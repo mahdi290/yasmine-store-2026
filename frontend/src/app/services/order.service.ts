@@ -8,6 +8,10 @@ export interface Order {
   totalPrice: number;
   status: string;
   createdAt: string;
+  customerName?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
 }
 
 export interface OrderItem {
@@ -24,6 +28,18 @@ export interface OrderHistoryItem {
   items: OrderItem[];
 }
 
+export interface GuestOrderPayload {
+  customerName: string;
+  phone: string;
+  address: string;
+  city: string;
+  items: Array<{
+    productId: number;
+    quantity: number;
+    size: string;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -31,8 +47,8 @@ export class OrderService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = 'http://localhost:8081/api/orders';
 
-  placeOrder(): Observable<OrderHistoryItem> {
-    return this.http.post<OrderHistoryItem>(this.apiUrl, {});
+  placeOrder(payload: GuestOrderPayload): Observable<OrderHistoryItem> {
+    return this.http.post<OrderHistoryItem>(this.apiUrl, payload);
   }
 
   getOrderHistory(): Observable<OrderHistoryItem[]> {

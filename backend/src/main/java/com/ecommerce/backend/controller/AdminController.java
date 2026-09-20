@@ -28,10 +28,30 @@ public class AdminController {
             Long id,
             String customerName,
             String customerEmail,
+            String phone,
+            String address,
+            String city,
             BigDecimal totalPrice,
             String status,
             java.time.LocalDateTime createdAt
     ) {}
+
+    private OrderResponse mapToOrderResponse(Order order) {
+        String name = order.getCustomerName() != null ? order.getCustomerName() :
+                (order.getUser() != null ? (order.getUser().getFirstname() + " " + order.getUser().getLastname()) : "Client Sans Compte");
+        String email = order.getUser() != null ? order.getUser().getEmail() : "N/A";
+        return new OrderResponse(
+                order.getId(),
+                name,
+                email,
+                order.getPhone() != null ? order.getPhone() : "N/A",
+                order.getAddress() != null ? order.getAddress() : "N/A",
+                order.getCity() != null ? order.getCity() : "N/A",
+                order.getTotalPrice(),
+                order.getStatus(),
+                order.getCreatedAt()
+        );
+    }
 
     public record DashboardStats(
             BigDecimal totalRevenue,
@@ -72,14 +92,7 @@ public class AdminController {
         List<OrderResponse> recentOrders = allOrders.stream()
                 .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
                 .limit(5)
-                .map(order -> new OrderResponse(
-                        order.getId(),
-                        order.getUser() != null ? (order.getUser().getFirstname() + " " + order.getUser().getLastname()) : "Guest",
-                        order.getUser() != null ? order.getUser().getEmail() : "N/A",
-                        order.getTotalPrice(),
-                        order.getStatus(),
-                        order.getCreatedAt()
-                ))
+                .map(this::mapToOrderResponse)
                 .toList();
 
         // Calculate category sales
@@ -228,14 +241,7 @@ public class AdminController {
         List<Order> orders = orderRepository.findAll();
         List<OrderResponse> response = orders.stream()
                 .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
-                .map(order -> new OrderResponse(
-                        order.getId(),
-                        order.getUser() != null ? (order.getUser().getFirstname() + " " + order.getUser().getLastname()) : "Guest",
-                        order.getUser() != null ? order.getUser().getEmail() : "N/A",
-                        order.getTotalPrice(),
-                        order.getStatus(),
-                        order.getCreatedAt()
-                ))
+                .map(this::mapToOrderResponse)
                 .toList();
         return ResponseEntity.ok(response);
     }

@@ -64,7 +64,10 @@ export class AdminOrdersComponent implements OnInit {
     return list.filter(o => 
       o.id.toString().includes(term) ||
       o.customerName.toLowerCase().includes(term) ||
-      o.customerEmail.toLowerCase().includes(term)
+      (o.customerEmail && o.customerEmail.toLowerCase().includes(term)) ||
+      (o.phone && o.phone.toLowerCase().includes(term)) ||
+      (o.address && o.address.toLowerCase().includes(term)) ||
+      (o.city && o.city.toLowerCase().includes(term))
     );
   }
 

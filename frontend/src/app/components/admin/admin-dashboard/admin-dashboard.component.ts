@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { AdminService, DashboardStats } from '../../../services/admin.service';
 
 @Component({
@@ -12,6 +12,7 @@ import { AdminService, DashboardStats } from '../../../services/admin.service';
 })
 export class AdminDashboardComponent implements OnInit {
   private adminService = inject(AdminService);
+  private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
   // States
@@ -36,8 +37,12 @@ export class AdminDashboardComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.errorMsg.set('Impossible de charger les statistiques du tableau de bord.');
         this.loading.set(false);
+        if (err.status === 403 || err.status === 401) {
+          this.errorMsg.set('Accès refusé (403). Veuillez vous connecter avec le compte administrateur (admin@shop.com / adminpassword).');
+        } else {
+          this.errorMsg.set('Impossible de charger les statistiques du tableau de bord.');
+        }
       }
     });
   }
@@ -49,4 +54,3 @@ export class AdminDashboardComponent implements OnInit {
     return Math.round((revenue / total) * 100);
   }
 }
-

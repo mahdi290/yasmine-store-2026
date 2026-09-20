@@ -10,7 +10,7 @@
     <!-- Search Bar -->
     <div class="d-none d-lg-flex flex-grow-1 mx-5" style="max-width: 500px;">
       <div class="input-group">
-        <input #searchInput type="text" (keyup.enter)="search(searchInput.value)" class="form-control border-end-0 py-2 bg-light border-2" placeholder="Rechercher des produits..." aria-label="Search" style="border-color: #eaeaea; border-radius: 4px 0 0 4px; font-size: 14px;">
+        <input #searchInput type="text" (keyup.enter)="search(searchInput.value)" class="form-control border-end-0 py-2 bg-light border-2" placeholder="Rechercher des vêtements, robes, blouses..." aria-label="Search" style="border-color: #eaeaea; border-radius: 4px 0 0 4px; font-size: 14px;">
         <button (click)="search(searchInput.value)" class="btn btn-dark px-4" type="button" style="border-radius: 0 4px 4px 0;">
           <i class="bi bi-search"></i>
         </button>
@@ -19,39 +19,29 @@
 
     <!-- Right Header Actions -->
     <div class="d-flex align-items-center gap-3">
-      <!-- User Account Action -->
+      <!-- Admin Account Action -->
       <div class="dropdown">
         <button class="btn btn-link text-dark p-1 position-relative dropdown-toggle no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="box-shadow: none;">
-          <i class="bi bi-person fs-4"></i>
+          <i class="bi bi-shield-lock fs-4"></i>
         </button>
         
-        <!-- User Dropdown Menu -->
-        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-3 mt-2" style="width: 280px; z-index: 1050; border-radius: 12px;">
+        <!-- Admin Dropdown Menu -->
+        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-3 mt-2" style="width: 250px; z-index: 1050; border-radius: 12px;">
           @if (authService.currentUser(); as user) {
-            <!-- Logged in state -->
-            <h6 class="fw-bold text-dark mb-0">Bienvenue, {{ user.firstname }} !</h6>
+            <!-- Admin logged in -->
+            <h6 class="fw-bold text-dark mb-1">Espace Administrateur</h6>
             <p class="text-muted mb-3" style="font-size: 12px;">{{ user.email }}</p>
             <hr class="my-2">
-            @if (user.role === 'ADMIN') {
-              <a class="dropdown-item py-2 fw-semibold text-warning-emphasis" routerLink="/admin"><i class="bi bi-shield-lock me-2"></i> Panneau d'Administration</a>
-            }
-            <a class="dropdown-item py-2" routerLink="/orders"><i class="bi bi-bag me-2"></i> Mes Commandes</a>
-            <a class="dropdown-item py-2" href="#"><i class="bi bi-heart me-2"></i> Ma Liste de Envies</a>
+            <a class="dropdown-item py-2 fw-semibold text-dark" routerLink="/admin"><i class="bi bi-speedometer2 me-2"></i> Tableau de bord</a>
+            <a class="dropdown-item py-2 fw-semibold text-dark" routerLink="/admin/orders"><i class="bi bi-box-seam me-2"></i> Gestion Commandes</a>
             <hr class="my-2">
             <button (click)="logout()" class="btn btn-outline-danger w-100 btn-sm mt-1">Se déconnecter</button>
           } @else {
-            <!-- Guest/Logged out state -->
-            <h6 class="fw-bold text-dark mb-0" style="font-family: 'Inter Tight', sans-serif; font-size: 15px;">Bienvenue chez Yasmina Store</h6>
-            <p class="text-muted mb-3" style="font-size: 12px;">Accédez à votre compte et vos commandes</p>
-            
-            <a class="dropdown-item py-2 text-muted" routerLink="/auth" [queryParams]="{mode: 'login'}"><i class="bi bi-bag me-2"></i> Mes Commandes</a>
-            <a class="dropdown-item py-2 text-muted" routerLink="/auth" [queryParams]="{mode: 'login'}"><i class="bi bi-heart me-2"></i> Ma Liste d'Envies</a>
-            
-            <hr class="my-3">
-            
-            <div class="d-grid gap-2">
-              <a routerLink="/auth" [queryParams]="{mode: 'login'}" class="btn btn-dark btn-sm py-2 fw-semibold" style="border-radius: 20px; font-size: 13px;">Se Connecter</a>
-              <a routerLink="/auth" [queryParams]="{mode: 'register'}" class="btn btn-outline-dark btn-sm py-2 fw-semibold" style="border-radius: 20px; font-size: 13px;">S'Inscrire</a>
+            <!-- Admin logged out -->
+            <h6 class="fw-bold text-dark mb-1" style="font-family: 'Inter Tight', sans-serif; font-size: 14px;">Espace Administrateur</h6>
+            <p class="text-muted mb-3" style="font-size: 12px;">Réservé au propriétaire de la boutique</p>
+            <div class="d-grid">
+              <a routerLink="/auth" [queryParams]="{mode: 'login'}" class="btn btn-dark btn-sm py-2 fw-semibold" style="border-radius: 20px; font-size: 13px;">Connexion Admin</a>
             </div>
           }
         </div>

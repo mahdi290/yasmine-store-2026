@@ -1,8 +1,7 @@
-import { Injectable, signal, computed, inject, effect } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Observable, of } from 'rxjs';
 import { Product } from './product.service';
-import { AuthService } from './auth.service';
 
 export interface CartItem {
   id: number;
@@ -15,9 +14,8 @@ export interface CartItem {
   providedIn: 'root'
 })
 export class CartService {
-  private readonly http = inject(HttpClient);
-  private readonly authService = inject(AuthService);
-  private readonly apiUrl = 'http://localhost:8081/api/cart';
+  private readonly STORAGE_KEY = 'yasmina_guest_cart';
+  private readonly platformId = inject(PLATFORM_ID);
 
   // State
   cartItems = signal<CartItem[]>([]);
@@ -28,51 +26,95 @@ export class CartService {
   });
 
   cartSubtotal = computed(() => {
-    return this.cartItems().reduce((total, item) => total + (item.product.price * item.quantity), 0);
+    return Math.round(this.cartItems().reduce((total, item) => total + (item.product.price * item.quantity), 0) * 100) / 100;
   });
 
   constructor() {
-    // Automatically load or clear cart based on user session state
-    effect(() => {
-      const user = this.authService.currentUser();
-      if (user) {
-        this.loadCart();
-      } else {
-        this.cartItems.set([]);
-      }
-    });
+    this.loadCart();
   }
 
   loadCart() {
-    this.http.get<CartItem[]>(this.apiUrl).subscribe({
-      next: (items) => this.cartItems.set(items),
-      error: () => this.cartItems.set([])
-    });
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const data = localStorage.getItem(this.STORAGE_KEY);
+        if (data) {
+          this.cartItems.set(JSON.parse(data));
+        } else {
+          this.cartItems.set([]);
+        }
+      } catch (e) {
+        this.cartItems.set([]);
+      }
+    }
   }
 
-  addToCart(productId: number, quantity: number = 1, size: string = 'M'): Observable<any> {
-    return this.http.post(this.apiUrl, { productId, quantity, size }).pipe(
-      tap(() => this.loadCart())
-    );
+  private saveCart(items: CartItem[]) {
+    this.cartItems.set(items);
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        console.error('Error saving cart to localStorage', e);
+      }
+    }
+  }
+
+  addToCart(productInput: Product | any, quantity: number = 1, size: string = 'M'): Observable<any> {
+    const current = [...this.cartItems()];
+    let product: Product;
+
+    if (typeof productInput === 'object' && productInput !== null && productInput.name) {
+      product = productInput;
+    } else {
+      product = {
+        id: typeof productInput === 'number' ? productInput : productInput.id,
+        name: productInput.name || 'Produit',
+        price: productInput.price || 0,
+        imageUrl: productInput.imageUrl || '',
+        category: productInput.category || { id: 1, name: 'Vêtements' }
+      } as Product;
+    }
+
+    const sizeVal = size || 'M';
+    const existingIndex = current.findIndex(item => item.product.id === product.id && (item.size || 'M') === sizeVal);
+
+    if (existingIndex > -1) {
+      current[existingIndex].quantity += quantity;
+    } else {
+      current.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        product: product,
+        quantity: quantity,
+        size: sizeVal
+      });
+    }
+
+    this.saveCart(current);
+    return of({ success: true, items: current });
   }
 
   updateQuantity(cartItemId: number, quantity: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${cartItemId}`, null, {
-      params: { quantity: quantity.toString() }
-    }).pipe(
-      tap(() => this.loadCart())
-    );
+    let current = [...this.cartItems()];
+    if (quantity <= 0) {
+      current = current.filter(item => item.id !== cartItemId);
+    } else {
+      const idx = current.findIndex(item => item.id === cartItemId);
+      if (idx > -1) {
+        current[idx].quantity = quantity;
+      }
+    }
+    this.saveCart(current);
+    return of({ success: true, items: current });
   }
 
   removeFromCart(cartItemId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${cartItemId}`, { responseType: 'text' }).pipe(
-      tap(() => this.loadCart())
-    );
+    const current = this.cartItems().filter(item => item.id !== cartItemId);
+    this.saveCart(current);
+    return of({ success: true, items: current });
   }
 
   clearCart(): Observable<any> {
-    return this.http.delete(this.apiUrl, { responseType: 'text' }).pipe(
-      tap(() => this.loadCart())
-    );
+    this.saveCart([]);
+    return of({ success: true, items: [] });
   }
 }

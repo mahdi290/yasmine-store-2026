@@ -12,7 +12,10 @@ export interface CategorySales {
 export interface AdminOrder {
   id: number;
   customerName: string;
-  customerEmail: string;
+  customerEmail?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
   totalPrice: number;
   status: string;
   createdAt: string;

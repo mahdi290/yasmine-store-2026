@@ -97,12 +97,6 @@ export class ProductDetailsComponent implements OnInit {
     const prod = this.product();
     if (!prod) return;
 
-    if (!this.authService.isLoggedIn()) {
-      alert('Veuillez vous connecter pour ajouter des articles à votre panier.');
-      this.router.navigate(['/auth']);
-      return;
-    }
-
     if (this.selectedSizeStock() <= 0) {
       alert('Cette taille est actuellement en rupture de stock.');
       return;
@@ -113,17 +107,12 @@ export class ProductDetailsComponent implements OnInit {
       return;
     }
 
-    this.cartService.addToCart(prod.id, this.quantity(), this.selectedSize()).subscribe({
+    this.cartService.addToCart(prod, this.quantity(), this.selectedSize()).subscribe({
       next: () => {
         alert(`${this.quantity()} x ${prod.name} ajouté à votre panier !`);
       },
-      error: (err) => {
-        if (err.status === 401 || err.status === 403) {
-          alert('Veuillez vous connecter pour ajouter des articles à votre panier.');
-          this.router.navigate(['/auth']);
-        } else {
-          alert('Impossible d’ajouter l’article au panier. Veuillez réessayer.');
-        }
+      error: () => {
+        alert('Impossible d’ajouter l’article au panier. Veuillez réessayer.');
       }
     });
   }

@@ -62,12 +62,14 @@
         <table class="table align-middle table-hover mb-0">
           <thead>
             <tr class="text-muted" style="font-size: 12px; text-transform: uppercase;">
-              <th class="border-0 pb-3 ps-4">ID Commande</th>
+              <th class="border-0 pb-3 ps-4">ID</th>
               <th class="border-0 pb-3">Client</th>
+              <th class="border-0 pb-3">Téléphone</th>
+              <th class="border-0 pb-3">Adresse & Ville</th>
               <th class="border-0 pb-3">Date</th>
-              <th class="border-0 pb-3">Montant Total</th>
+              <th class="border-0 pb-3">Total</th>
               <th class="border-0 pb-3">Statut</th>
-              <th class="border-0 pb-3 pe-4 text-end">Changer le Statut</th>
+              <th class="border-0 pb-3 pe-4 text-end">Changer Statut</th>
             </tr>
           </thead>
           <tbody style="font-size: 14px;">
@@ -76,10 +78,16 @@
                 <td class="ps-4 fw-bold">#{{ order.id }}</td>
                 <td>
                   <div class="fw-semibold text-dark">{{ order.customerName }}</div>
-                  <small class="text-muted d-block" style="font-size: 11px;">{{ order.customerEmail }}</small>
                 </td>
-                <td class="text-secondary">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td class="fw-semibold">{{ order.totalPrice.toFixed(2) }} DT</td>
+                <td class="fw-semibold text-primary">
+                  <i class="bi bi-telephone me-1"></i> {{ order.phone || 'N/A' }}
+                </td>
+                <td>
+                  <span class="text-dark d-block text-truncate" style="max-width: 200px;">{{ order.address || 'N/A' }}</span>
+                  <small class="text-muted d-block" style="font-size: 11px;">{{ order.city }}</small>
+                </td>
+                <td class="text-secondary" style="font-size: 13px;">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="fw-bold text-dark">{{ order.totalPrice.toFixed(2) }} DT</td>
                 <td>
                   <span class="badge" 
                         [class.bg-warning-ns]="order.status === 'PENDING'"
@@ -90,7 +98,7 @@
                   </span>
                 </td>
                 <td class="pe-4 text-end">
-                  <div class="d-inline-block" style="max-width: 160px;">
+                  <div class="d-inline-block" style="max-width: 150px;">
                     <select [ngModel]="order.status" (ngModelChange)="updateStatus(order, $event)" 
                             class="form-select form-select-sm py-1.5 px-2.5" style="font-size: 13px; border-radius: 6px;">
                       <option value="PENDING">EN ATTENTE</option>
@@ -103,7 +111,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="text-center text-muted py-5">Aucune commande trouvée.</td>
+                <td colspan="8" class="text-center text-muted py-5">Aucune commande trouvée.</td>
               </tr>
             }
           </tbody>

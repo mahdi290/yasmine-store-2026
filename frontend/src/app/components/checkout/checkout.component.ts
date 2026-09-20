@@ -1,10 +1,8 @@
-import { Component, OnInit, inject, signal, computed, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../../services/cart.service';
-import { AuthService } from '../../services/auth.service';
 import { OrderService } from '../../services/order.service';
 
 @Component({
@@ -16,17 +14,16 @@ import { OrderService } from '../../services/order.service';
 })
 export class CheckoutComponent implements OnInit {
   cartService = inject(CartService);
-  private authService = inject(AuthService);
   private orderService = inject(OrderService);
   private router = inject(Router);
   protected readonly Math = Math;
   private platformId = inject(PLATFORM_ID);
 
-  // Form Fields
+  // Form Fields for Fast Guest Checkout
+  customerName = '';
+  phone = '';
   address = '';
   city = '';
-  zipCode = '';
-  country = '';
   paymentMethod = 'COD';
 
   loading = signal<boolean>(false);
@@ -35,11 +32,6 @@ export class CheckoutComponent implements OnInit {
 
   ngOnInit() {
     if (!isPlatformBrowser(this.platformId)) return;
-
-    if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/auth'], { queryParams: { returnUrl: '/checkout', mode: 'login' } });
-      return;
-    }
 
     if (this.cartService.cartItems().length === 0) {
       this.router.navigate(['/cart']);
@@ -53,18 +45,38 @@ export class CheckoutComponent implements OnInit {
       return;
     }
 
+    if (!this.customerName.trim() || !this.phone.trim() || !this.address.trim()) {
+      if (isPlatformBrowser(this.platformId)) alert('Veuillez remplir votre nom, téléphone et adresse.');
+      return;
+    }
+
     this.loading.set(true);
 
-    this.orderService.placeOrder().subscribe({
+    const items = this.cartService.cartItems().map(item => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+      size: item.size || 'M'
+    }));
+
+    const payload = {
+      customerName: this.customerName.trim(),
+      phone: this.phone.trim(),
+      address: this.address.trim(),
+      city: this.city.trim() || 'Non spécifié',
+      items: items
+    };
+
+    this.orderService.placeOrder(payload).subscribe({
       next: (res) => {
         this.loading.set(false);
         this.success.set(true);
         this.placedOrder.set(res.order);
-        this.cartService.loadCart();
+        this.cartService.clearCart();
       },
       error: (err) => {
         this.loading.set(false);
-        if (isPlatformBrowser(this.platformId)) alert(err.error || 'Échec de la validation de la commande. Veuillez réessayer.');
+        const msg = typeof err.error === 'string' ? err.error : (err.error?.message || 'Échec de la validation de la commande.');
+        if (isPlatformBrowser(this.platformId)) alert(msg);
       }
     });
   }

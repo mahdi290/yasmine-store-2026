@@ -31,70 +31,121 @@ public class OrderController {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
 
+    public record OrderItemRequest(Long productId, Integer quantity, String size) {}
+    public record GuestOrderRequest(String customerName, String phone, String address, String city, List<OrderItemRequest> items) {}
+
     @PostMapping
     @Transactional
-    public ResponseEntity<?> placeOrder(@AuthenticationPrincipal User user) {
-        List<CartItem> cartItems = cartItemRepository.findByUserId(user.getId());
-        if (cartItems.isEmpty()) {
-            return ResponseEntity.badRequest().body("Error: Cart is empty!");
-        }
+    public ResponseEntity<?> placeOrder(
+            @RequestBody(required = false) GuestOrderRequest request,
+            @AuthenticationPrincipal User user) {
 
-        BigDecimal totalPrice = BigDecimal.ZERO;
         List<OrderItem> orderItemsToSave = new ArrayList<>();
+        BigDecimal totalPrice = BigDecimal.ZERO;
 
-        for (CartItem cartItem : cartItems) {
-            Product product = cartItem.getProduct();
-            String size = cartItem.getSize() != null && !cartItem.getSize().trim().isEmpty() ? cartItem.getSize().trim() : "M";
+        String customerName = null;
+        String phone = null;
+        String address = null;
+        String city = null;
 
-            // Initialize size stocks in case they are not persisted yet
-            product.initializeSizeStocks();
+        if (request != null && request.items() != null && !request.items().isEmpty()) {
+            // Guest Checkout flow
+            customerName = request.customerName();
+            phone = request.phone();
+            address = request.address();
+            city = request.city();
 
-            Integer sizeStock = product.getSizeStocks().getOrDefault(size, 0);
-            if (sizeStock < cartItem.getQuantity()) {
-                return ResponseEntity.badRequest().body("Error: Insufficient stock for size " + size + " of product " + product.getName());
+            for (OrderItemRequest itemReq : request.items()) {
+                if (itemReq.productId() == null) continue;
+                Product product = productRepository.findById(itemReq.productId()).orElse(null);
+                if (product == null) {
+                    return ResponseEntity.badRequest().body("Error: Product ID " + itemReq.productId() + " not found!");
+                }
+
+                int qty = itemReq.quantity() != null && itemReq.quantity() > 0 ? itemReq.quantity() : 1;
+                String size = itemReq.size() != null && !itemReq.size().trim().isEmpty() ? itemReq.size().trim() : "M";
+
+                product.initializeSizeStocks();
+                Integer sizeStock = product.getSizeStocks().getOrDefault(size, 0);
+                if (sizeStock < qty) {
+                    return ResponseEntity.badRequest().body("Error: Insufficient stock for size " + size + " of product " + product.getName());
+                }
+
+                // Subtract stock
+                product.getSizeStocks().put(size, sizeStock - qty);
+                product.setStock(product.getSizeStocks().values().stream().mapToInt(Integer::intValue).sum());
+                productRepository.save(product);
+
+                BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(qty));
+                totalPrice = totalPrice.add(itemTotal);
+
+                OrderItem orderItem = OrderItem.builder()
+                        .product(product)
+                        .quantity(qty)
+                        .price(product.getPrice())
+                        .size(size)
+                        .color("Default")
+                        .build();
+
+                orderItemsToSave.add(orderItem);
             }
+        } else if (user != null) {
+            // Fallback for logged in user cart
+            List<CartItem> cartItems = cartItemRepository.findByUserId(user.getId());
+            if (cartItems.isEmpty()) {
+                return ResponseEntity.badRequest().body("Error: Cart is empty!");
+            }
+            customerName = user.getFirstname() + " " + user.getLastname();
 
-            // Subtract stock from sizeStocks
-            product.getSizeStocks().put(size, sizeStock - cartItem.getQuantity());
-            // Recalculate global stock
-            product.setStock(product.getSizeStocks().values().stream().mapToInt(Integer::intValue).sum());
+            for (CartItem cartItem : cartItems) {
+                Product product = cartItem.getProduct();
+                String size = cartItem.getSize() != null && !cartItem.getSize().trim().isEmpty() ? cartItem.getSize().trim() : "M";
 
-            productRepository.save(product);
+                product.initializeSizeStocks();
+                Integer sizeStock = product.getSizeStocks().getOrDefault(size, 0);
+                if (sizeStock < cartItem.getQuantity()) {
+                    return ResponseEntity.badRequest().body("Error: Insufficient stock for size " + size + " of product " + product.getName());
+                }
 
-            // Compute total
-            BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-            totalPrice = totalPrice.add(itemTotal);
+                product.getSizeStocks().put(size, sizeStock - cartItem.getQuantity());
+                product.setStock(product.getSizeStocks().values().stream().mapToInt(Integer::intValue).sum());
+                productRepository.save(product);
 
-            // Create OrderItem details
-            OrderItem orderItem = OrderItem.builder()
-                    .product(product)
-                    .quantity(cartItem.getQuantity())
-                    .price(product.getPrice()) // price at order time
-                    .size(cartItem.getSize() != null ? cartItem.getSize() : "M")
-                    .color("Default")
-                    .build();
+                BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+                totalPrice = totalPrice.add(itemTotal);
 
-            orderItemsToSave.add(orderItem);
+                OrderItem orderItem = OrderItem.builder()
+                        .product(product)
+                        .quantity(cartItem.getQuantity())
+                        .price(product.getPrice())
+                        .size(size)
+                        .color("Default")
+                        .build();
+
+                orderItemsToSave.add(orderItem);
+            }
+            cartItemRepository.deleteByUserId(user.getId());
+        } else {
+            return ResponseEntity.badRequest().body("Error: Order items or customer details are required!");
         }
 
         // Save Order
         Order order = Order.builder()
                 .user(user)
+                .customerName(customerName)
+                .phone(phone)
+                .address(address)
+                .city(city)
                 .totalPrice(totalPrice)
                 .status("PENDING")
                 .build();
         orderRepository.save(order);
 
-        // Associate items with the saved order and save them
         for (OrderItem item : orderItemsToSave) {
             item.setOrder(order);
             orderItemRepository.save(item);
         }
 
-        // Clear cart
-        cartItemRepository.deleteByUserId(user.getId());
-
-        // Construct response with order and items
         Map<String, Object> response = new HashMap<>();
         response.put("order", order);
         response.put("items", orderItemsToSave);
@@ -104,6 +155,9 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getOrderHistory(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.ok(List.of());
+        }
         List<Order> orders = orderRepository.findByUserId(user.getId());
         List<Map<String, Object>> response = new ArrayList<>();
 

@@ -230,23 +230,12 @@ export class CategoryComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
-    if (!this.authService.isLoggedIn()) {
-      alert('Veuillez vous connecter pour ajouter des articles à votre panier.');
-      this.router.navigate(['/auth']);
-      return;
-    }
-
-    this.cartService.addToCart(product.id, 1).subscribe({
+    this.cartService.addToCart(product, 1).subscribe({
       next: () => {
         alert(`${product.name} a été ajouté au panier !`);
       },
-      error: (err) => {
-        if (err.status === 401 || err.status === 403) {
-          alert('Veuillez vous connecter pour ajouter des articles à votre panier.');
-          this.router.navigate(['/auth']);
-        } else {
-          alert('Impossible d’ajouter l’article au panier. Veuillez réessayer.');
-        }
+      error: () => {
+        alert('Impossible d’ajouter l’article au panier. Veuillez réessayer.');
       }
     });
   }

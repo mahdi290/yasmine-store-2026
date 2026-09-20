@@ -1,7 +1,7 @@
 <!-- Page Header -->
-<div class="bg-light py-4 mb-5 border-bottom">
+<div class="bg-light py-4 mb-4 border-bottom">
   <div class="container d-flex justify-content-between align-items-center">
-    <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Paiement & Commande</h1>
+    <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Validation de Commande</h1>
     <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
       <ol class="breadcrumb m-0" style="font-size: 13px;">
         <li class="breadcrumb-item"><a routerLink="/" class="text-secondary text-decoration-none">Accueil</a></li>
@@ -21,8 +21,8 @@
           <div class="text-success mb-3">
             <i class="bi bi-check-circle-fill" style="font-size: 64px;"></i>
           </div>
-          <h2 class="fw-bold text-dark mb-2" style="font-family: 'Inter Tight', sans-serif;">Commande Confirmée !</h2>
-          <p class="text-secondary mb-4 fs-6">Merci pour votre achat. Votre commande a été enregistrée et est en cours de préparation.</p>
+          <h2 class="fw-bold text-dark mb-2" style="font-family: 'Inter Tight', sans-serif;">Commande Enregistrée !</h2>
+          <p class="text-secondary mb-4 fs-6">Merci pour votre commande. Nous vous contacterons rapidement pour la livraison.</p>
           
           @if (placedOrder(); as order) {
             <div class="bg-light p-4 rounded-3 text-start mb-4" style="font-size: 14px; line-height: 1.6;">
@@ -31,78 +31,61 @@
                 <span class="fw-bold text-dark">#{{ order.id }}</span>
               </div>
               <div class="d-flex justify-content-between mb-2">
-                <span class="text-secondary">Total Payé :</span>
-                <span class="fw-bold text-dark">{{ order.totalPrice }} DT</span>
+                <span class="text-secondary">Client :</span>
+                <span class="fw-bold text-dark">{{ order.customerName }}</span>
               </div>
-              <div class="d-flex justify-content-between">
-                <span class="text-secondary">Statut :</span>
-                <span class="badge bg-warning text-dark uppercase">{{ order.status === 'PENDING' ? 'EN ATTENTE' : order.status }}</span>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Téléphone :</span>
+                <span class="fw-bold text-dark">{{ order.phone }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Total (Paiement à la livraison) :</span>
+                <span class="fw-bold text-success">{{ order.totalPrice }} DT</span>
               </div>
             </div>
           }
 
           <div class="d-flex justify-content-center gap-3">
-            <a routerLink="/" class="btn btn-dark px-4 py-2">Continuer vos achats</a>
-            <a routerLink="/orders" class="btn btn-outline-dark px-4 py-2">Voir mes commandes</a>
+            <a routerLink="/" class="btn btn-dark px-4 py-2">Retour à l'Accueil</a>
           </div>
         </div>
       </div>
     </div>
   } @else {
-    <!-- Checkout Form -->
+    <!-- Minimalist Checkout Form -->
     <form (submit)="onSubmit($event)">
-      <div class="row g-5">
-        <!-- Billing Details Col -->
+      <div class="row g-4">
+        <!-- Delivery Details Col -->
         <div class="col-lg-7">
-          <h4 class="fw-bold mb-4" style="font-family: 'Inter Tight', sans-serif; font-size: 20px;">Détails de Livraison</h4>
-          
-          <div class="row g-3">
-            <!-- Address -->
-            <div class="col-12">
-              <label for="address" class="form-label fw-bold text-dark" style="font-size: 13px;">Adresse de livraison</label>
-              <input type="text" id="address" name="address" [(ngModel)]="address" class="form-control border-secondary" placeholder="Ex: 12 Rue de la Liberté" required style="border-radius: 4px; font-size: 14px;">
-            </div>
+          <div class="bg-white p-4 rounded-3 border shadow-sm">
+            <h5 class="fw-bold mb-4 text-dark" style="font-family: 'Inter Tight', sans-serif;">
+              Coordonnées de Livraison
+            </h5>
 
-            <!-- City & Zip -->
-            <div class="col-md-6 col-12">
-              <label for="city" class="form-label fw-bold text-dark" style="font-size: 13px;">Ville</label>
-              <input type="text" id="city" name="city" [(ngModel)]="city" class="form-control border-secondary" placeholder="Ex: Tunis" required style="border-radius: 4px; font-size: 14px;">
-            </div>
-            <div class="col-md-6 col-12">
-              <label for="zip" class="form-label fw-bold text-dark" style="font-size: 13px;">Code Postal</label>
-              <input type="text" id="zip" name="zipCode" [(ngModel)]="zipCode" class="form-control border-secondary" placeholder="Ex: 1000" required style="border-radius: 4px; font-size: 14px;">
-            </div>
+            <div class="row g-3">
+              <!-- Nom & Prénom -->
+              <div class="col-12">
+                <label for="customerName" class="form-label fw-semibold text-dark" style="font-size: 13px;">Nom & Prénom *</label>
+                <input type="text" id="customerName" name="customerName" [(ngModel)]="customerName" class="form-control" placeholder="Nom et prénom" required style="border-radius: 6px; font-size: 14px;">
+              </div>
 
-            <!-- Country -->
-            <div class="col-12 mb-4">
-              <label for="country" class="form-label fw-bold text-dark" style="font-size: 13px;">Pays</label>
-              <select id="country" name="country" [(ngModel)]="country" class="form-select border-secondary text-secondary" required style="border-radius: 4px; font-size: 14px;">
-                <option value="" disabled selected>Sélectionnez votre pays</option>
-                <option value="TN">Tunisie</option>
-                <option value="FR">France</option>
-                <option value="MA">Maroc</option>
-                <option value="CA">Canada</option>
-              </select>
-            </div>
-          </div>
+              <!-- Numéro de Téléphone -->
+              <div class="col-12">
+                <label for="phone" class="form-label fw-semibold text-dark" style="font-size: 13px;">Téléphone *</label>
+                <input type="tel" id="phone" name="phone" [(ngModel)]="phone" class="form-control" placeholder="Numéro de téléphone" required style="border-radius: 6px; font-size: 14px;">
+              </div>
 
-          <h4 class="fw-bold mb-4 pt-2" style="font-family: 'Inter Tight', sans-serif; font-size: 20px;">Mode de Paiement</h4>
-          
-          <div class="border rounded-3 p-3 bg-white mb-4">
-            <div class="form-check mb-2">
-              <input class="form-check-input" type="radio" name="payment" id="payCod" value="COD" [(ngModel)]="paymentMethod" checked>
-              <label class="form-check-label text-dark fw-bold" for="payCod" style="font-size: 13px;">
-                Paiement à la livraison (Espèces)
-              </label>
-              <p class="text-secondary mb-0 ms-4" style="font-size: 12px; line-height: 1.4;">Payez en espèces dès réception de vos articles à votre domicile.</p>
-            </div>
-            <hr class="my-3">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="payment" id="payCard" value="CARD" [(ngModel)]="paymentMethod" disabled>
-              <label class="form-check-label text-secondary fw-bold" for="payCard" style="font-size: 13px;">
-                Carte Bancaire (Bientôt disponible)
-              </label>
-              <p class="text-muted mb-0 ms-4" style="font-size: 12px; line-height: 1.4;">Le paiement en ligne par carte est actuellement indisponible.</p>
+              <!-- Adresse -->
+              <div class="col-md-8 col-12">
+                <label for="address" class="form-label fw-semibold text-dark" style="font-size: 13px;">Adresse *</label>
+                <input type="text" id="address" name="address" [(ngModel)]="address" class="form-control" placeholder="Adresse de livraison" required style="border-radius: 6px; font-size: 14px;">
+              </div>
+
+              <!-- Ville -->
+              <div class="col-md-4 col-12">
+                <label for="city" class="form-label fw-semibold text-dark" style="font-size: 13px;">Ville *</label>
+                <input type="text" id="city" name="city" [(ngModel)]="city" class="form-control" placeholder="Ville" required style="border-radius: 6px; font-size: 14px;">
+              </div>
             </div>
           </div>
         </div>
@@ -110,15 +93,20 @@
         <!-- Order Summary Col -->
         <div class="col-lg-5">
           <div class="border rounded-3 p-4 bg-white shadow-sm">
-            <h4 class="fw-bold mb-4" style="font-family: 'Inter Tight', sans-serif; font-size: 20px;">Votre Commande</h4>
+            <h5 class="fw-bold mb-4 text-dark" style="font-family: 'Inter Tight', sans-serif;">Résumé de Commande</h5>
             
             <!-- Items list -->
-            <div class="d-flex flex-column gap-3 mb-4">
+            <div class="d-flex flex-column gap-3 mb-3" style="max-height: 250px; overflow-y: auto;">
               @for (item of cartService.cartItems(); track item.id) {
-                <div class="d-flex justify-content-between align-items-center" style="font-size: 14px; line-height: 1.4;">
-                  <div class="text-start" style="max-width: 70%;">
-                    <span class="fw-semibold text-dark">{{ item.product.name }}</span>
-                    <small class="text-muted d-block">Qté : {{ item.quantity }} &nbsp;|&nbsp; Taille : {{ item.size || 'M' }}</small>
+                <div class="d-flex justify-content-between align-items-center" style="font-size: 14px;">
+                  <div class="d-flex align-items-center gap-2" style="max-width: 75%;">
+                    @if (item.product.imageUrl) {
+                      <img [src]="item.product.imageUrl" [alt]="item.product.name" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                    }
+                    <div>
+                      <span class="fw-semibold text-dark d-block text-truncate" style="max-width: 170px;">{{ item.product.name }}</span>
+                      <small class="text-muted d-block" style="font-size: 11px;">Qté : {{ item.quantity }} | Taille : {{ item.size || 'M' }}</small>
+                    </div>
                   </div>
                   <span class="fw-bold text-dark">{{ Math.round(item.product.price * item.quantity * 100) / 100 }} DT</span>
                 </div>
@@ -148,11 +136,12 @@
             </div>
 
             <!-- Checkout Button -->
-            <button type="submit" class="btn btn-dark w-100 py-3 d-flex align-items-center justify-content-center gap-2" [disabled]="loading()" style="border-radius: 4px; font-weight: 600;">
+            <button type="submit" class="btn btn-dark w-100 py-3 d-flex align-items-center justify-content-center gap-2" [disabled]="loading()" style="border-radius: 6px; font-weight: 600; font-size: 15px;">
               @if (loading()) {
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              } @else {
+                Confirmer la Commande <i class="bi bi-check2-circle fs-5"></i>
               }
-              Confirmer la Commande <i class="bi bi-shield-check"></i>
             </button>
           </div>
         </div>

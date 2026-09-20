@@ -25,9 +25,21 @@ public class Order {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     @ToString.Exclude
     private User user;
+
+    @Column(name = "customer_name")
+    private String customerName;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "city")
+    private String city;
 
     @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
