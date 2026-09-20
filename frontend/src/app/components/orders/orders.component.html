@@ -1,0 +1,85 @@
+<!-- Page Header -->
+<div class="bg-light py-4 mb-5 border-bottom">
+  <div class="container d-flex justify-content-between align-items-center">
+    <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Mes Commandes</h1>
+    <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+      <ol class="breadcrumb m-0" style="font-size: 13px;">
+        <li class="breadcrumb-item"><a routerLink="/" class="text-secondary text-decoration-none">Accueil</a></li>
+        <li class="breadcrumb-item active text-dark" aria-current="page">Mes Commandes</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container mb-5 text-start">
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-dark" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+    </div>
+  } @else {
+    @if (orders().length > 0) {
+      <div class="d-flex flex-column gap-4">
+        @for (item of orders(); track item.order.id) {
+          <div class="card shadow-sm border">
+            <!-- Order Header info -->
+            <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-3 py-3">
+              <div class="d-flex gap-4" style="font-size: 13px;">
+                <div>
+                  <span class="text-secondary d-block text-uppercase" style="font-size: 10px;">Date de Commande</span>
+                  <span class="fw-bold text-dark">{{ item.order.createdAt | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div>
+                  <span class="text-secondary d-block text-uppercase" style="font-size: 10px;">Prix Total</span>
+                  <span class="fw-bold text-dark">{{ item.order.totalPrice }} DT</span>
+                </div>
+                <div>
+                  <span class="text-secondary d-block text-uppercase" style="font-size: 10px;">Statut</span>
+                  <span class="badge bg-warning text-dark uppercase fw-bold" style="font-size: 10px;">
+                    {{ item.order.status === 'PENDING' ? 'EN ATTENTE' : (item.order.status === 'SHIPPED' ? 'EXPÉDIÉE' : (item.order.status === 'DELIVERED' ? 'LIVRÉE' : (item.order.status === 'CANCELLED' ? 'ANNULÉE' : item.order.status))) }}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <span class="fw-bold text-dark">Commande #{{ item.order.id }}</span>
+              </div>
+            </div>
+            
+            <!-- Order Items body -->
+            <div class="card-body p-4">
+              <div class="d-flex flex-column gap-3">
+                @for (itemDetails of item.items; track itemDetails.id) {
+                  <div class="d-flex align-items-center justify-content-between border-bottom pb-3 last-no-border">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="bg-light p-1 rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <img [src]="itemDetails.product.imageUrl" class="img-fluid" [alt]="itemDetails.product.name" style="max-height: 50px; object-fit: contain; mix-blend-mode: multiply;">
+                      </div>
+                      <div style="line-height: 1.3;">
+                        <h6 class="fw-semibold mb-1 text-dark" style="font-size: 14px;">{{ itemDetails.product.name }}</h6>
+                        <small class="text-secondary d-block" style="font-size: 11px;">
+                          Qté : {{ itemDetails.quantity }} &nbsp;|&nbsp; Taille : {{ itemDetails.size }} &nbsp;|&nbsp; Couleur : Standard
+                        </small>
+                      </div>
+                    </div>
+                    <div>
+                      <span class="fw-bold text-dark" style="font-size: 14px;">{{ itemDetails.price }} DT</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- No orders -->
+      <div class="text-center py-5 border rounded-3 bg-light">
+        <i class="bi bi-bag-x text-muted mb-3" style="font-size: 60px;"></i>
+        <h4 class="fw-bold text-dark">Aucune commande trouvée</h4>
+        <p class="text-secondary mb-4">Vous n'avez pas encore passé de commande.</p>
+        <a routerLink="/" class="btn btn-dark px-4 py-2">Commencer vos achats</a>
+      </div>
+    }
+  }
+</div>

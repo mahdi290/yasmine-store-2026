@@ -1,0 +1,174 @@
+<div class="container-fluid p-0 text-start">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Gestion des Produits</h2>
+    <button (click)="openAddModal()" class="btn btn-dark btn-sm d-flex align-items-center gap-2 px-3 py-2" style="border-radius: 8px;">
+      <i class="bi bi-plus-lg"></i> Ajouter un Produit
+    </button>
+  </div>
+
+  <!-- Messages -->
+  @if (successMsg()) {
+    <div class="alert alert-success py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg() }}
+    </div>
+  }
+  @if (errorMsg()) {
+    <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+    </div>
+  }
+
+  <!-- Search -->
+  <div class="mb-4">
+    <div class="input-group" style="max-width: 400px;">
+      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+      <input type="text" class="form-control border-start-0 py-2" placeholder="Rechercher par nom, marque ou catégorie..." 
+             [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" style="font-size: 14px;">
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Chargement...</span></div>
+    </div>
+  } @else {
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+      <div class="table-responsive">
+        <table class="table align-middle table-hover mb-0">
+          <thead>
+            <tr class="text-muted" style="font-size: 12px; text-transform: uppercase;">
+              <th class="border-0 pb-3 ps-4">Produit</th>
+              <th class="border-0 pb-3">Catégorie</th>
+              <th class="border-0 pb-3">Prix</th>
+              <th class="border-0 pb-3">Stock Total</th>
+              <th class="border-0 pb-3 pe-4 text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody style="font-size: 14px;">
+            @for (prod of getFilteredProducts(); track prod.id) {
+              <tr>
+                <td class="ps-4">
+                  <div class="d-flex align-items-center gap-3">
+                    <img [src]="prod.imageUrl" [alt]="prod.name" class="rounded" style="width: 45px; height: 45px; object-fit: cover;">
+                    <div>
+                      <div class="fw-semibold text-dark">{{ prod.name }}</div>
+                      <small class="text-muted" style="font-size: 11px;">{{ prod.brand }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border" style="font-size: 11px;">{{ prod.category?.name || 'N/A' }}</span>
+                </td>
+                <td class="fw-semibold">{{ prod.price }} DT</td>
+                <td>
+                  @if (prod.stock > 10) {
+                    <span class="text-success fw-semibold">{{ prod.stock }}</span>
+                  } @else if (prod.stock > 0) {
+                    <span class="text-warning fw-semibold">{{ prod.stock }}</span>
+                  } @else {
+                    <span class="text-danger fw-semibold">Rupture</span>
+                  }
+                </td>
+                <td class="pe-4 text-end">
+                  <button (click)="openEditModal(prod)" class="btn btn-sm btn-outline-dark me-1" style="border-radius: 6px;">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button (click)="openDeleteModal(prod)" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="text-center text-muted py-5">Aucun produit trouvé.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- MODAL: Add / Edit Product -->
+@if (modalMode() === 'add' || modalMode() === 'edit') {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4" style="border-radius: 16px;">
+    <h5 class="fw-bold text-dark mb-4" style="font-family: 'Inter Tight', sans-serif;">
+      {{ modalMode() === 'add' ? 'Ajouter un Nouveau Produit' : 'Modifier le Produit' }}
+    </h5>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Nom du produit *</label>
+        <input type="text" class="form-control py-2" [(ngModel)]="productForm.name" placeholder="Ex: Robe d'été fleurie" style="border-radius: 6px; font-size: 14px;">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Prix (DT) *</label>
+        <input type="number" class="form-control py-2" [(ngModel)]="productForm.price" placeholder="0.00" style="border-radius: 6px; font-size: 14px;">
+      </div>
+      <div class="col-12 border rounded p-3 bg-light my-2">
+        <label class="form-label fw-bold text-dark mb-2" style="font-size: 13px;">Stock par Taille</label>
+        <div class="row g-2">
+          <div class="col-3 text-start">
+            <label class="form-label fw-semibold text-secondary mb-1" style="font-size: 11px;">Taille S</label>
+            <input type="number" class="form-control py-1.5 px-2" [(ngModel)]="productForm.sizeStocks['S']" placeholder="0" style="border-radius: 6px; font-size: 13px;">
+          </div>
+          <div class="col-3 text-start">
+            <label class="form-label fw-semibold text-secondary mb-1" style="font-size: 11px;">Taille M</label>
+            <input type="number" class="form-control py-1.5 px-2" [(ngModel)]="productForm.sizeStocks['M']" placeholder="0" style="border-radius: 6px; font-size: 13px;">
+          </div>
+          <div class="col-3 text-start">
+            <label class="form-label fw-semibold text-secondary mb-1" style="font-size: 11px;">Taille L</label>
+            <input type="number" class="form-control py-1.5 px-2" [(ngModel)]="productForm.sizeStocks['L']" placeholder="0" style="border-radius: 6px; font-size: 13px;">
+          </div>
+          <div class="col-3 text-start">
+            <label class="form-label fw-semibold text-secondary mb-1" style="font-size: 11px;">Taille XL</label>
+            <input type="number" class="form-control py-1.5 px-2" [(ngModel)]="productForm.sizeStocks['XL']" placeholder="0" style="border-radius: 6px; font-size: 13px;">
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Marque</label>
+        <input type="text" class="form-control py-2" [(ngModel)]="productForm.brand" placeholder="Ex: Aura Paris" style="border-radius: 6px; font-size: 14px;">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Catégorie *</label>
+        <select class="form-select py-2" [(ngModel)]="productForm.categoryId" style="border-radius: 6px; font-size: 14px;">
+          @for (cat of categories(); track cat.id) {
+            <option [ngValue]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold" style="font-size: 13px;">URL de l'image</label>
+        <input type="text" class="form-control py-2" [(ngModel)]="productForm.imageUrl" placeholder="https://images.unsplash.com/..." style="border-radius: 6px; font-size: 14px;">
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Description</label>
+        <textarea class="form-control py-2" rows="3" [(ngModel)]="productForm.description" placeholder="Décrivez le produit..." style="border-radius: 6px; font-size: 14px;"></textarea>
+      </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px; font-size: 14px;">Annuler</button>
+      <button (click)="saveProduct()" class="btn btn-dark px-4 py-2" style="border-radius: 8px; font-size: 14px;">
+        {{ modalMode() === 'add' ? 'Créer le Produit' : 'Enregistrer' }}
+      </button>
+    </div>
+  </div>
+}
+
+<!-- MODAL: Delete Confirmation -->
+@if (modalMode() === 'delete') {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4 text-center" style="border-radius: 16px; max-width: 420px;">
+    <i class="bi bi-exclamation-triangle text-danger mb-3" style="font-size: 48px;"></i>
+    <h5 class="fw-bold text-dark mb-2">Supprimer le Produit ?</h5>
+    <p class="text-muted mb-4" style="font-size: 14px;">
+      Êtes-vous sûr de vouloir supprimer <strong>{{ selectedProduct()?.name }}</strong> ? Cette action est irréversible.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px;">Annuler</button>
+      <button (click)="deleteProduct()" class="btn btn-danger px-4 py-2" style="border-radius: 8px;">Supprimer</button>
+    </div>
+  </div>
+}

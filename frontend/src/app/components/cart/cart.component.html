@@ -1,0 +1,141 @@
+<!-- Page Header -->
+<div class="bg-light py-4 mb-5 border-bottom">
+  <div class="container d-flex justify-content-between align-items-center">
+    <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Panier</h1>
+    <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+      <ol class="breadcrumb m-0" style="font-size: 13px;">
+        <li class="breadcrumb-item"><a routerLink="/" class="text-secondary text-decoration-none">Accueil</a></li>
+        <li class="breadcrumb-item active text-dark" aria-current="page">Panier</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container mb-5">
+  <div class="row g-5">
+    <!-- Left Column: Cart Items -->
+    <div class="col-lg-8">
+      @if (cartService.cartItems().length > 0) {
+        <div class="table-responsive">
+          <table class="table align-middle text-start">
+            <thead>
+              <tr class="text-uppercase text-secondary border-bottom-2" style="font-size: 11px; letter-spacing: 0.5px;">
+                <th scope="col" style="min-width: 300px;">Produit</th>
+                <th scope="col">Prix</th>
+                <th scope="col" style="width: 120px;">Quantité</th>
+                <th scope="col" class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of cartService.cartItems(); track item.id) {
+                <tr class="border-bottom">
+                  <!-- Product details -->
+                  <td class="py-4">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="bg-light p-2 rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <img [src]="item.product.imageUrl" class="img-fluid" [alt]="item.product.name" style="max-height: 60px; object-fit: contain; mix-blend-mode: multiply;">
+                      </div>
+                      <div style="line-height: 1.4;">
+                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 15px;">{{ item.product.name }}</h6>
+                        <small class="text-muted d-block" style="font-size: 12px;">Couleur : Standard &nbsp;|&nbsp; Taille : {{ item.size || 'M' }}</small>
+                        <button (click)="removeItem(item)" class="btn btn-link text-danger p-0 mt-1 d-flex align-items-center gap-1" style="font-size: 12px; text-decoration: none; box-shadow: none;">
+                          <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                  
+                  <!-- Price -->
+                  <td class="py-4 fw-semibold text-dark">{{ item.product.price }} DT</td>
+                  
+                  <!-- Quantity adjuster -->
+                  <td class="py-4">
+                    <div class="input-group input-group-sm border rounded" style="width: 100px;">
+                      <button (click)="decreaseQty(item)" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;">
+                        <i class="bi bi-dash"></i>
+                      </button>
+                      <span class="d-flex align-items-center justify-content-center fw-bold bg-white text-dark border-start border-end" style="width: 34px; font-size: 13px;">
+                        {{ item.quantity }}
+                      </span>
+                      <button (click)="increaseQty(item)" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;">
+                        <i class="bi bi-plus"></i>
+                      </button>
+                    </div>
+                  </td>
+                  
+                  <!-- Total -->
+                  <td class="py-4 text-end fw-bold text-dark">{{ Math.round(item.product.price * item.quantity * 100) / 100 }} DT</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Cart actions -->
+        <div class="d-flex justify-content-end gap-3 mt-4">
+          <button (click)="clearCart()" class="btn btn-outline-danger px-3 py-2" style="font-size: 13px;"><i class="bi bi-trash3 me-1"></i> Vider le Panier</button>
+        </div>
+      } @else {
+        <!-- Empty Cart -->
+        <div class="text-center py-5 border rounded-3 bg-light">
+          <i class="bi bi-cart-x text-muted mb-3" style="font-size: 60px;"></i>
+          <h4 class="fw-bold text-dark">Votre panier est vide</h4>
+          <p class="text-secondary mb-4">Vous n'avez pas encore ajouté de produit à votre panier.</p>
+          <a routerLink="/" class="btn btn-dark px-4 py-2">Continuer vos achats</a>
+        </div>
+      }
+    </div>
+
+    <!-- Right Column: Order Summary -->
+    <div class="col-lg-4">
+      <div class="border rounded-3 p-4 bg-white shadow-sm text-start">
+        <h4 class="fw-bold mb-4" style="font-family: 'Inter Tight', sans-serif; font-size: 20px;">Récapitulatif</h4>
+        
+        <!-- Subtotal -->
+        <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="font-size: 14px;">
+          <span class="text-secondary">Sous-total</span>
+          <span class="fw-bold text-dark">{{ cartService.cartSubtotal() }} DT</span>
+        </div>
+
+        <!-- Delivery -->
+        <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="font-size: 14px;">
+          <span class="text-secondary">Frais de livraison</span>
+          <span class="fw-semibold text-dark">{{ deliveryCost() }} DT</span>
+        </div>
+
+        <!-- Discount -->
+        @if (discount() > 0) {
+          <div class="d-flex justify-content-between mb-3 border-bottom pb-2 text-danger" style="font-size: 14px;">
+            <span>Remise</span>
+            <span class="fw-semibold">-{{ discount() }} DT</span>
+          </div>
+        }
+
+        <!-- Total -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pt-2">
+          <span class="h5 fw-bold m-0 text-dark">Total</span>
+          <span class="h4 fw-bold m-0 text-dark">{{ grandTotal() }} DT</span>
+        </div>
+
+        <!-- Checkout Actions -->
+        <button (click)="proceedToCheckout()" class="btn btn-dark w-100 py-3 mb-3 d-flex align-items-center justify-content-center gap-2" [disabled]="cartService.cartItems().length === 0" style="border-radius: 4px; font-weight: 600;">
+          Commander <i class="bi bi-arrow-right"></i>
+        </button>
+        
+        <div class="text-center">
+          <a routerLink="/" class="text-secondary d-inline-block hover-white" style="font-size: 13px;"><i class="bi bi-arrow-left me-1"></i> Continuer vos achats</a>
+        </div>
+
+        <!-- We Accept info -->
+        <div class="mt-4 pt-3 border-top text-center">
+          <small class="text-muted d-block mb-2" style="font-size: 11px;">Moyens de paiement acceptés</small>
+          <div class="d-flex justify-content-center gap-2">
+            <span class="px-2 py-1 border text-secondary rounded" style="font-size: 10px; font-weight: bold;"><i class="bi bi-credit-card-2-back me-1"></i> VISA</span>
+            <span class="px-2 py-1 border text-secondary rounded" style="font-size: 10px; font-weight: bold;"><i class="bi bi-paypal me-1"></i> PayPal</span>
+            <span class="px-2 py-1 border text-secondary rounded" style="font-size: 10px; font-weight: bold;"><i class="bi bi-apple me-1"></i> Pay</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

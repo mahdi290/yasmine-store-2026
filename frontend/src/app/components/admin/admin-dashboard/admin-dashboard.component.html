@@ -1,0 +1,162 @@
+<div class="container-fluid p-0 text-start">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Aperçu du Tableau de Bord</h2>
+    <button (click)="loadStats()" class="btn btn-outline-dark btn-sm d-flex align-items-center gap-2">
+      <i class="bi bi-arrow-clockwise"></i> Actualiser
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-dark" role="status">
+        <span class="visually-hidden">Chargement des statistiques...</span>
+      </div>
+    </div>
+  } @else if (errorMsg()) {
+    <div class="alert alert-danger" role="alert">
+      {{ errorMsg() }}
+    </div>
+  } @else if (stats(); as s) {
+    <!-- KPI cards grid -->
+    <div class="row g-4 mb-5">
+      <!-- Total Revenue -->
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 p-4 card-kpi" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f4fcf7 100%); border-left: 5px solid #198754 !important;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <small class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">Chiffre d'Affaires</small>
+              <h3 class="fw-bold text-dark mt-2 mb-0" style="font-family: 'Inter Tight', sans-serif;">{{ s.totalRevenue.toFixed(2) }} DT</h3>
+            </div>
+            <div class="icon-shape bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-cash-coin fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Orders -->
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 p-4 card-kpi" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%); border-left: 5px solid #0d6efd !important;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <small class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">Total Commandes</small>
+              <h3 class="fw-bold text-dark mt-2 mb-0" style="font-family: 'Inter Tight', sans-serif;">{{ s.totalOrders }}</h3>
+            </div>
+            <div class="icon-shape bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-bag-check fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Products -->
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 p-4 card-kpi" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f0fcfe 100%); border-left: 5px solid #0dcaf0 !important;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <small class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">Produits Actifs</small>
+              <h3 class="fw-bold text-dark mt-2 mb-0" style="font-family: 'Inter Tight', sans-serif;">{{ s.totalProducts }}</h3>
+            </div>
+            <div class="icon-shape bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-box-seam fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Customers -->
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 p-4 card-kpi" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #fffbf2 100%); border-left: 5px solid #ffc107 !important;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <small class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">Total Clients</small>
+              <h3 class="fw-bold text-dark mt-2 mb-0" style="font-family: 'Inter Tight', sans-serif;">{{ s.totalUsers }}</h3>
+            </div>
+            <div class="icon-shape bg-warning-subtle text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-people fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Sales by Category Column -->
+      <div class="col-12 col-xl-4">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 12px;">
+          <h5 class="fw-bold text-dark mb-4" style="font-family: 'Inter Tight', sans-serif;">Ventes par Catégorie</h5>
+          @if (s.categorySales.length === 0) {
+            <p class="text-muted text-center py-5">Aucune vente enregistrée pour le moment.</p>
+          } @else {
+            <div class="d-flex flex-column gap-3">
+              @for (cat of s.categorySales; track cat.categoryName) {
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 13px;">
+                    <span class="fw-semibold text-dark">{{ cat.categoryName }}</span>
+                    <span class="text-muted">{{ cat.revenue.toFixed(2) }} DT ({{ cat.salesCount }} vendus)</span>
+                  </div>
+                  <div class="progress" style="height: 8px; border-radius: 4px;">
+                    <div class="progress-bar bg-dark" role="progressbar" 
+                         [style.width.%]="getPercent(cat.revenue)" 
+                         [attr.aria-valuenow]="getPercent(cat.revenue)" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Recent Orders Column -->
+      <div class="col-12 col-xl-8">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 12px;">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold text-dark m-0" style="font-family: 'Inter Tight', sans-serif;">Commandes Récentes</h5>
+            <a routerLink="/admin/orders" class="btn btn-link text-dark p-0 text-decoration-none fw-semibold" style="font-size: 13px;">Voir Toutes les Commandes</a>
+          </div>
+          @if (s.recentOrders.length === 0) {
+            <p class="text-muted text-center py-5">Aucune commande trouvée.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table align-middle table-hover mb-0">
+                <thead>
+                  <tr class="text-muted" style="font-size: 12px; text-transform: uppercase;">
+                    <th scope="col" class="border-0 pb-3">ID Commande</th>
+                    <th scope="col" class="border-0 pb-3">Client</th>
+                    <th scope="col" class="border-0 pb-3">Date</th>
+                    <th scope="col" class="border-0 pb-3">Total</th>
+                    <th scope="col" class="border-0 pb-3">Statut</th>
+                  </tr>
+                </thead>
+                <tbody style="font-size: 14px;">
+                  @for (order of s.recentOrders; track order.id) {
+                    <tr>
+                      <td class="fw-semibold">#{{ order.id }}</td>
+                      <td>
+                        <div class="fw-semibold text-dark">{{ order.customerName }}</div>
+                        <small class="text-muted d-block" style="font-size: 11px;">{{ order.customerEmail }}</small>
+                      </td>
+                      <td class="text-secondary">{{ order.createdAt | date:'dd/MM/yyyy' }}</td>
+                      <td class="fw-semibold">{{ order.totalPrice.toFixed(2) }} DT</td>
+                      <td>
+                        <span class="badge" 
+                              [class.bg-warning-ns]="order.status === 'PENDING'"
+                              [class.bg-info-ns]="order.status === 'SHIPPED'"
+                              [class.bg-success-ns]="order.status === 'DELIVERED'"
+                              [class.bg-danger-ns]="order.status === 'CANCELLED'">
+                          {{ order.status === 'PENDING' ? 'EN ATTENTE' : (order.status === 'SHIPPED' ? 'EXPÉDIÉE' : (order.status === 'DELIVERED' ? 'LIVRÉE' : (order.status === 'CANCELLED' ? 'ANNULÉE' : order.status))) }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

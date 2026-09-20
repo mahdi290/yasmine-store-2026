@@ -1,0 +1,220 @@
+<div class="auth-wrapper py-5 bg-light d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height: 80vh;">
+  <!-- Decorative background elements -->
+  <div class="bg-shape circle-1"></div>
+  <div class="bg-shape circle-2"></div>
+  <div class="bg-shape diamond-1"></div>
+  <div class="bg-shape diamond-2"></div>
+
+  <div class="container position-relative" style="z-index: 5;">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6 col-xl-5">
+        <div class="card shadow border-0 p-4 p-md-5 bg-white" style="border-radius: 16px;">
+          <!-- Header -->
+          <div class="text-center mb-4">
+            @if (isRegisterMode()) {
+              <h2 class="fw-bold mb-1" style="font-family: 'Inter Tight', sans-serif;">Créer un Compte</h2>
+              <p class="text-muted" style="font-size: 14px;">Créez votre compte pour commencer vos achats</p>
+            } @else {
+              <h2 class="fw-bold mb-1" style="font-family: 'Inter Tight', sans-serif;">Bienvenue</h2>
+              <p class="text-muted" style="font-size: 14px;">Connectez-vous pour accéder à votre espace</p>
+            }
+          </div>
+
+          <!-- Error Alert -->
+          @if (errorMsg()) {
+            <div class="alert alert-danger py-2 px-3 mb-4 text-start d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+            </div>
+          }
+
+          <!-- Success Alert -->
+          @if (successMsg()) {
+            <div class="alert alert-success py-2 px-3 mb-4 text-start d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+              <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg() }}
+            </div>
+          }
+
+          <!-- ===================== REGISTER FORM ===================== -->
+          @if (isRegisterMode()) {
+            <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="text-start" novalidate>
+              <!-- Full Name -->
+              <div class="mb-3">
+                <label for="regFullName" class="form-label fw-semibold text-dark" style="font-size: 13px;">Nom Complet</label>
+                <input type="text" id="regFullName" formControlName="fullName"
+                       class="form-control py-2 border-secondary" placeholder="Entrez votre nom et prénom"
+                       style="border-radius: 6px; font-size: 14px;"
+                       [class.is-invalid]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched">
+                @if (registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched) {
+                  <div class="invalid-feedback">Le nom complet est obligatoire.</div>
+                }
+              </div>
+
+              <!-- Email Address -->
+              <div class="mb-3">
+                <label for="regEmail" class="form-label fw-semibold text-dark" style="font-size: 13px;">Adresse Email</label>
+                <input type="email" id="regEmail" formControlName="email"
+                       class="form-control py-2 border-secondary" placeholder="exemple@email.com"
+                       style="border-radius: 6px; font-size: 14px;"
+                       [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+                @if (registerForm.get('email')?.hasError('required') && registerForm.get('email')?.touched) {
+                  <div class="invalid-feedback">L'adresse email est obligatoire.</div>
+                }
+                @if (registerForm.get('email')?.hasError('email') && registerForm.get('email')?.touched) {
+                  <div class="invalid-feedback">Veuillez entrer une adresse email valide.</div>
+                }
+              </div>
+
+              <!-- Password & Confirm Password -->
+              <div class="row g-2 mb-3">
+                <div class="col-md-6 col-12">
+                  <label for="regPassword" class="form-label fw-semibold text-dark" style="font-size: 13px;">Mot de passe</label>
+                  <input type="password" id="regPassword" formControlName="password"
+                         class="form-control py-2 border-secondary" placeholder="Min. 6 caractères"
+                         style="border-radius: 6px; font-size: 14px;"
+                         [class.is-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+                  @if (registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched) {
+                    <div class="invalid-feedback">Le mot de passe est obligatoire.</div>
+                  }
+                  @if (registerForm.get('password')?.hasError('minlength') && registerForm.get('password')?.touched) {
+                    <div class="invalid-feedback">Au moins 6 caractères requis.</div>
+                  }
+                </div>
+                <div class="col-md-6 col-12">
+                  <label for="regConfirmPassword" class="form-label fw-semibold text-dark" style="font-size: 13px;">Confirmer le mot de passe</label>
+                  <input type="password" id="regConfirmPassword" formControlName="confirmPassword"
+                         class="form-control py-2 border-secondary" placeholder="Confirmez votre mot de passe"
+                         style="border-radius: 6px; font-size: 14px;"
+                         [class.is-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+                  @if (registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched) {
+                    <div class="invalid-feedback">Veuillez confirmer votre mot de passe.</div>
+                  }
+                </div>
+              </div>
+
+              <!-- Country Selection -->
+              <div class="mb-3">
+                <label for="regCountry" class="form-label fw-semibold text-dark" style="font-size: 13px;">Pays</label>
+                <select id="regCountry" formControlName="country"
+                        class="form-select py-2 border-secondary text-secondary" style="border-radius: 6px; font-size: 14px;">
+                  <option value="" disabled selected>Sélectionnez votre pays</option>
+                  <option value="TN">Tunisie</option>
+                  <option value="FR">France</option>
+                  <option value="MA">Maroc</option>
+                  <option value="CA">Canada</option>
+                  <option value="US">États-Unis</option>
+                  <option value="DE">Allemagne</option>
+                </select>
+              </div>
+
+              <!-- Terms Checkbox -->
+              <div class="form-check mb-2 text-start">
+                <input type="checkbox" formControlName="agreeTerms" id="agreeTerms" class="form-check-input">
+                <label class="form-check-label text-muted" for="agreeTerms" style="font-size: 12px; line-height: 1.4;">
+                  J'accepte les <a href="#" class="text-dark fw-semibold text-decoration-underline">Conditions Générales</a> et la <a href="#" class="text-dark fw-semibold text-decoration-underline">Politique de Confidentialité</a>
+                </label>
+              </div>
+
+              <!-- Newsletter Checkbox -->
+              <div class="form-check mb-4 text-start">
+                <input type="checkbox" formControlName="newsletter" id="newsletter" class="form-check-input">
+                <label class="form-check-label text-muted" for="newsletter" style="font-size: 12px; line-height: 1.4;">
+                  Je souhaite recevoir les offres promotionnelles par email
+                </label>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-dark w-100 py-2 mb-3 fw-bold d-flex align-items-center justify-content-center gap-2"
+                      [disabled]="loading()" style="border-radius: 6px; font-size: 15px; height: 48px;">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                S'Inscrire
+              </button>
+
+              <!-- Toggle link -->
+              <div class="text-center mb-4">
+                <span class="text-muted" style="font-size: 13px;">Vous avez déjà un compte ? </span>
+                <button type="button" (click)="toggleMode()" class="btn btn-link p-0 text-dark fw-bold text-decoration-underline" style="font-size: 13px; box-shadow: none;">Se connecter</button>
+              </div>
+            </form>
+          } @else {
+            <!-- ===================== LOGIN FORM ===================== -->
+            <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="text-start" novalidate>
+              <!-- Email Address -->
+              <div class="mb-3">
+                <label for="loginEmail" class="form-label fw-semibold text-dark" style="font-size: 13px;">Adresse Email</label>
+                <input type="email" id="loginEmail" formControlName="email"
+                       class="form-control py-2 border-secondary" placeholder="exemple@email.com"
+                       style="border-radius: 6px; font-size: 14px;"
+                       [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+                @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+                  <div class="invalid-feedback">Veuillez entrer un email valide.</div>
+                }
+              </div>
+
+              <!-- Password -->
+              <div class="mb-3">
+                <label for="loginPassword" class="form-label fw-semibold text-dark" style="font-size: 13px;">Mot de passe</label>
+                <input type="password" id="loginPassword" formControlName="password"
+                       class="form-control py-2 border-secondary" placeholder="Entrez votre mot de passe"
+                       style="border-radius: 6px; font-size: 14px;"
+                       [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+                @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+                  <div class="invalid-feedback">Le mot de passe est obligatoire.</div>
+                }
+              </div>
+
+              <!-- Remember me & Forgot password -->
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="rememberMe">
+                  <label class="form-check-label text-muted" for="rememberMe" style="font-size: 12px;">Se souvenir de moi</label>
+                </div>
+                <a href="#" class="text-dark fw-semibold text-decoration-underline" style="font-size: 12px;">Mot de passe oublié ?</a>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-dark w-100 py-2 mb-3 fw-bold d-flex align-items-center justify-content-center gap-2"
+                      [disabled]="loading()" style="border-radius: 6px; font-size: 15px; height: 48px;">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                Se Connecter
+              </button>
+
+              <!-- Toggle link -->
+              <div class="text-center mb-4">
+                <span class="text-muted" style="font-size: 13px;">Vous n'avez pas de compte ? </span>
+                <button type="button" (click)="toggleMode()" class="btn btn-link p-0 text-dark fw-bold text-decoration-underline" style="font-size: 13px; box-shadow: none;">S'inscrire</button>
+              </div>
+            </form>
+          }
+
+          <!-- Social Signup -->
+          <div class="border-top pt-4 text-center">
+            <small class="text-muted d-block mb-3" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+              Ou se {{ isRegisterMode() ? 'inscrire' : 'connecter' }} avec
+            </small>
+            <div class="row g-2">
+              <div class="col-4">
+                <button type="button" class="btn btn-outline-dark btn-sm py-2 w-100 d-flex align-items-center justify-content-center gap-2" style="border-radius: 6px; font-size: 12px;">
+                  <i class="bi bi-google text-danger"></i> Google
+                </button>
+              </div>
+              <div class="col-4">
+                <button type="button" class="btn btn-outline-dark btn-sm py-2 w-100 d-flex align-items-center justify-content-center gap-2" style="border-radius: 6px; font-size: 12px;">
+                  <i class="bi bi-facebook text-primary"></i> Facebook
+                </button>
+              </div>
+              <div class="col-4">
+                <button type="button" class="btn btn-outline-dark btn-sm py-2 w-100 d-flex align-items-center justify-content-center gap-2" style="border-radius: 6px; font-size: 12px;">
+                  <i class="bi bi-apple text-dark"></i> Apple
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

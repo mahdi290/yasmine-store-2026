@@ -1,0 +1,30 @@
+// Custom badges style matching shop template
+.badge {
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  
+  &.bg-warning-ns {
+    background-color: #fff3cd !important;
+    color: #664d03 !important;
+  }
+  &.bg-info-ns {
+    background-color: #cff4fc !important;
+    color: #087990 !important;
+  }
+  &.bg-success-ns {
+    background-color: #d1e7dd !important;
+    color: #0f5132 !important;
+  }
+  &.bg-danger-ns {
+    background-color: #f8d7da !important;
+    color: #842029 !important;
+  }
+}
+
+.table th {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 700;
+}

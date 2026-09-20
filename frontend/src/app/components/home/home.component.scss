@@ -1,0 +1,34 @@
+.hero-section {
+  h1 {
+    font-weight: 800;
+  }
+}
+
+.add-to-cart-overlay {
+  opacity: 0;
+  transition: opacity 0.25s ease-in-out;
+}
+
+.card-img-wrapper:hover .add-to-cart-overlay {
+  opacity: 1;
+}
+
+/* Float Animations for Hero icons */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+.position-absolute.shadow-sm,
+.position-absolute.shadow {
+  animation: float 4s ease-in-out infinite;
+  
+  &:nth-child(even) {
+    animation-delay: 2s;
+  }
+}
+
+.navbar-brand h2 {
+  letter-spacing: -0.5px;
+}

@@ -1,0 +1,135 @@
+<!-- Page Header -->
+<div class="bg-light py-4 mb-5 border-bottom">
+  <div class="container d-flex justify-content-between align-items-center">
+    <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Détails du Produit</h1>
+    <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+      <ol class="breadcrumb m-0" style="font-size: 13px;">
+        <li class="breadcrumb-item"><a routerLink="/" class="text-secondary text-decoration-none">Accueil</a></li>
+        <li class="breadcrumb-item active text-dark" aria-current="page">Détails du Produit</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container mb-5 text-start">
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-dark" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+    </div>
+  } @else {
+    @if (product(); as prod) {
+      <div class="row g-5">
+        <!-- Product Image Col -->
+        <div class="col-md-6">
+          <div class="bg-light p-4 rounded-3 d-flex align-items-center justify-content-center border" style="min-height: 400px;">
+            <img [src]="prod.imageUrl" class="img-fluid" [alt]="prod.name" style="max-height: 380px; object-fit: contain; mix-blend-mode: multiply;">
+          </div>
+        </div>
+
+        <!-- Product Specs Col -->
+        <div class="col-md-6">
+          <div>
+            <!-- Category & Brand -->
+            @if (prod.category; as cat) {
+              <span class="badge bg-secondary mb-2 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">{{ cat.name }}</span>
+            }
+            <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 11px; letter-spacing: 0.5px;">{{ prod.brand }}</small>
+            
+            <!-- Title -->
+            <h2 class="fw-bold text-dark mb-3" style="font-family: 'Inter Tight', sans-serif; font-size: 32px; letter-spacing: -0.5px;">{{ prod.name }}</h2>
+
+            <!-- Price -->
+            <div class="mb-4">
+              <span class="h3 fw-bold text-dark">{{ prod.price }} DT</span>
+              <span class="text-muted ms-2" style="font-size: 14px;">+ livraison gratuite</span>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Size Selection -->
+            <div class="mb-4 text-start">
+              <h6 class="fw-bold text-dark mb-2" style="font-size: 13px;">Sélectionnez une Taille</h6>
+              <div class="d-flex gap-2">
+                @for (sz of availableSizes; track sz) {
+                  <button type="button" 
+                          (click)="changeSize(sz)" 
+                          class="btn btn-sm px-3 py-2 fw-semibold" 
+                          [class.btn-dark]="selectedSize() === sz" 
+                          [class.btn-outline-dark]="selectedSize() !== sz" 
+                          style="border-radius: 6px; min-width: 44px; font-size: 13px;">
+                    {{ sz }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Description -->
+            <h6 class="fw-bold text-dark mb-2">Description</h6>
+            <p class="text-secondary lh-lg mb-4" style="font-size: 14px;">{{ prod.description }}</p>
+
+            <!-- Stock status -->
+            <div class="d-flex align-items-center gap-2 mb-4" style="font-size: 14px;">
+              <span class="fw-bold">Disponibilité :</span>
+              @if (selectedSizeStock() > 0) {
+                <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i> En Stock ({{ selectedSizeStock() }} unités en taille {{ selectedSize() }})</span>
+              } @else {
+                <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i> Taille {{ selectedSize() }} Rupture de stock</span>
+              }
+            </div>
+
+            <!-- Add to Cart actions -->
+            @if (prod.stock > 0) {
+              <div class="d-flex flex-wrap gap-3 mb-4">
+                <!-- Qty counter -->
+                <div class="input-group border rounded" style="width: 120px;">
+                  <button (click)="decreaseQty()" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;" [disabled]="selectedSizeStock() <= 0">
+                    <i class="bi bi-dash fs-5"></i>
+                  </button>
+                  <span class="d-flex align-items-center justify-content-center fw-bold bg-white text-dark border-start border-end" style="width: 44px; font-size: 15px;">
+                    {{ selectedSizeStock() > 0 ? quantity() : 0 }}
+                  </span>
+                  <button (click)="increaseQty()" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;" [disabled]="selectedSizeStock() <= 0 || quantity() >= selectedSizeStock()">
+                    <i class="bi bi-plus fs-5"></i>
+                  </button>
+                </div>
+
+                <!-- Add Button -->
+                <button (click)="addToCart()" class="btn btn-dark px-5 py-2.5 fw-semibold d-flex align-items-center justify-content-center gap-2" style="border-radius: 4px;" [disabled]="selectedSizeStock() <= 0">
+                  <i class="bi bi-cart-plus fs-5"></i> Ajouter au Panier
+                </button>
+
+                <!-- Wishlist Button -->
+                <button class="btn btn-outline-dark p-2.5 d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; border-radius: 4px;">
+                  <i class="bi bi-heart fs-5"></i>
+                </button>
+              </div>
+            }
+
+            <hr class="my-4">
+
+            <!-- Guarantee Features -->
+            <div class="row g-3" style="font-size: 12px; color: #555;">
+              <div class="col-6 d-flex align-items-center gap-2">
+                <i class="bi bi-shield-check text-dark fs-5"></i>
+                <span>Garantie Qualité</span>
+              </div>
+              <div class="col-6 d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left-right text-dark fs-5"></i>
+                <span>Retours sous 30 Jours</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="text-center py-5 border rounded-3 bg-light">
+        <i class="bi bi-exclamation-circle text-muted mb-3" style="font-size: 60px;"></i>
+        <h4 class="fw-bold text-dark">Produit Introuvable</h4>
+        <p class="text-secondary mb-4">Le produit recherché n'existe pas ou a été supprimé.</p>
+        <a routerLink="/" class="btn btn-dark px-4 py-2">Retourner à l'accueil</a>
+      </div>
+    }
+  }
+</div>

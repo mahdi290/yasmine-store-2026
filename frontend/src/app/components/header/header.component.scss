@@ -1,0 +1,32 @@
+.no-caret::after {
+  display: none !important;
+}
+
+.text-light-hover {
+  color: rgba(255, 255, 255, 0.75) !important;
+  transition: color 0.15s ease-in-out;
+  
+  &:hover, &.active {
+    color: #ffffff !important;
+  }
+}
+
+.navbar-nav .nav-link {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.dropdown-menu {
+  border-radius: 4px;
+  font-size: 14px;
+  
+  .dropdown-item {
+    transition: all 0.15s ease;
+    
+    &:hover {
+      background-color: #f8f9fa;
+      color: #000000;
+      padding-left: 1.25rem;
+    }
+  }
+}

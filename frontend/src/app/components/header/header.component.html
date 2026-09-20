@@ -1,0 +1,108 @@
+<!-- Main Header -->
+<header class="py-3 bg-white border-bottom">
+  <div class="container d-flex align-items-center justify-content-between">
+    <!-- Brand Logo -->
+    <a routerLink="/" class="navbar-brand d-flex align-items-center gap-3">
+      <img src="/logo.jpg" alt="Yasmina Store Logo" style="height: 75px; width: 75px; object-fit: cover; border-radius: 50%;">
+      <span class="m-0 fw-bold tracking-tight text-dark fs-3" style="font-family: 'Inter Tight', sans-serif;">Yasmina Store</span>
+    </a>
+
+    <!-- Search Bar -->
+    <div class="d-none d-lg-flex flex-grow-1 mx-5" style="max-width: 500px;">
+      <div class="input-group">
+        <input #searchInput type="text" (keyup.enter)="search(searchInput.value)" class="form-control border-end-0 py-2 bg-light border-2" placeholder="Rechercher des produits..." aria-label="Search" style="border-color: #eaeaea; border-radius: 4px 0 0 4px; font-size: 14px;">
+        <button (click)="search(searchInput.value)" class="btn btn-dark px-4" type="button" style="border-radius: 0 4px 4px 0;">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div class="d-flex align-items-center gap-3">
+      <!-- User Account Action -->
+      <div class="dropdown">
+        <button class="btn btn-link text-dark p-1 position-relative dropdown-toggle no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="box-shadow: none;">
+          <i class="bi bi-person fs-4"></i>
+        </button>
+        
+        <!-- User Dropdown Menu -->
+        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-3 mt-2" style="width: 280px; z-index: 1050; border-radius: 12px;">
+          @if (authService.currentUser(); as user) {
+            <!-- Logged in state -->
+            <h6 class="fw-bold text-dark mb-0">Bienvenue, {{ user.firstname }} !</h6>
+            <p class="text-muted mb-3" style="font-size: 12px;">{{ user.email }}</p>
+            <hr class="my-2">
+            @if (user.role === 'ADMIN') {
+              <a class="dropdown-item py-2 fw-semibold text-warning-emphasis" routerLink="/admin"><i class="bi bi-shield-lock me-2"></i> Panneau d'Administration</a>
+            }
+            <a class="dropdown-item py-2" routerLink="/orders"><i class="bi bi-bag me-2"></i> Mes Commandes</a>
+            <a class="dropdown-item py-2" href="#"><i class="bi bi-heart me-2"></i> Ma Liste de Envies</a>
+            <hr class="my-2">
+            <button (click)="logout()" class="btn btn-outline-danger w-100 btn-sm mt-1">Se déconnecter</button>
+          } @else {
+            <!-- Guest/Logged out state -->
+            <h6 class="fw-bold text-dark mb-0" style="font-family: 'Inter Tight', sans-serif; font-size: 15px;">Bienvenue chez Yasmina Store</h6>
+            <p class="text-muted mb-3" style="font-size: 12px;">Accédez à votre compte et vos commandes</p>
+            
+            <a class="dropdown-item py-2 text-muted" routerLink="/auth" [queryParams]="{mode: 'login'}"><i class="bi bi-bag me-2"></i> Mes Commandes</a>
+            <a class="dropdown-item py-2 text-muted" routerLink="/auth" [queryParams]="{mode: 'login'}"><i class="bi bi-heart me-2"></i> Ma Liste d'Envies</a>
+            
+            <hr class="my-3">
+            
+            <div class="d-grid gap-2">
+              <a routerLink="/auth" [queryParams]="{mode: 'login'}" class="btn btn-dark btn-sm py-2 fw-semibold" style="border-radius: 20px; font-size: 13px;">Se Connecter</a>
+              <a routerLink="/auth" [queryParams]="{mode: 'register'}" class="btn btn-outline-dark btn-sm py-2 fw-semibold" style="border-radius: 20px; font-size: 13px;">S'Inscrire</a>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Wishlist Link -->
+      <a href="#" class="position-relative text-dark p-1">
+        <i class="bi bi-heart fs-4"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="font-size: 10px; padding: 3px 6px;">0</span>
+      </a>
+
+      <!-- Cart Button Link -->
+      <a routerLink="/cart" class="position-relative text-dark p-1 me-1">
+        <i class="bi bi-cart3 fs-4"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px; padding: 3px 6px;">
+          {{ cartService.cartCount() }}
+        </span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation Menu Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark py-1">
+  <div class="container">
+    <button class="navbar-expand navbar-toggler border-0 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav gap-2 py-1" style="font-size: 14px; font-weight: 500;">
+        <li class="nav-item">
+          <a class="nav-link text-light-hover" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle text-light-hover" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Nos Catégories
+          </a>
+          <ul class="dropdown-menu border-0 shadow-sm">
+            <li><a class="dropdown-item" routerLink="/category" [queryParams]="{category: null}">Tous les vêtements</a></li>
+            <li><hr class="dropdown-divider"></li>
+            @for (cat of categories(); track cat.id) {
+              <li>
+                <a class="dropdown-item" routerLink="/category" [queryParams]="{category: cat.id}">{{ cat.name }}</a>
+              </li>
+            }
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-light-hover" routerLink="/category" routerLinkActive="active">Tout Parcourir</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

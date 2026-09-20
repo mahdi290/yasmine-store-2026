@@ -1,0 +1,264 @@
+<!-- Page Title Header with Breadcrumbs -->
+<div class="bg-light py-4 mb-4 text-start border-bottom">
+  <div class="container d-flex flex-wrap justify-content-between align-items-center">
+    <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif; letter-spacing: -0.5px;">Boutique & Catégories</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb m-0" style="font-size: 13px;">
+        <li class="breadcrumb-item"><a routerLink="/" class="text-dark text-decoration-none">Accueil</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Catégories</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container pb-5 text-start">
+  <div class="row g-4">
+    <!-- LEFT SIDEBAR: FILTERS -->
+    <aside class="col-lg-3">
+      <!-- Categories Filter -->
+      <div class="card border mb-4 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center cursor-pointer" 
+             (click)="categoriesOpen.set(!categoriesOpen())" style="font-weight: 700; font-family: 'Inter Tight', sans-serif;">
+          <span>Catégories</span>
+          <i class="bi" [class.bi-chevron-down]="!categoriesOpen()" [class.bi-chevron-up]="categoriesOpen()"></i>
+        </div>
+        <div class="card-body pt-0" [class.d-none]="!categoriesOpen()">
+          <div class="list-group list-group-flush gap-1">
+            <button class="list-group-item list-group-item-action border-0 py-2.5 px-0 d-flex justify-content-between align-items-center"
+                    [class.fw-bold]="selectedCategoryId() === null" (click)="selectCategory(null)" style="font-size: 14px; background: transparent;">
+              <span>Tous les vêtements</span>
+              <span class="badge rounded-pill bg-light text-dark border">{{ products().length }}</span>
+            </button>
+            @for (cat of categories(); track cat.id) {
+              <button class="list-group-item list-group-item-action border-0 py-2.5 px-0 d-flex justify-content-between align-items-center"
+                      [class.fw-bold]="selectedCategoryId() === cat.id" (click)="selectCategory(cat.id)" style="font-size: 14px; background: transparent;">
+                <span>{{ cat.name }}</span>
+                <i class="bi bi-chevron-right text-muted" style="font-size: 11px;"></i>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Range Filter -->
+      <div class="card border mb-4 shadow-sm" style="border-radius: 12px;">
+        <div class="card-header bg-white py-3 border-0" style="font-weight: 700; font-family: 'Inter Tight', sans-serif;">
+          Gamme de Prix
+        </div>
+        <div class="card-body pt-0">
+          <div class="mb-3 d-flex justify-content-between align-items-center text-muted" style="font-size: 12px;">
+            <span>0 DT</span>
+            <span>300 DT</span>
+          </div>
+          <!-- Dual Range inputs -->
+          <input type="range" class="form-range mb-3 accent-dark" min="0" max="300" 
+                 [ngModel]="maxPrice()" (ngModelChange)="maxPrice.set($event)" style="cursor: pointer;">
+          
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-muted m-0" style="font-size: 11px;">Min (DT)</label>
+              <input type="number" class="form-control form-control-sm py-1.5" [(ngModel)]="minPrice" style="font-size: 13px; border-radius: 6px;">
+            </div>
+            <div class="col-6">
+              <label class="form-label text-muted m-0" style="font-size: 11px;">Max (DT)</label>
+              <input type="number" class="form-control form-control-sm py-1.5" [(ngModel)]="maxPrice" style="font-size: 13px; border-radius: 6px;">
+            </div>
+          </div>
+          <button (click)="applyPriceFilter()" class="btn btn-dark btn-sm w-100 py-2 fw-semibold" style="border-radius: 8px; font-size: 13px;">Filtrer</button>
+        </div>
+      </div>
+
+      <!-- Filter by Brand -->
+      <div class="card border mb-4 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center cursor-pointer" 
+             (click)="brandsOpen.set(!brandsOpen())" style="font-weight: 700; font-family: 'Inter Tight', sans-serif;">
+          <span>Filtrer par Marque</span>
+          <i class="bi" [class.bi-chevron-down]="!brandsOpen()" [class.bi-chevron-up]="brandsOpen()"></i>
+        </div>
+        <div class="card-body pt-0" [class.d-none]="!brandsOpen()">
+          <div class="d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;">
+            @for (brand of availableBrands(); track brand) {
+              <div class="form-check d-flex align-items-center gap-2 m-0 py-1">
+                <input class="form-check-input accent-dark cursor-pointer" type="checkbox" 
+                       [id]="'brand-' + brand" [checked]="selectedBrands().includes(brand)" (change)="toggleBrand(brand)">
+                <label class="form-check-label text-dark cursor-pointer" [for]="'brand-' + brand" style="font-size: 13.5px;">
+                  {{ brand }}
+                </label>
+              </div>
+            } @empty {
+              <small class="text-muted">Aucune marque trouvée</small>
+            }
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDE: PRODUCT SEARCH GRID -->
+    <main class="col-lg-9">
+      <!-- TOP FILTERS BAR -->
+      <div class="card border shadow-sm p-3 mb-4" style="border-radius: 12px; background-color: #fff;">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <!-- Search -->
+          <div class="input-group" style="max-width: 320px; flex-grow: 1;">
+            <input type="text" class="form-control border-end-0 py-2" placeholder="Rechercher des vêtements..." 
+                   [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" style="font-size: 13.5px; border-radius: 6px 0 0 6px;">
+            <button class="btn btn-dark px-3" type="button" style="border-radius: 0 6px 6px 0;">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+
+          <div class="d-flex flex-wrap align-items-center gap-3">
+            <!-- Sort By -->
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted d-none d-sm-inline" style="font-size: 13px;">Trier par</span>
+              <select class="form-select form-select-sm py-1.5" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)" style="font-size: 13px; width: 160px; border-radius: 6px;">
+                <option value="featured">En Vedette</option>
+                <option value="lowToHigh">Prix : Croissant</option>
+                <option value="highToLow">Prix : Décroissant</option>
+                <option value="newest">Nouveautés</option>
+              </select>
+            </div>
+
+            <!-- View limit -->
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted d-none d-sm-inline" style="font-size: 13px;">Afficher</span>
+              <select class="form-select form-select-sm py-1.5" [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" style="font-size: 13px; width: 110px; border-radius: 6px;">
+                <option [ngValue]="8">8 par page</option>
+                <option [ngValue]="12">12 par page</option>
+                <option [ngValue]="24">24 par page</option>
+              </select>
+            </div>
+
+            <!-- Grid/List View Toggles -->
+            <div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+              <button type="button" class="btn btn-outline-dark" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')">
+                <i class="bi bi-grid-3x3-gap"></i>
+              </button>
+              <button type="button" class="btn btn-outline-dark" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')">
+                <i class="bi bi-list-task"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVE FILTERS BADGES -->
+      @if (getActiveFiltersList().length > 0) {
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+          <span class="text-muted fw-semibold" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Filtres Actifs :</span>
+          @for (filter of getActiveFiltersList(); track filter.label) {
+            <span class="badge bg-light text-dark border py-2 px-3 d-flex align-items-center gap-2" style="font-size: 12.5px; border-radius: 20px;">
+              {{ filter.label }}
+              <i class="bi bi-x-circle-fill cursor-pointer text-muted" (click)="filter.action()" style="font-size: 13px; line-height: 1;"></i>
+            </span>
+          }
+          <button (click)="clearAllFilters()" class="btn btn-link text-dark btn-sm py-0 px-2 fw-bold text-decoration-none" style="font-size: 12.5px;">Réinitialiser Tout</button>
+        </div>
+      }
+
+      <!-- LOADING STATE -->
+      @if (loading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Chargement...</span></div>
+        </div>
+      } @else {
+        <!-- PRODUCTS GRID VIEW -->
+        @if (viewMode() === 'grid') {
+          <div class="row g-4">
+            @for (product of paginatedProducts(); track product.id; let idx = $index) {
+              <div class="col-md-6 col-xl-4">
+                <div class="card card-ns text-start h-100" style="border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea;">
+                  <!-- Image Wrapper -->
+                  <div class="card-img-wrapper p-3 d-flex align-items-center justify-content-center" style="height: 260px; position: relative; background: #fbfbfb;">
+                    @if (idx % 3 === 0) {
+                      <span class="badge bg-black text-white position-absolute m-3 start-0 top-0" style="font-size: 9px;">NOUVEAU</span>
+                    } @else if (idx % 3 === 1) {
+                      <span class="badge bg-danger text-white position-absolute m-3 start-0 top-0" style="font-size: 9px;">-20%</span>
+                    }
+                    <button class="btn btn-light rounded-circle shadow-sm position-absolute m-3 end-0 top-0 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; border: none;">
+                      <i class="bi bi-heart"></i>
+                    </button>
+                    <img [src]="product.imageUrl" class="img-fluid" [alt]="product.name" style="max-height: 200px; object-fit: contain;">
+                    
+                    <!-- Hover Add to Cart -->
+                    <div class="add-to-cart-overlay w-100 position-absolute bottom-0 text-center py-2.5" 
+                         style="background: rgba(0,0,0,0.85); cursor: pointer;" [routerLink]="['/product-details', product.id]">
+                      <span class="text-white fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;"><i class="bi bi-cart-plus me-1"></i> Voir & Commander</span>
+                    </div>
+                  </div>
+                  <!-- Details -->
+                  <div class="card-body p-3">
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">{{ product.brand }}</small>
+                    <h6 class="fw-semibold text-dark mt-1 mb-2 text-truncate">{{ product.name }}</h6>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                      <span class="fw-bold text-dark fs-5">{{ product.price }} DT</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="col-12 text-center text-muted py-5">Aucun produit ne correspond aux filtres sélectionnés.</div>
+            }
+          </div>
+        } @else {
+          <!-- PRODUCTS LIST VIEW -->
+          <div class="d-flex flex-column gap-4">
+            @for (product of paginatedProducts(); track product.id) {
+              <div class="card border shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea;">
+                <div class="row g-0 align-items-center">
+                  <div class="col-md-3 bg-light d-flex align-items-center justify-content-center p-3" style="height: 180px;">
+                    <img [src]="product.imageUrl" class="img-fluid" [alt]="product.name" style="max-height: 140px; object-fit: contain;">
+                  </div>
+                  <div class="col-md-9 p-4">
+                    <div class="d-flex justify-content-between">
+                      <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">{{ product.brand }}</small>
+                        <h5 class="fw-bold text-dark mt-1 mb-2">{{ product.name }}</h5>
+                      </div>
+                      <span class="fw-bold text-dark fs-4">{{ product.price }} DT</span>
+                    </div>
+                    <p class="text-secondary mb-3" style="font-size: 13.5px; max-width: 580px;">{{ product.description }}</p>
+                    
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-outline-dark btn-sm px-3" style="border-radius: 6px;"><i class="bi bi-heart"></i></button>
+                        <button [routerLink]="['/product-details', product.id]" class="btn btn-dark btn-sm px-4 py-2" style="border-radius: 6px; font-size: 13px;">
+                          <i class="bi bi-cart-plus me-1"></i> Voir & Commander
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="text-center text-muted py-5">Aucun produit ne correspond aux filtres sélectionnés.</div>
+            }
+          </div>
+        }
+
+        <!-- PAGINATION BAR FOOTER -->
+        @if (totalPages() > 1) {
+          <nav class="mt-5 d-flex justify-content-center">
+            <ul class="pagination pagination-sm gap-1">
+              <li class="page-item" [class.disabled]="currentPage() === 1">
+                <button (click)="currentPage.set(currentPage() - 1)" class="page-link py-2 px-3 text-dark" style="border-radius: 6px;">&laquo; Précédent</button>
+              </li>
+              @for (page of [].constructor(totalPages()); track $index; let pageNum = $index) {
+                <li class="page-item" [class.active]="currentPage() === pageNum + 1">
+                  <button (click)="currentPage.set(pageNum + 1)" class="page-link py-2 px-3" 
+                          [class.bg-dark]="currentPage() === pageNum + 1"
+                          [class.text-white]="currentPage() === pageNum + 1"
+                          [class.text-dark]="currentPage() !== pageNum + 1"
+                          style="border-radius: 6px;">{{ pageNum + 1 }}</button>
+                </li>
+              }
+              <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+                <button (click)="currentPage.set(currentPage() + 1)" class="page-link py-2 px-3 text-dark" style="border-radius: 6px;">Suivant &raquo;</button>
+              </li>
+            </ul>
+          </nav>
+        }
+      }
+    </main>
+  </div>
+</div>

@@ -1,0 +1,131 @@
+<div class="container-fluid p-0 text-start">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Gestion des Comptes Utilisateurs</h2>
+    <button (click)="loadUsers()" class="btn btn-outline-dark btn-sm d-flex align-items-center gap-2">
+      <i class="bi bi-arrow-clockwise"></i> Actualiser
+    </button>
+  </div>
+
+  <!-- Messages -->
+  @if (successMsg()) {
+    <div class="alert alert-success py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg() }}
+    </div>
+  }
+  @if (errorMsg()) {
+    <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+    </div>
+  }
+
+  <!-- Controls -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <!-- Search -->
+    <div class="input-group" style="max-width: 400px; flex-grow: 1;">
+      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+      <input type="text" class="form-control border-start-0 py-2" placeholder="Rechercher par nom ou email..." 
+             [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" style="font-size: 14px;">
+    </div>
+
+    <!-- Role Filter Pills -->
+    <div class="d-flex gap-2">
+      <button (click)="roleFilter.set('ALL')" class="btn btn-sm py-2 px-3" 
+              [class.btn-dark]="roleFilter() === 'ALL'" [class.btn-outline-dark]="roleFilter() !== 'ALL'" style="border-radius: 8px; font-size: 13px;">
+        Tous les Rôles
+      </button>
+      <button (click)="roleFilter.set('ADMIN')" class="btn btn-sm py-2 px-3" 
+              [class.btn-dark]="roleFilter() === 'ADMIN'" [class.btn-outline-dark]="roleFilter() !== 'ADMIN'" style="border-radius: 8px; font-size: 13px;">
+        Admin
+      </button>
+      <button (click)="roleFilter.set('USER')" class="btn btn-sm py-2 px-3" 
+              [class.btn-dark]="roleFilter() === 'USER'" [class.btn-outline-dark]="roleFilter() !== 'USER'" style="border-radius: 8px; font-size: 13px;">
+        Utilisateur
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Chargement...</span></div>
+    </div>
+  } @else {
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+      <div class="table-responsive">
+        <table class="table align-middle table-hover mb-0">
+          <thead>
+            <tr class="text-muted" style="font-size: 12px; text-transform: uppercase;">
+              <th class="border-0 pb-3 ps-4">Utilisateur</th>
+              <th class="border-0 pb-3">Email</th>
+              <th class="border-0 pb-3">Date d'Inscription</th>
+              <th class="border-0 pb-3">Rôle</th>
+              <th class="border-0 pb-3 pe-4 text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody style="font-size: 14px;">
+            @for (user of getFilteredUsers(); track user.id) {
+              <tr>
+                <td class="ps-4">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="avatar bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 13px;">
+                      {{ user.firstname.charAt(0) }}{{ user.lastname.charAt(0) }}
+                    </div>
+                    <div>
+                      <div class="fw-semibold text-dark">{{ user.firstname }} {{ user.lastname }}</div>
+                      <small class="text-muted" style="font-size: 11px;">ID: #{{ user.id }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ user.email }}</td>
+                <td class="text-secondary">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span class="badge uppercase" 
+                        [class.bg-warning]="user.role === 'ADMIN'" 
+                        [class.text-dark]="user.role === 'ADMIN'"
+                        [class.bg-secondary]="user.role === 'USER'"
+                        [class.text-white]="user.role === 'USER'">
+                    {{ user.role === 'ADMIN' ? 'ADMINISTRATEUR' : 'UTILISATEUR' }}
+                  </span>
+                </td>
+                <td class="pe-4 text-end">
+                  <!-- Don't show actions for own user -->
+                  @if (authService.currentUser(); as currentAdmin) {
+                    @if (currentAdmin.userId !== user.id) {
+                      <button (click)="toggleRole(user)" class="btn btn-sm btn-outline-dark me-1" style="border-radius: 6px; font-size: 13px;">
+                        <i class="bi bi-shield-check me-1"></i> Changer le Rôle
+                      </button>
+                      <button (click)="openDeleteModal(user)" class="btn btn-sm btn-outline-danger" style="border-radius: 6px; font-size: 13px;">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    } @else {
+                      <span class="text-muted italic" style="font-size: 12px;">Vous (Session Actuelle)</span>
+                    }
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="text-center text-muted py-5">Aucun utilisateur trouvé.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- MODAL: Delete Confirmation -->
+@if (modalMode() === 'delete') {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4 text-center" style="border-radius: 16px; max-width: 420px;">
+    <i class="bi bi-exclamation-triangle text-danger mb-3" style="font-size: 48px;"></i>
+    <h5 class="fw-bold text-dark mb-2">Supprimer le Compte Utilisateur ?</h5>
+    <p class="text-muted mb-4" style="font-size: 14px;">
+      Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{{ selectedUser()?.firstname }} {{ selectedUser()?.lastname }}</strong> ? Toutes ses données de profil seront supprimées.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px;">Annuler</button>
+      <button (click)="deleteUser()" class="btn btn-danger px-4 py-2" style="border-radius: 8px;">Supprimer le Compte</button>
+    </div>
+  </div>
+}

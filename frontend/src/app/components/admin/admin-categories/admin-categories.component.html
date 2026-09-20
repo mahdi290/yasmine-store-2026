@@ -1,0 +1,109 @@
+<div class="container-fluid p-0 text-start">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Gestion des Catégories</h2>
+    <button (click)="openAddModal()" class="btn btn-dark btn-sm d-flex align-items-center gap-2 px-3 py-2" style="border-radius: 8px;">
+      <i class="bi bi-plus-lg"></i> Ajouter une Catégorie
+    </button>
+  </div>
+
+  <!-- Messages -->
+  @if (successMsg()) {
+    <div class="alert alert-success py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg() }}
+    </div>
+  }
+  @if (errorMsg()) {
+    <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+    </div>
+  }
+
+  <!-- Search -->
+  <div class="mb-4">
+    <div class="input-group" style="max-width: 400px;">
+      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+      <input type="text" class="form-control border-start-0 py-2" placeholder="Rechercher une catégorie..." 
+             [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" style="font-size: 14px;">
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Chargement...</span></div>
+    </div>
+  } @else {
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; max-width: 800px;">
+      <div class="table-responsive">
+        <table class="table align-middle table-hover mb-0">
+          <thead>
+            <tr class="text-muted" style="font-size: 12px; text-transform: uppercase;">
+              <th class="border-0 pb-3 ps-4">ID Catégorie</th>
+              <th class="border-0 pb-3">Nom de la Catégorie</th>
+              <th class="border-0 pb-3 pe-4 text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody style="font-size: 14px;">
+            @for (cat of getFilteredCategories(); track cat.id) {
+              <tr>
+                <td class="ps-4 fw-semibold text-secondary">#{{ cat.id }}</td>
+                <td>
+                  <span class="fw-semibold text-dark">{{ cat.name }}</span>
+                </td>
+                <td class="pe-4 text-end">
+                  <button (click)="openEditModal(cat)" class="btn btn-sm btn-outline-dark me-1" style="border-radius: 6px;">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button (click)="openDeleteModal(cat)" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="text-center text-muted py-5">Aucune catégorie trouvée.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- MODAL: Add / Edit Category -->
+@if (modalMode() === 'add' || modalMode() === 'edit') {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4" style="border-radius: 16px; max-width: 450px;">
+    <h5 class="fw-bold text-dark mb-4" style="font-family: 'Inter Tight', sans-serif;">
+      {{ modalMode() === 'add' ? 'Nouvelle Catégorie' : 'Modifier la Catégorie' }}
+    </h5>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Nom de la catégorie *</label>
+        <input type="text" class="form-control py-2" [(ngModel)]="categoryForm.name" placeholder="Ex: Accessoires" style="border-radius: 6px; font-size: 14px;">
+      </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px; font-size: 14px;">Annuler</button>
+      <button (click)="saveCategory()" class="btn btn-dark px-4 py-2" style="border-radius: 8px; font-size: 14px;">
+        {{ modalMode() === 'add' ? 'Créer la Catégorie' : 'Enregistrer' }}
+      </button>
+    </div>
+  </div>
+}
+
+<!-- MODAL: Delete Confirmation -->
+@if (modalMode() === 'delete') {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4 text-center" style="border-radius: 16px; max-width: 420px;">
+    <i class="bi bi-exclamation-triangle text-danger mb-3" style="font-size: 48px;"></i>
+    <h5 class="fw-bold text-dark mb-2">Supprimer la Catégorie ?</h5>
+    <p class="text-muted mb-4" style="font-size: 14px;">
+      Êtes-vous sûr de vouloir supprimer <strong>{{ selectedCategory()?.name }}</strong> ? Cette action est irréversible et échouera si la catégorie contient des produits.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px;">Annuler</button>
+      <button (click)="deleteCategory()" class="btn btn-danger px-4 py-2" style="border-radius: 8px;">Supprimer</button>
+    </div>
+  </div>
+}

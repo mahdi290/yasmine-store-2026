@@ -1,0 +1,49 @@
+.admin-container {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  flex-shrink: 0;
+  
+  @media (max-width: 767.98px) {
+    position: fixed;
+    left: -260px;
+    height: 100vh;
+    
+    &.show {
+      left: 0;
+    }
+  }
+}
+
+.nav-link {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  
+  &.active {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffc107 !important;
+    font-weight: 600;
+  }
+}
+
+.topbar-header {
+  height: 70px;
+  flex-shrink: 0;
+}
+
+.avatar {
+  font-family: 'Inter Tight', sans-serif;
+  letter-spacing: 0px;
+}
