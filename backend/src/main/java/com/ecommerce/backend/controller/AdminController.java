@@ -5,8 +5,14 @@ import com.ecommerce.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -133,6 +139,33 @@ public class AdminController {
     }
 
     // 2. Product Management
+    @PostMapping("/products/upload-image")
+    public ResponseEntity<?> uploadProductImage(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Veuillez sélectionner un fichier image."));
+        }
+        try {
+            String uploadDir = "uploads/products/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String newFilename = UUID.randomUUID().toString() + extension;
+            Path filePath = Paths.get(uploadDir + newFilename);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            String fileUrl = "http://localhost:8081/uploads/products/" + newFilename;
+            return ResponseEntity.ok(Map.of("imageUrl", fileUrl));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Erreur lors de l'enregistrement de l'image : " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productRepository.findAll());

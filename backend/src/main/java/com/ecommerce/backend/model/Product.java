@@ -53,7 +53,7 @@ public class Product {
     @Builder.Default
     private Map<String, Integer> sizeStocks = new HashMap<>();
 
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     @Column(name = "created_at", nullable = false, updatable = false)

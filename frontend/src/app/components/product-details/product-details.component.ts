@@ -44,7 +44,14 @@ export class ProductDetailsComponent implements OnInit {
         if (idStr) {
           this.loadProduct(Number(idStr));
         } else {
-          this.loadDefaultProduct();
+          this.route.queryParamMap.subscribe(qParams => {
+            const qId = qParams.get('id');
+            if (qId) {
+              this.loadProduct(Number(qId));
+            } else {
+              this.loadDefaultProduct();
+            }
+          });
         }
       });
     } else {
@@ -53,9 +60,10 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   loadProduct(id: number) {
+    this.loading.set(true);
     this.productService.getProductById(id).subscribe({
       next: (prod) => {
-        this.product.set(prod);
+        this.applyProduct(prod);
         this.loading.set(false);
       },
       error: () => {
@@ -65,10 +73,11 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   loadDefaultProduct() {
+    this.loading.set(true);
     this.productService.getProducts().subscribe({
       next: (prods) => {
         if (prods.length > 0) {
-          this.product.set(prods[0]);
+          this.applyProduct(prods[0]);
         }
         this.loading.set(false);
       },
@@ -76,6 +85,17 @@ export class ProductDetailsComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  private applyProduct(prod: Product) {
+    this.product.set(prod);
+    this.quantity.set(1);
+    if (prod.sizeStocks) {
+      const inStockSize = this.availableSizes.find(s => (prod.sizeStocks?.[s] ?? 0) > 0);
+      if (inStockSize) {
+        this.selectedSize.set(inStockSize);
+      }
+    }
   }
 
   increaseQty() {

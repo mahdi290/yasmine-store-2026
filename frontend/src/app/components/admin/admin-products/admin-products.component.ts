@@ -27,6 +27,9 @@ export class AdminProductsComponent implements OnInit {
   modalMode = signal<'add' | 'edit' | 'delete' | 'none'>('none');
   selectedProduct = signal<Product | null>(null);
 
+  uploadingImage = signal<boolean>(false);
+  isDragging = signal<boolean>(false);
+
   // Form Model
   productForm = {
     id: 0,
@@ -41,6 +44,62 @@ export class AdminProductsComponent implements OnInit {
   };
 
   searchTerm = signal<string>('');
+
+  onImageFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.handleImageFile(input.files[0]);
+    }
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(true);
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+  }
+
+  onDropImage(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+    if (event.dataTransfer && event.dataTransfer.files.length > 0) {
+      this.handleImageFile(event.dataTransfer.files[0]);
+    }
+  }
+
+  handleImageFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner un fichier image valide (JPG, PNG, WebP).');
+      return;
+    }
+
+    this.uploadingImage.set(true);
+    this.adminService.uploadImage(file).subscribe({
+      next: (res) => {
+        this.productForm.imageUrl = res.imageUrl;
+        this.uploadingImage.set(false);
+      },
+      error: () => {
+        // Fallback to base64 Data URL if needed
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.productForm.imageUrl = (e.target?.result as string) || '';
+          this.uploadingImage.set(false);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  removeImage() {
+    this.productForm.imageUrl = '';
+  }
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {

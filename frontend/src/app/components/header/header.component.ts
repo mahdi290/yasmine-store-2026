@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
@@ -17,13 +17,17 @@ export class HeaderComponent implements OnInit {
   cartService = inject(CartService);
   private productService = inject(ProductService);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
   categories = signal<Category[]>([]);
 
   ngOnInit() {
-    this.productService.getCategories().subscribe({
-      next: (cats) => this.categories.set(cats)
-    });
+    if (isPlatformBrowser(this.platformId)) {
+      this.productService.getCategories().subscribe({
+        next: (cats) => this.categories.set(cats),
+        error: () => {}
+      });
+    }
   }
 
   logout() {

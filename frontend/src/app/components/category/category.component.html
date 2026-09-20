@@ -167,7 +167,7 @@
           <div class="row g-4">
             @for (product of paginatedProducts(); track product.id; let idx = $index) {
               <div class="col-md-6 col-xl-4">
-                <div class="card card-ns text-start h-100" style="border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea;">
+                <div class="card card-ns text-start h-100" [routerLink]="['/product-details', product.id]" style="border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea; cursor: pointer;">
                   <!-- Image Wrapper -->
                   <div class="card-img-wrapper p-3 d-flex align-items-center justify-content-center" style="height: 260px; position: relative; background: #fbfbfb;">
                     @if (idx % 3 === 0) {
@@ -175,14 +175,14 @@
                     } @else if (idx % 3 === 1) {
                       <span class="badge bg-danger text-white position-absolute m-3 start-0 top-0" style="font-size: 9px;">-20%</span>
                     }
-                    <button class="btn btn-light rounded-circle shadow-sm position-absolute m-3 end-0 top-0 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; border: none;">
+                    <button class="btn btn-light rounded-circle shadow-sm position-absolute m-3 end-0 top-0 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; border: none;" (click)="$event.stopPropagation()">
                       <i class="bi bi-heart"></i>
                     </button>
                     <img [src]="product.imageUrl" class="img-fluid" [alt]="product.name" style="max-height: 200px; object-fit: contain;">
                     
                     <!-- Hover Add to Cart -->
                     <div class="add-to-cart-overlay w-100 position-absolute bottom-0 text-center py-2.5" 
-                         style="background: rgba(0,0,0,0.85); cursor: pointer;" [routerLink]="['/product-details', product.id]">
+                         style="background: rgba(0,0,0,0.85); cursor: pointer;">
                       <span class="text-white fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;"><i class="bi bi-cart-plus me-1"></i> Voir & Commander</span>
                     </div>
                   </div>
@@ -204,7 +204,7 @@
           <!-- PRODUCTS LIST VIEW -->
           <div class="d-flex flex-column gap-4">
             @for (product of paginatedProducts(); track product.id) {
-              <div class="card border shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea;">
+              <div class="card border shadow-sm" [routerLink]="['/product-details', product.id]" style="border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea; cursor: pointer;">
                 <div class="row g-0 align-items-center">
                   <div class="col-md-3 bg-light d-flex align-items-center justify-content-center p-3" style="height: 180px;">
                     <img [src]="product.imageUrl" class="img-fluid" [alt]="product.name" style="max-height: 140px; object-fit: contain;">
@@ -221,8 +221,8 @@
                     
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex gap-2">
-                        <button class="btn btn-outline-dark btn-sm px-3" style="border-radius: 6px;"><i class="bi bi-heart"></i></button>
-                        <button [routerLink]="['/product-details', product.id]" class="btn btn-dark btn-sm px-4 py-2" style="border-radius: 6px; font-size: 13px;">
+                        <button class="btn btn-outline-dark btn-sm px-3" style="border-radius: 6px;" (click)="$event.stopPropagation()"><i class="bi bi-heart"></i></button>
+                        <button class="btn btn-dark btn-sm px-4 py-2" style="border-radius: 6px; font-size: 13px;">
                           <i class="bi bi-cart-plus me-1"></i> Voir & Commander
                         </button>
                       </div>

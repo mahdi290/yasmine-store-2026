@@ -61,44 +61,44 @@ export class CartComponent {
   }
 
   removeItem(item: CartItem) {
-    if (confirm(`Remove ${item.product.name} from cart?`)) {
+    if (confirm(`Voulez-vous retirer ${item.product.name} de votre panier ?`)) {
       const currentItems = this.cartService.cartItems();
       this.cartService.cartItems.set(currentItems.filter(i => i.id !== item.id));
 
       this.cartService.removeFromCart(item.id).subscribe({
         error: () => {
           this.cartService.cartItems.set(currentItems);
-          alert('Failed to remove item from cart.');
+          alert('Impossible de retirer cet article du panier.');
         }
       });
     }
   }
 
   clearCart() {
-    if (confirm('Are you sure you want to empty your cart?')) {
+    if (confirm('Êtes-vous sûr de vouloir vider votre panier ?')) {
       const currentItems = this.cartService.cartItems();
       this.cartService.cartItems.set([]);
       this.cartService.clearCart().subscribe({
         error: () => {
           this.cartService.cartItems.set(currentItems);
-          alert('Failed to clear cart.');
+          alert('Impossible de vider le panier.');
         }
       });
     }
   }
 
   applyCoupon(code: string) {
-    if (code.trim().toUpperCase() === 'WELCOME20') {
-      this.discount.set(10); // $10 off
-      alert('Coupon Applied! $10 discount applied to your order.');
+    if (code.trim().toUpperCase() === 'BIENVENUE10' || code.trim().toUpperCase() === 'WELCOME20') {
+      this.discount.set(10);
+      alert('Code promo validé ! 10 DT de réduction appliqués.');
     } else {
-      alert('Invalid coupon code.');
+      alert('Code promo invalide.');
     }
   }
 
   proceedToCheckout() {
     if (this.cartService.cartItems().length === 0) {
-      alert('Your cart is empty.');
+      alert('Votre panier est vide.');
       return;
     }
     this.router.navigate(['/checkout']);

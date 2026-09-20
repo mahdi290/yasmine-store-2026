@@ -56,6 +56,12 @@ export class AdminService {
     return this.http.get<Product[]>(`${this.apiUrl}/products`);
   }
 
+  uploadImage(file: File): Observable<{ imageUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ imageUrl: string }>(`${this.apiUrl}/products/upload-image`, formData);
+  }
+
   createProduct(product: any): Observable<Product> {
     return this.http.post<Product>(`${this.apiUrl}/products`, product);
   }
