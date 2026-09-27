@@ -31,6 +31,7 @@ export interface OrderHistoryItem {
 export interface GuestOrderPayload {
   customerName: string;
   phone: string;
+  email?: string;
   address: string;
   city: string;
   items: Array<{

@@ -70,9 +70,15 @@
               </div>
 
               <!-- Numéro de Téléphone -->
-              <div class="col-12">
+              <div class="col-md-6 col-12">
                 <label for="phone" class="form-label fw-semibold text-dark" style="font-size: 13px;">Téléphone *</label>
                 <input type="tel" id="phone" name="phone" [(ngModel)]="phone" class="form-control" placeholder="Numéro de téléphone" required style="border-radius: 6px; font-size: 14px;">
+              </div>
+
+              <!-- Adresse Email -->
+              <div class="col-md-6 col-12">
+                <label for="email" class="form-label fw-semibold text-dark" style="font-size: 13px;">Adresse Email <span class="text-muted fw-normal">(optionnel)</span></label>
+                <input type="email" id="email" name="email" [(ngModel)]="email" class="form-control" placeholder="exemple@gmail.com" style="border-radius: 6px; font-size: 14px;">
               </div>
 
               <!-- Adresse -->

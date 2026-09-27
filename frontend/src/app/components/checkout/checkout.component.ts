@@ -22,6 +22,7 @@ export class CheckoutComponent implements OnInit {
   // Form Fields for Fast Guest Checkout
   customerName = '';
   phone = '';
+  email = '';
   address = '';
   city = '';
   paymentMethod = 'COD';
@@ -61,6 +62,7 @@ export class CheckoutComponent implements OnInit {
     const payload = {
       customerName: this.customerName.trim(),
       phone: this.phone.trim(),
+      email: this.email.trim(),
       address: this.address.trim(),
       city: this.city.trim() || 'Non spécifié',
       items: items

@@ -9,6 +9,7 @@ import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.repository.OrderItemRepository;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.ProductRepository;
+import com.ecommerce.backend.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,9 +31,10 @@ public class OrderController {
     private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final EmailService emailService;
 
     public record OrderItemRequest(Long productId, Integer quantity, String size) {}
-    public record GuestOrderRequest(String customerName, String phone, String address, String city, List<OrderItemRequest> items) {}
+    public record GuestOrderRequest(String customerName, String phone, String email, String address, String city, List<OrderItemRequest> items) {}
 
     @PostMapping
     @Transactional
@@ -45,6 +47,7 @@ public class OrderController {
 
         String customerName = null;
         String phone = null;
+        String email = null;
         String address = null;
         String city = null;
 
@@ -52,6 +55,7 @@ public class OrderController {
             // Guest Checkout flow
             customerName = request.customerName();
             phone = request.phone();
+            email = request.email();
             address = request.address();
             city = request.city();
 
@@ -96,6 +100,7 @@ public class OrderController {
                 return ResponseEntity.badRequest().body("Error: Cart is empty!");
             }
             customerName = user.getFirstname() + " " + user.getLastname();
+            email = user.getEmail();
 
             for (CartItem cartItem : cartItems) {
                 Product product = cartItem.getProduct();
@@ -134,6 +139,7 @@ public class OrderController {
                 .user(user)
                 .customerName(customerName)
                 .phone(phone)
+                .email(email)
                 .address(address)
                 .city(city)
                 .totalPrice(totalPrice)
@@ -145,6 +151,9 @@ public class OrderController {
             item.setOrder(order);
             orderItemRepository.save(item);
         }
+
+        // Send email notification to yasminestoresf@gmail.com and customer
+        emailService.sendOrderNotificationAsync(order, orderItemsToSave);
 
         Map<String, Object> response = new HashMap<>();
         response.put("order", order);

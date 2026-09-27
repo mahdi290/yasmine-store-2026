@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "postinstall": "node -e \"const fs=require('fs');const p='./node_modules/@angular/cli/src/utilities/node-version.js';if(fs.existsSync(p)){let c=fs.readFileSync(p,'utf8');c=c.replace('\\^22.22.3','\\^22.11.0');fs.writeFileSync(p,c);}\"",
-    "ng": "node --experimental-require-module ./node_modules/@angular/cli/bin/ng.js",
-    "start": "node --experimental-require-module ./node_modules/@angular/cli/bin/ng.js serve",
-    "build": "node ./build.js",
-    "watch": "node ./build.js --watch --configuration development",
-    "test": "node --experimental-require-module ./node_modules/@angular/cli/bin/ng.js test",
+    "ng": "node ./run-ng.js",
+    "start": "node ./run-ng.js serve",
+    "build": "node ./run-ng.js build",
+    "watch": "node ./run-ng.js build --watch --configuration development",
+    "test": "node ./run-ng.js test --watch=false",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
   "private": true,
