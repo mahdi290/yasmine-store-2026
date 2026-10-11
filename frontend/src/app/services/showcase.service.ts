@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface ShowcaseCard {
   id?: number;
@@ -63,7 +64,7 @@ export const DEFAULT_SHOWCASE_CARDS: ShowcaseCard[] = [
 })
 export class ShowcaseService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8081/api';
+  private apiUrl = environment.apiUrl;
 
   getShowcaseCards(): Observable<ShowcaseCard[]> {
     return this.http.get<ShowcaseCard[]>(`${this.apiUrl}/showcase`).pipe(

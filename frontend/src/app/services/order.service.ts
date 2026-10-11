@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Product } from './product.service';
 
 export interface Order {
@@ -46,7 +47,7 @@ export interface GuestOrderPayload {
 })
 export class OrderService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8081/api/orders';
+  private readonly apiUrl = `${environment.apiUrl}/orders`;
 
   placeOrder(payload: GuestOrderPayload): Observable<OrderHistoryItem> {
     return this.http.post<OrderHistoryItem>(this.apiUrl, payload);

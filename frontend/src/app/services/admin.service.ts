@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Product, Category } from './product.service';
 
 export interface CategorySales {
@@ -44,7 +45,7 @@ export interface AdminUser {
 })
 export class AdminService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8081/api/admin';
+  private apiUrl = `${environment.apiUrl}/admin`;
 
   // Stats
   getStats(): Observable<DashboardStats> {

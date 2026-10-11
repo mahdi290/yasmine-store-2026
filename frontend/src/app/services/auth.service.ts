@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface UserSession {
   token: string;
@@ -16,7 +17,7 @@ export interface UserSession {
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8081/api/auth';
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
   
   // Track current user session using Angular Signals
   currentUser = signal<UserSession | null>(null);
