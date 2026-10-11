@@ -67,15 +67,46 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   });
 
+  private onResize = () => {
+    this.updateHeaderHeight();
+  };
+
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.loadData();
       this.startAutoPlay();
+      this.updateHeaderHeight();
+      window.addEventListener('resize', this.onResize);
     }
   }
 
   ngOnDestroy() {
     this.stopAutoPlay();
+    if (isPlatformBrowser(this.platformId)) {
+      window.removeEventListener('resize', this.onResize);
+    }
+  }
+
+  updateHeaderHeight() {
+    if (!isPlatformBrowser(this.platformId)) return;
+    setTimeout(() => {
+      const headerEl = document.querySelector('.luxury-header') as HTMLElement;
+      const topBarEl = document.querySelector('.top-announcement-bar') as HTMLElement;
+      let total = 0;
+      if (topBarEl) total += topBarEl.offsetHeight;
+      if (headerEl) total += headerEl.offsetHeight;
+      if (total > 0) {
+        document.documentElement.style.setProperty('--app-header-height', `${total}px`);
+      }
+    }, 60);
+  }
+
+  scrollToExplore() {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const nextSection = document.querySelector('.trust-bar') as HTMLElement;
+    if (nextSection) {
+      nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   startAutoPlay() {

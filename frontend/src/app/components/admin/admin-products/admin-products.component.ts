@@ -217,7 +217,7 @@ export class AdminProductsComponent implements OnInit {
       sizeStocks: prod.sizeStocks ? { ...prod.sizeStocks } : { S: 0, M: 0, L: 0, XL: 0 },
       onSale: !!prod.onSale,
       discountPercent: prod.discountPercent || 0,
-      department: (prod as any).department || 'Femme'
+      department: prod.department || 'Femme'
     };
   }
 

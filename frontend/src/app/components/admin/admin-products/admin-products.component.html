@@ -83,7 +83,12 @@
                     <img [src]="prod.imageUrl" [alt]="prod.name" class="rounded" style="width: 45px; height: 45px; object-fit: cover;">
                     <div>
                       <div class="fw-semibold text-dark">{{ prod.name }}</div>
-                      <small class="text-muted" style="font-size: 11px;">{{ prod.brand }}</small>
+                      <div class="d-flex align-items-center gap-1.5 mt-1">
+                        <span class="badge" [class.bg-dark]="prod.department === 'HOMME' || prod.department === 'Homme'" [class.bg-secondary]="prod.department !== 'HOMME' && prod.department !== 'Homme'" style="font-size: 10px; font-weight: 600;">
+                          {{ prod.department || 'FEMME' }}
+                        </span>
+                        <small class="text-muted" style="font-size: 11px;">{{ prod.brand }}</small>
+                      </div>
                     </div>
                   </div>
                 </td>

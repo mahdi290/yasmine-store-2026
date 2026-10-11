@@ -2,17 +2,17 @@
 // 1. HERO CAROUSEL SECTION
 // ==========================================
 .hero-carousel-section {
-  height: 600px;
-  min-height: 520px;
-  max-height: 720px;
+  height: calc(100dvh - var(--app-header-height, 132px));
+  min-height: calc(100vh - var(--app-header-height, 132px));
   width: 100%;
   background-color: #0c0d0e;
   position: relative;
   user-select: none;
+  overflow: hidden;
 
-  @media (max-width: 768px) {
-    height: 480px;
-    min-height: 440px;
+  @media (max-width: 991.98px) {
+    height: calc(100dvh - var(--app-header-height, 88px));
+    min-height: calc(100vh - var(--app-header-height, 88px));
   }
 
   .carousel-inner {
@@ -185,6 +185,56 @@
     &:hover:not(.active) {
       background: rgba(255, 255, 255, 0.65);
     }
+  }
+
+  /* Subtle Luxury Scroll Down Indicator */
+  .hero-scroll-indicator {
+    position: absolute;
+    bottom: 22px;
+    right: 36px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.25s ease;
+
+    .scroll-label {
+      font-size: 10px;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 3px;
+      color: rgba(255, 255, 255, 0.8);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    .scroll-bounce-icon {
+      font-size: 15px;
+      color: #ffffff;
+      animation: heroBounceDown 2.2s infinite ease-in-out;
+    }
+
+    &:hover {
+      color: #ffffff;
+      transform: translateY(2px);
+
+      .scroll-label {
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+@keyframes heroBounceDown {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(6px);
+  }
+  60% {
+    transform: translateY(3px);
   }
 }
 

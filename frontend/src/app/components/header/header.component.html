@@ -1,196 +1,155 @@
-<!-- Top Luxury Announcement Ribbon -->
-<div class="top-announcement-bar py-1 text-center bg-light border-bottom">
-  <div class="container d-flex justify-content-between align-items-center" style="font-size: 11px; letter-spacing: 0.6px; font-weight: 500;">
-    <span class="d-none d-md-inline text-muted">
-      <i class="bi bi-geo-alt me-1 text-secondary"></i> Sfax, Tunisie • Livraison Express 24-48h
-    </span>
-    <span class="mx-auto text-uppercase fw-semibold tracking-wider text-dark">
-      Paiement à la livraison sur toute la Tunisie • Satisfait ou Échangé
-    </span>
-    <span class="d-none d-md-inline text-muted">
-      <i class="bi bi-whatsapp me-1 text-success"></i> Assistance Client 7j/7
-    </span>
+<!-- Top Announcement Ribbon -->
+<div class="top-announcement-bar py-1.5 border-bottom">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div class="d-none d-md-flex align-items-center gap-1.5 text-muted location-info">
+      <i class="bi bi-geo-alt"></i>
+      <span>Sfax, Tunisie &bull; Livraison Express 24-48h</span>
+    </div>
+    <div class="mx-auto text-uppercase fw-semibold tracking-wider announcement-text">
+      Paiement à la livraison sur toute la Tunisie &bull; Satisfait ou Échangé
+    </div>
+    <div class="d-none d-md-flex align-items-center gap-1.5 text-muted support-info">
+      <i class="bi bi-whatsapp text-success"></i>
+      <span>Assistance Client 7j/7</span>
+    </div>
   </div>
 </div>
 
-<!-- Transparent backdrop to dismiss fixed dropdown when clicking outside -->
-@if (activeDeptId() !== null) {
-  <div class="dropdown-backdrop-transparent" (click)="closeDropdown()"></div>
-}
-
-<!-- Main Nawara-Style Luxury Header -->
-<header class="nawara-header bg-white sticky-top">
-  <div class="container-fluid px-3 px-xl-5 py-2.5">
-    <div class="d-flex align-items-center justify-content-between position-relative">
-      
-      <!-- Left: Mobile Trigger + Department Pills (FEMME, HOMME...) + Links -->
-      <div class="d-flex align-items-center gap-3">
-        <!-- Mobile Hamburger Button -->
-        <button class="btn btn-link text-dark p-1 d-lg-none border-0" 
-                type="button" 
-                (click)="toggleMobileMenu()" 
-                aria-label="Menu de navigation">
-          <i class="bi bi-list fs-2"></i>
-        </button>
-
-        <!-- Desktop Navigation Bar -->
-        <nav class="d-none d-lg-flex align-items-center gap-3 text-uppercase fw-semibold nawara-nav" style="font-size: 12px; letter-spacing: 0.5px;">
-          
-          <!-- Dynamic Department Buttons (e.g. FEMME, HOMME...) with Fixed Click Dropdown -->
-          @for (dept of departments(); track dept.id) {
-            <div class="position-relative d-inline-block">
-              <button class="nawara-dept-btn d-inline-flex align-items-center gap-1.5"
-                      [class.active]="activeDeptId() === dept.id"
-                      type="button"
-                      (click)="toggleDeptDropdown(dept, $event)"
-                      [attr.aria-expanded]="activeDeptId() === dept.id"
-                      title="Cliquer pour afficher les catégories de {{ dept.name }}">
-                <span>{{ dept.name }}</span>
-                <i class="bi bi-chevron-down transition-transform" 
-                   [class.rotate-180]="activeDeptId() === dept.id" 
-                   style="font-size: 10px;"></i>
-              </button>
-
-              <!-- Fixed Luxury Dropdown Menu -->
-              @if (activeDeptId() === dept.id) {
-                <div class="nawara-dropdown-menu shadow-lg border rounded-3 p-3 mt-1" 
-                     (click)="$event.stopPropagation()">
-                  <div class="dropdown-header text-uppercase fw-bold text-dark px-2 mb-1 d-flex justify-content-between align-items-center" style="font-size: 11px; letter-spacing: 1px;">
-                    <span>Rayon {{ dept.name }}</span>
-                    <button type="button" class="btn-close btn-close-sm" style="font-size: 8px;" (click)="closeDropdown()"></button>
-                  </div>
-                  
-                  <a class="dropdown-item rounded-2 py-1.5 px-2 fw-semibold" 
-                     routerLink="/category" 
-                     [queryParams]="{department: dept.code}" 
-                     (click)="closeDropdown()">
-                    <i class="bi bi-grid-fill me-2 text-muted"></i> Toute la collection {{ dept.name }}
-                  </a>
-                  
-                  <div class="dropdown-divider my-1.5"></div>
-                  
-                  <!-- Department Subcategories with Icons (Zalando Style) -->
-                  @for (sub of getSubcategories(dept.subcategories); track sub) {
-                    <a class="dropdown-item rounded-2 py-2 px-2.5 d-flex align-items-center gap-2.5" 
-                       [class.text-danger]="isPromoSub(sub)"
-                       [class.fw-bold]="isPromoSub(sub)"
-                       routerLink="/category" 
-                       [queryParams]="isPromoSub(sub) ? {promo: 'true', department: dept.code} : {search: sub, department: dept.code}"
-                       (click)="closeDropdown()">
-                      <i [class]="getCategoryIcon(sub)" style="font-size: 15px; width: 20px; text-align: center;"></i>
-                      <span class="text-uppercase" style="letter-spacing: 0.3px;">{{ sub }}</span>
-                    </a>
-                  }
-                </div>
-              }
-            </div>
-          }
-
-          <!-- Direct Navigation Links -->
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nawara-link">
-            Accueil
-          </a>
-          <a routerLink="/category" [queryParams]="{category: null}" routerLinkActive="active" class="nawara-link">
-            Nouveautés
-          </a>
-          <a [routerLink]="['/category']" [queryParams]="{search: 'Robe'}" routerLinkActive="active" class="nawara-link">
-            Robes
-          </a>
-          <a [routerLink]="['/category']" [queryParams]="{search: 'Maille'}" routerLinkActive="active" class="nawara-link">
-            Maille
-          </a>
-          <a [routerLink]="['/category']" [queryParams]="{search: 'Accessoires'}" routerLinkActive="active" class="nawara-link">
-            Accessoires
-          </a>
-          
-          <!-- Soldes / Promos Pill -->
-          <a routerLink="/category" [queryParams]="{promo: 'true'}" routerLinkActive="active" class="nawara-link text-danger fw-bold d-inline-flex align-items-center gap-1">
-            <span class="badge bg-danger text-white rounded-pill px-1.5 py-0.5" style="font-size: 9px;">-PROMO</span>
-            <span>Soldes</span>
-          </a>
-        </nav>
-      </div>
-
-      <!-- Center: Yasmina Store Luxury Brand Identity -->
-      <div class="header-brand-wrap text-center">
-        <a routerLink="/" class="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none py-1">
-          <img src="/logo.jpg" alt="Yasmina Store" class="rounded-circle shadow-xs brand-logo-img">
-          <span class="brand-title fw-bold text-dark">
-            Yasmina Store
-          </span>
-        </a>
-      </div>
-
-      <!-- Right: Search Bar, Wishlist (Heart), Cart -->
-      <div class="d-flex align-items-center gap-2.5 gap-md-3">
+<!-- Main Luxury Header -->
+<header class="luxury-header bg-white sticky-top">
+  
+  <!-- Row 1: Brand & Key Actions Bar -->
+  <div class="header-main-bar border-bottom">
+    <div class="container-fluid px-3 px-xl-5 py-2.5">
+      <div class="d-flex align-items-center justify-content-between position-relative">
         
-        <!-- Desktop Search Bar -->
-        <div class="search-box position-relative d-none d-md-block">
-          <input #searchInput 
-                 type="text" 
-                 (keyup.enter)="search(searchInput.value)" 
-                 class="form-control form-control-sm rounded-pill pe-4 ps-3 bg-light border-0 search-input" 
-                 placeholder="Rechercher..." 
-                 style="font-size: 13px; height: 36px; width: 200px;">
-          <button (click)="search(searchInput.value)" class="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y p-0 pe-2.5 border-0" type="button" aria-label="Rechercher">
-            <i class="bi bi-search" style="font-size: 13px;"></i>
+        <!-- Left: Mobile Trigger + Department Pills (FEMME / HOMME) -->
+        <div class="header-left d-flex align-items-center gap-2 gap-md-3">
+          <!-- Mobile Hamburger Toggle -->
+          <button class="btn btn-link text-dark p-1 d-lg-none border-0" 
+                  type="button" 
+                  (click)="toggleMobileMenu()" 
+                  aria-label="Menu de navigation">
+            <i class="bi bi-list fs-2"></i>
           </button>
+
+          <!-- Desktop Department Pill Selector (Direct 1-Click Navigation to Femme or Homme) -->
+          <div class="d-none d-lg-flex align-items-center gap-2 department-pills">
+            @for (dept of departments(); track dept.id) {
+              <button class="dept-pill-btn d-inline-flex align-items-center"
+                      [class.active]="isDepartmentActive(dept.code)"
+                      type="button"
+                      (click)="selectDepartment(dept.code)"
+                      [title]="'Voir toute la collection ' + dept.name">
+                <span>{{ dept.name }}</span>
+              </button>
+            }
+          </div>
         </div>
 
-        <!-- Mobile Search Toggle Button -->
-        <button class="btn btn-link text-dark p-1 d-md-none border-0" (click)="toggleSearch()" aria-label="Ouvrir la recherche">
-          <i class="bi bi-search fs-5"></i>
-        </button>
-
-        <!-- Wishlist / Favorites Link with Live Counter (Links to /favorites) -->
-        <a routerLink="/favorites" class="header-action-btn position-relative text-dark p-1.5" title="Mes Favoris (Coups de Cœur)">
-          <i class="bi bi-heart fs-4"></i>
-          @if (wishlistService.favoritesCount() > 0) {
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px; padding: 2.5px 5.5px;">
-              {{ wishlistService.favoritesCount() }}
+        <!-- Center: Prominent Brand Identity -->
+        <div class="header-center text-center">
+          <a routerLink="/" class="navbar-brand d-inline-flex align-items-center gap-2.5 text-decoration-none py-1">
+            <img src="/logo.jpg" alt="Yasmina Store" class="brand-logo rounded-circle shadow-xs">
+            <span class="brand-title fw-bold">
+              Yasmina Store
             </span>
-          }
-        </a>
-
-        <!-- Cart Bag Link with Live Counter -->
-        <a routerLink="/cart" class="header-action-btn position-relative text-dark p-1.5" title="Mon Panier">
-          <i class="bi bi-bag fs-4"></i>
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="font-size: 10px; padding: 2.5px 5.5px;">
-            {{ cartService.cartCount() }}
-          </span>
-        </a>
-
-        <!-- Discreet link for logged in Admin ONLY (No public login/shield button shown!) -->
-        @if (authService.currentUser(); as user) {
-          @if (user.role === 'ADMIN') {
-            <a routerLink="/admin" class="btn btn-dark btn-sm rounded-pill px-3 py-1 ms-1 d-inline-flex align-items-center gap-1.5 shadow-xs" style="font-size: 11px; font-weight: 600;">
-              <i class="bi bi-shield-lock-fill text-warning"></i>
-              <span>Admin</span>
-            </a>
-          }
-        }
-      </div>
-
-    </div>
-
-    <!-- Mobile Search Expandable Bar -->
-    @if (searchOpen()) {
-      <div class="pt-2 pb-1 d-md-none border-top mt-2">
-        <div class="position-relative">
-          <input #mobileSearchInput 
-                 type="text" 
-                 (keyup.enter)="search(mobileSearchInput.value)" 
-                 class="form-control rounded-pill pe-4 ps-3 bg-light border" 
-                 placeholder="Rechercher des vêtements, robes, hauts..." 
-                 style="font-size: 13px; height: 38px;">
-          <button (click)="search(mobileSearchInput.value)" class="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y p-0 pe-3 border-0" type="button">
-            <i class="bi bi-search"></i>
-          </button>
+          </a>
         </div>
-      </div>
-    }
 
+        <!-- Right: Search Bar, Wishlist, Cart -->
+        <div class="header-right d-flex align-items-center justify-content-end gap-2 gap-md-3">
+          
+          <!-- Desktop Search Bar -->
+          <div class="search-box position-relative d-none d-md-block">
+            <input #searchInput 
+                   type="text" 
+                   (keyup.enter)="search(searchInput.value)" 
+                   class="form-control rounded-pill pe-4 ps-3 search-input" 
+                   placeholder="Rechercher...">
+            <button (click)="search(searchInput.value)" class="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y p-0 pe-2.5 border-0" type="button" aria-label="Rechercher">
+              <i class="bi bi-search" style="font-size: 13px;"></i>
+            </button>
+          </div>
+
+          <!-- Mobile Search Toggle -->
+          <button class="btn btn-link text-dark p-1 d-md-none border-0" (click)="toggleSearch()" aria-label="Recherche">
+            <i class="bi bi-search fs-5"></i>
+          </button>
+
+          <!-- Favorites / Wishlist -->
+          <a routerLink="/favorites" class="action-btn position-relative text-dark p-1.5" title="Mes Favoris">
+            <i class="bi bi-heart fs-4"></i>
+            @if (wishlistService.favoritesCount() > 0) {
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-favorites">
+                {{ wishlistService.favoritesCount() }}
+              </span>
+            }
+          </a>
+
+          <!-- Shopping Bag -->
+          <a routerLink="/cart" class="action-btn position-relative text-dark p-1.5" title="Mon Panier">
+            <i class="bi bi-bag fs-4"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-cart">
+              {{ cartService.cartCount() }}
+            </span>
+          </a>
+
+          <!-- Admin Badge (for admin user only) -->
+          @if (authService.currentUser(); as user) {
+            @if (user.role === 'ADMIN') {
+              <a routerLink="/admin" class="btn btn-dark btn-sm rounded-pill px-3 py-1 ms-1 d-none d-sm-inline-flex align-items-center gap-1.5 shadow-xs" style="font-size: 11px; font-weight: 600;">
+                <i class="bi bi-shield-lock-fill text-warning"></i>
+                <span>Admin</span>
+              </a>
+            }
+          }
+        </div>
+
+      </div>
+    </div>
   </div>
+
+  <!-- Row 2: Secondary Navigation Bar (Clean, Centered, Elegant) -->
+  <nav class="header-nav-bar d-none d-lg-block">
+    <div class="container d-flex justify-content-center">
+      <ul class="nav-links-list d-flex align-items-center gap-4 m-0 py-2 list-unstyled">
+        @for (item of navLinks(); track item.label) {
+          <li>
+            <a [routerLink]="item.path" 
+               [queryParams]="item.queryParams" 
+               routerLinkActive="active" 
+               [routerLinkActiveOptions]="{exact: item.exact}" 
+               class="nav-link-item"
+               [class.promo-link]="item.isPromo">
+              @if (item.isPromo) {
+                <span class="promo-badge">PROMO</span>
+              }
+              <span>{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Mobile Search Bar (Expandable) -->
+  @if (searchOpen()) {
+    <div class="mobile-search-expand px-3 py-2 border-top bg-light d-md-none">
+      <div class="position-relative">
+        <input #mobileSearchInput 
+               type="text" 
+               (keyup.enter)="search(mobileSearchInput.value)" 
+               class="form-control rounded-pill pe-4 ps-3 bg-white border" 
+               placeholder="Rechercher des vêtements, robes, hauts..." 
+               style="font-size: 13px; height: 38px;">
+        <button (click)="search(mobileSearchInput.value)" class="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y p-0 pe-3 border-0" type="button">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+  }
+
 </header>
 
 <!-- Mobile Navigation Drawer / Offcanvas -->
@@ -201,7 +160,7 @@
     <!-- Drawer Header -->
     <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-2">
-        <img src="/logo.jpg" alt="Logo" class="rounded-circle" style="width: 34px; height: 34px; object-fit: cover;">
+        <img src="/logo.jpg" alt="Logo" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
         <span class="fw-bold fs-5" style="font-family: 'Playfair Display', Georgia, serif;">Yasmina Store</span>
       </div>
       <button class="btn btn-link text-dark p-1 border-0" (click)="closeMobileMenu()">
@@ -216,11 +175,14 @@
       <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 11px; letter-spacing: 0.8px;">
         Rayons
       </div>
-      <div class="d-flex flex-wrap gap-2 mb-3">
+      <div class="drawer-department-switcher d-flex align-items-center gap-2 mb-3">
         @for (dept of departments(); track dept.id) {
-          <a [routerLink]="['/category']" [queryParams]="{department: dept.code}" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-bold" (click)="closeMobileMenu()">
+          <button type="button" 
+                  class="drawer-dept-pill" 
+                  [class.active]="isDepartmentActive(dept.code)"
+                  (click)="selectDepartment(dept.code)">
             {{ dept.name }}
-          </a>
+          </button>
         }
       </div>
 
@@ -229,19 +191,19 @@
       </div>
       <div class="list-group list-group-flush mb-4">
         <a routerLink="/" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
-          <i class="bi bi-house me-2"></i> Accueil
+          <i class="bi bi-house me-2 text-sage"></i> Accueil
         </a>
         <a routerLink="/category" [queryParams]="{category: null}" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
-          <i class="bi bi-grid me-2"></i> Tout Parcourir
+          <i class="bi bi-grid me-2 text-sage"></i> Nouveautés & Collections
         </a>
         <a routerLink="/category" [queryParams]="{promo: 'true'}" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-bold text-danger" (click)="closeMobileMenu()">
           <i class="bi bi-percent me-2"></i> Soldes & Promotions
         </a>
         <a routerLink="/favorites" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
-          <i class="bi bi-heart me-2 text-danger"></i> Mes Favoris ({{ wishlistService.favoritesCount() }})
+          <i class="bi bi-heart me-2 text-pink"></i> Mes Favoris ({{ wishlistService.favoritesCount() }})
         </a>
         <a routerLink="/cart" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
-          <i class="bi bi-bag me-2"></i> Mon Panier ({{ cartService.cartCount() }})
+          <i class="bi bi-bag me-2 text-dark"></i> Mon Panier ({{ cartService.cartCount() }})
         </a>
       </div>
 
@@ -259,8 +221,8 @@
 
     <!-- Drawer Footer -->
     <div class="p-3 bg-light border-top text-center text-muted small">
-      <div>Livraison partout en Tunisie</div>
-      <div class="fw-semibold text-dark">Yasmina Store • Mode & Prêt-à-porter</div>
+      <div>Livraison express partout en Tunisie</div>
+      <div class="fw-semibold text-dark mt-1">Yasmina Store &bull; Mode & Prêt-à-porter</div>
     </div>
 
   </div>

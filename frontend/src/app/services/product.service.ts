@@ -23,6 +23,7 @@ export interface Product {
   onSale?: boolean;
   discountPercent?: number;
   salePrice?: number;
+  department?: string;
 }
 
 @Injectable({

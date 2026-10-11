@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -26,8 +26,45 @@ export class HeaderComponent implements OnInit {
   categories = signal<Category[]>([]);
   departments = signal<Department[]>(DEFAULT_DEPARTMENTS);
 
-  // Fixed Dropdown state: id of currently opened department
-  activeDeptId = signal<number | null>(null);
+  // Current active department tracking (empty by default so neither is pre-selected)
+  currentDepartment = signal<string>('');
+
+  // Dynamic secondary navigation links matching active department
+  navLinks = computed(() => {
+    const isHomme = this.currentDepartment().toLowerCase() === 'homme';
+    const isFemme = this.currentDepartment().toLowerCase() === 'femme';
+    if (isHomme) {
+      return [
+        { label: 'Accueil', path: '/', queryParams: {}, exact: true, isPromo: false },
+        { label: 'Tout le vestiaire', path: '/category', queryParams: { department: 'homme' }, exact: false, isPromo: false },
+        { label: 'Chemises', path: '/category', queryParams: { department: 'homme', search: 'Chemise' }, exact: false, isPromo: false },
+        { label: 'Pulls & Maille', path: '/category', queryParams: { department: 'homme', search: 'Pull' }, exact: false, isPromo: false },
+        { label: 'Vestes & Blazers', path: '/category', queryParams: { department: 'homme', search: 'Blazer' }, exact: false, isPromo: false },
+        { label: 'Accessoires', path: '/category', queryParams: { department: 'homme', search: 'Montre' }, exact: false, isPromo: false },
+        { label: 'Soldes', path: '/category', queryParams: { department: 'homme', promo: 'true' }, exact: false, isPromo: true }
+      ];
+    }
+    if (isFemme) {
+      return [
+        { label: 'Accueil', path: '/', queryParams: {}, exact: true, isPromo: false },
+        { label: 'Toutes les créations', path: '/category', queryParams: { department: 'femme' }, exact: false, isPromo: false },
+        { label: 'Robes', path: '/category', queryParams: { department: 'femme', search: 'Robe' }, exact: false, isPromo: false },
+        { label: 'Hauts & Blouses', path: '/category', queryParams: { department: 'femme', search: 'Blouse' }, exact: false, isPromo: false },
+        { label: 'Maille & Pulls', path: '/category', queryParams: { department: 'femme', search: 'Maille' }, exact: false, isPromo: false },
+        { label: 'Accessoires', path: '/category', queryParams: { department: 'femme', search: 'Accessoires' }, exact: false, isPromo: false },
+        { label: 'Soldes', path: '/category', queryParams: { department: 'femme', promo: 'true' }, exact: false, isPromo: true }
+      ];
+    }
+    return [
+      { label: 'Accueil', path: '/', queryParams: {}, exact: true, isPromo: false },
+      { label: 'Nouveautés', path: '/category', queryParams: {}, exact: false, isPromo: false },
+      { label: 'Robes', path: '/category', queryParams: { search: 'Robe' }, exact: false, isPromo: false },
+      { label: 'Hauts & Blouses', path: '/category', queryParams: { search: 'Blouse' }, exact: false, isPromo: false },
+      { label: 'Maille & Pulls', path: '/category', queryParams: { search: 'Maille' }, exact: false, isPromo: false },
+      { label: 'Accessoires', path: '/category', queryParams: { search: 'Accessoires' }, exact: false, isPromo: false },
+      { label: 'Soldes', path: '/category', queryParams: { promo: 'true' }, exact: false, isPromo: true }
+    ];
+  });
 
   mobileMenuOpen = signal<boolean>(false);
   searchOpen = signal<boolean>(false);
@@ -47,23 +84,47 @@ export class HeaderComponent implements OnInit {
         },
         error: () => {}
       });
+
+      // Track current URL department query param
+      this.updateActiveDeptFromUrl();
+      this.router.events.subscribe(() => {
+        this.updateActiveDeptFromUrl();
+      });
     }
   }
 
-  toggleDeptDropdown(dept: Department, event?: Event) {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    if (this.activeDeptId() === dept.id) {
-      this.activeDeptId.set(null); // Click again to close
+  private updateActiveDeptFromUrl() {
+    const urlTree = this.router.parseUrl(this.router.url);
+    const dept = urlTree.queryParams['department'];
+    if (dept) {
+      this.currentDepartment.set(dept.toLowerCase());
     } else {
-      this.activeDeptId.set(dept.id ?? null); // Stays fixed open until user closes or clicks outside!
+      this.currentDepartment.set('');
     }
   }
 
-  closeDropdown() {
-    this.activeDeptId.set(null);
+  selectDepartment(code: string) {
+    const cleanCode = (code || '').toLowerCase();
+    if (this.currentDepartment() === cleanCode) {
+      // Toggle off if already active
+      this.currentDepartment.set('');
+      this.closeMobileMenu();
+      this.router.navigate(['/category'], {
+        queryParams: { department: null }
+      });
+    } else {
+      this.currentDepartment.set(cleanCode);
+      this.closeMobileMenu();
+      this.router.navigate(['/category'], {
+        queryParams: { department: cleanCode }
+      });
+    }
+  }
+
+  isDepartmentActive(code: string): boolean {
+    const cur = this.currentDepartment();
+    if (!cur) return false;
+    return cur.toLowerCase() === (code || '').toLowerCase();
   }
 
   getSubcategories(sub?: string): string[] {
@@ -113,7 +174,6 @@ export class HeaderComponent implements OnInit {
       this.router.navigate(['/category']);
     }
     this.closeMobileMenu();
-    this.closeDropdown();
     this.searchOpen.set(false);
   }
 

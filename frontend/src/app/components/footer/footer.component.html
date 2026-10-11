@@ -22,12 +22,12 @@
       <div class="col-lg-2 col-md-6 col-6 ps-lg-5">
         <h5 class="fw-bold mb-3 pb-1 position-relative footer-title text-white">Boutique</h5>
         <ul class="list-unstyled footer-links">
-          <li class="mb-2"><a routerLink="/category">Nouveautés</a></li>
-          <li class="mb-2"><a routerLink="/category">Meilleures Ventes</a></li>
-          <li class="mb-2"><a routerLink="/category">Robes & Jupes</a></li>
-          <li class="mb-2"><a routerLink="/category">Hauts & Blouses</a></li>
-          <li class="mb-2"><a routerLink="/category">Accessoires</a></li>
-          <li class="mb-2"><a routerLink="/category">Promotions</a></li>
+          <li class="mb-2"><a routerLink="/category" [queryParams]="{department: 'femme'}">Collection Femme</a></li>
+          <li class="mb-2"><a routerLink="/category" [queryParams]="{department: 'homme'}">Collection Homme</a></li>
+          <li class="mb-2"><a routerLink="/category" [queryParams]="{search: 'Robe'}">Robes & Jupes</a></li>
+          <li class="mb-2"><a routerLink="/category" [queryParams]="{search: 'Blouse'}">Hauts & Blouses</a></li>
+          <li class="mb-2"><a routerLink="/category" [queryParams]="{search: 'Accessoires'}">Accessoires</a></li>
+          <li class="mb-2"><a routerLink="/category" [queryParams]="{promo: 'true'}">Soldes & Promos</a></li>
         </ul>
       </div>
 
