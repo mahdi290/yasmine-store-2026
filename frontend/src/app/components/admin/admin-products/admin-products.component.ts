@@ -42,10 +42,14 @@ export class AdminProductsComponent implements OnInit {
     brand: '',
     stock: 0,
     imageUrl: '',
-    sizeStocks: { S: 0, M: 0, L: 0, XL: 0 } as { [key: string]: number }
+    sizeStocks: { S: 0, M: 0, L: 0, XL: 0 } as { [key: string]: number },
+    onSale: false,
+    discountPercent: 0,
+    department: 'Femme'
   };
 
   searchTerm = signal<string>('');
+  filterMode = signal<'all' | 'solde' | 'out_of_stock'>('all');
 
   onImageFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -133,13 +137,50 @@ export class AdminProductsComponent implements OnInit {
   }
 
   getFilteredProducts(): Product[] {
+    let list = this.products();
+    const mode = this.filterMode();
+    if (mode === 'solde') {
+      list = list.filter(p => p.onSale && (p.discountPercent || 0) > 0);
+    } else if (mode === 'out_of_stock') {
+      list = list.filter(p => p.stock <= 0);
+    }
+
     const term = this.searchTerm().trim().toLowerCase();
-    if (!term) return this.products();
-    return this.products().filter(p => 
+    if (!term) return list;
+    return list.filter(p => 
       p.name.toLowerCase().includes(term) || 
       p.brand.toLowerCase().includes(term) ||
       (p.category && p.category.name.toLowerCase().includes(term))
     );
+  }
+
+  getEffectivePrice(price: number, discountPercent: number): number {
+    if (discountPercent > 0) {
+      return Number((price * (100 - discountPercent) / 100).toFixed(2));
+    }
+    return price;
+  }
+
+  quickToggleSolde(prod: Product, onSale: boolean, percent?: number) {
+    const disc = percent !== undefined ? percent : (prod.discountPercent || 20);
+    this.adminService.updateProduct(prod.id, {
+      name: prod.name,
+      description: prod.description,
+      price: prod.price,
+      categoryId: prod.category ? prod.category.id : 0,
+      brand: prod.brand,
+      stock: prod.stock,
+      imageUrl: prod.imageUrl,
+      sizeStocks: prod.sizeStocks || {},
+      onSale: onSale,
+      discountPercent: disc
+    }).subscribe({
+      next: () => {
+        prod.onSale = onSale;
+        prod.discountPercent = disc;
+        this.loadProducts();
+      }
+    });
   }
 
   openAddModal() {
@@ -154,7 +195,10 @@ export class AdminProductsComponent implements OnInit {
       brand: '',
       stock: 0,
       imageUrl: '',
-      sizeStocks: { S: 0, M: 0, L: 0, XL: 0 }
+      sizeStocks: { S: 0, M: 0, L: 0, XL: 0 },
+      onSale: false,
+      discountPercent: 0,
+      department: 'Femme'
     };
   }
 
@@ -170,7 +214,10 @@ export class AdminProductsComponent implements OnInit {
       brand: prod.brand || '',
       stock: prod.stock,
       imageUrl: prod.imageUrl || '',
-      sizeStocks: prod.sizeStocks ? { ...prod.sizeStocks } : { S: 0, M: 0, L: 0, XL: 0 }
+      sizeStocks: prod.sizeStocks ? { ...prod.sizeStocks } : { S: 0, M: 0, L: 0, XL: 0 },
+      onSale: !!prod.onSale,
+      discountPercent: prod.discountPercent || 0,
+      department: (prod as any).department || 'Femme'
     };
   }
 

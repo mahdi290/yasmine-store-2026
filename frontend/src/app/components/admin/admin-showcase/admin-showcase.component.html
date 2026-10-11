@@ -1,0 +1,135 @@
+<div class="admin-showcase container-fluid p-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 pb-3 border-bottom">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">
+        <i class="bi bi-images me-2 text-primary"></i> Gestion de la Vitrine (Bannières Bento Accueil)
+      </h2>
+      <p class="text-muted mb-0 small">
+        Personnalisez les 4 bannières principales de la page d'accueil (Capture 2) : modifiez les images, titres, badges et liens.
+      </p>
+    </div>
+    <div class="d-flex gap-2 mt-3 mt-md-0">
+      <button (click)="resetToDefault()" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Réinitialiser
+      </button>
+      <button (click)="saveAll()" [disabled]="saving()" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-sm">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+          <span>Enregistrement...</span>
+        } @else {
+          <i class="bi bi-check-lg me-1"></i>
+          <span>Enregistrer les Modifications</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  @if (successMsg()) {
+    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center gap-2 mb-4" role="alert">
+      <i class="bi bi-check-circle-fill fs-5"></i>
+      <span>{{ successMsg() }}</span>
+      <button type="button" class="btn-close" (click)="successMsg.set(null)" aria-label="Close"></button>
+    </div>
+  }
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center gap-2 mb-4" role="alert">
+      <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+      <span>{{ errorMsg() }}</span>
+      <button type="button" class="btn-close" (click)="errorMsg.set(null)" aria-label="Close"></button>
+    </div>
+  }
+
+  <!-- Cards List -->
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+    </div>
+  } @else {
+    <div class="row g-4">
+      @for (card of cards(); track card.cardKey; let i = $index) {
+        <div class="col-12 col-xl-6">
+          <div class="card border-0 rounded-4 shadow-sm overflow-hidden h-100 bg-white">
+            
+            <div class="card-header bg-light border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark">
+                <span class="badge bg-dark rounded-pill me-2">#{{ i + 1 }}</span>
+                {{ card.title }}
+              </span>
+              <span class="badge bg-secondary-subtle text-secondary rounded-pill" style="font-size: 11px;">
+                {{ card.colClass.includes('col-lg-7') ? 'Format Large' : 'Format Carré' }}
+              </span>
+            </div>
+
+            <div class="card-body p-4">
+              <!-- Live Preview Mini Card -->
+              <div class="preview-box position-relative rounded-3 overflow-hidden text-white mb-4 shadow-sm"
+                   style="height: 180px;">
+                <div class="preview-bg position-absolute top-0 start-0 w-100 h-100"
+                     [style.background-image]="'url(' + card.imageUrl + ')'"
+                     style="background-size: cover; background-position: center;"></div>
+                <div class="preview-overlay position-absolute top-0 start-0 w-100 h-100"
+                     style="background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.75) 100%);"></div>
+                <div class="preview-content position-relative h-100 p-3 d-flex flex-column justify-content-between">
+                  <span class="badge bg-white text-dark align-self-start fw-bold" style="font-size: 10px;">{{ card.badge }}</span>
+                  <div>
+                    <h5 class="fw-bold mb-1">{{ card.title }}</h5>
+                    <p class="small mb-0 opacity-75 text-truncate">{{ card.description }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Form Inputs -->
+              <div class="row g-3">
+                <!-- Image Upload & URL -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold small text-muted mb-1">Image de la Bannière</label>
+                  <div class="input-group mb-2">
+                    <input type="text" [(ngModel)]="card.imageUrl" class="form-control form-control-sm" placeholder="https://exemple.com/image.jpg">
+                    <label class="btn btn-outline-primary btn-sm mb-0 d-flex align-items-center gap-1 cursor-pointer">
+                      <i class="bi bi-cloud-arrow-up"></i>
+                      <span>{{ uploadingCardKey() === card.cardKey ? 'Téléversement...' : 'Importer' }}</span>
+                      <input type="file" (change)="onImageSelected($event, card)" accept="image/*" class="d-none">
+                    </label>
+                  </div>
+                  <small class="text-muted d-block" style="font-size: 11px;">
+                    Vous pouvez soit coller une URL web, soit cliquer sur <strong>Importer</strong> pour choisir une photo depuis votre ordinateur.
+                  </small>
+                </div>
+
+                <!-- Title -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small text-muted mb-1">Titre de la collection</label>
+                  <input type="text" [(ngModel)]="card.title" class="form-control form-control-sm" placeholder="Ex: Robes & Ensembles">
+                </div>
+
+                <!-- Badge -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small text-muted mb-1">Badge (Texte supérieur)</label>
+                  <input type="text" [(ngModel)]="card.badge" class="form-control form-control-sm" placeholder="Ex: PIÈCES EMBLÉMATIQUES">
+                </div>
+
+                <!-- Description -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold small text-muted mb-1">Description courte</label>
+                  <textarea [(ngModel)]="card.description" rows="2" class="form-control form-control-sm" placeholder="Ex: Des coupes fluides et sophistiquées..."></textarea>
+                </div>
+
+                <!-- Target Category Query -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small text-muted mb-1">Catégorie cible (Nom)</label>
+                  <input type="text" [(ngModel)]="card.categoryQueryName" class="form-control form-control-sm" placeholder="Ex: Robes">
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

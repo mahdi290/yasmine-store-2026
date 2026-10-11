@@ -5,16 +5,9 @@ import { RouterLink, Router } from '@angular/router';
 import { ProductService, Product, Category } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
-
-export interface CarouselSlide {
-  id: number;
-  badge: string;
-  title: string;
-  subtitle: string;
-  btnText: string;
-  link: string;
-  imageUrl: string;
-}
+import { WishlistService } from '../../services/wishlist.service';
+import { ShowcaseService, ShowcaseCard, DEFAULT_SHOWCASE_CARDS } from '../../services/showcase.service';
+import { CarouselService, CarouselSlide, DEFAULT_CAROUSEL_SLIDES } from '../../services/carousel.service';
 
 export interface FeaturedCategory {
   title: string;
@@ -36,6 +29,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);
+  private wishlistService = inject(WishlistService);
+  private showcaseService = inject(ShowcaseService);
+  private carouselService = inject(CarouselService);
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
@@ -43,80 +39,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   currentSlide = signal<number>(0);
   private autoSlideTimer: any = null;
 
-  slides: CarouselSlide[] = [
-    {
-      id: 1,
-      badge: 'COLLECTION EXCLUSIVE',
-      title: 'SOULEVEZ VOTRE STYLE',
-      subtitle: 'Affirmez votre personnalité avec des pièces uniques et raffinées, conçues pour marquer les esprits.',
-      btnText: 'ACHETER MAINTENANT',
-      link: '/category',
-      imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&auto=format&fit=crop&q=80'
-    },
-    {
-      id: 2,
-      badge: 'NOUVELLE SAISON',
-      title: 'SUBLIMEZ VOTRE ÉLÉGANCE',
-      subtitle: 'Des pièces raffinées et intemporelles pour enrichir votre garde-robe avec distinction et style au quotidien.',
-      btnText: 'DÉCOUVRIR LA BOUTIQUE',
-      link: '/category',
-      imageUrl: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1600&auto=format&fit=crop&q=80'
-    },
-    {
-      id: 3,
-      badge: 'COLLECTION FEMME',
-      title: "L'AUDACE DU STYLE TUNISIEN",
-      subtitle: 'Robes glamour, manteaux chics et ensembles signatures. Livraison rapide sur toute la Tunisie avec paiement à la livraison.',
-      btnText: 'COMMANDER MAINTENANT',
-      link: '/category',
-      imageUrl: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600&auto=format&fit=crop&q=80'
-    },
-    {
-      id: 4,
-      badge: 'ÉDITION LIMITÉE',
-      title: 'TENDANCES & COUPS DE CŒUR',
-      subtitle: 'Profitez de notre sélection exclusive de prêt-à-porter féminin et sublimez chaque instant de votre journée.',
-      btnText: 'VOIR LES TENDANCES',
-      link: '/category',
-      imageUrl: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=1600&auto=format&fit=crop&q=80'
-    }
-  ];
+  // Dynamic Carousel Slides loaded from DB (NO 'I TAKE THE RISK' slide!)
+  slides = signal<CarouselSlide[]>(DEFAULT_CAROUSEL_SLIDES);
 
-  // Curated Featured Categories (Replaces Capture 1 with high-fashion Bento grid)
-  featuredCategories: FeaturedCategory[] = [
-    {
-      title: 'Robes & Ensembles',
-      badge: 'PIÈCES EMBLÉMATIQUES',
-      description: 'Des coupes fluides et sophistiquées pour toutes vos occasions.',
-      imageUrl: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=900&auto=format&fit=crop&q=80',
-      categoryQueryName: 'Robes',
-      colClass: 'col-lg-7 col-md-12'
-    },
-    {
-      title: 'Hauts & Chemisiers',
-      badge: 'CHIC QUOTIDIEN',
-      description: 'Blouses légères, chemises modernes et coupes fluides.',
-      imageUrl: 'https://images.unsplash.com/photo-1551803091-e20673f15770?w=900&auto=format&fit=crop&q=80',
-      categoryQueryName: 'Hauts & Blouses',
-      colClass: 'col-lg-5 col-md-6'
-    },
-    {
-      title: 'Maille & Sweats',
-      badge: 'DOUCEUR DE SAISON',
-      description: 'Pulls douillets et cardigans élégants pour les journées fraîches.',
-      imageUrl: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=900&auto=format&fit=crop&q=80',
-      categoryQueryName: 'Maille',
-      colClass: 'col-lg-5 col-md-6'
-    },
-    {
-      title: 'Accessoires & Maroquinerie',
-      badge: 'FINITIONS RAFFINÉES',
-      description: 'Sacs en cuir, solaires et accessoires pour parfaire votre allure.',
-      imageUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=900&auto=format&fit=crop&q=80',
-      categoryQueryName: 'Accessoires',
-      colClass: 'col-lg-7 col-md-12'
-    }
-  ];
+  // Dynamic Featured Categories Bento Grid (Managed from Admin)
+  showcaseCards = signal<ShowcaseCard[]>(DEFAULT_SHOWCASE_CARDS);
 
   // States
   categories = signal<Category[]>([]);
@@ -125,13 +52,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // Active Category Filter for Best Sellers
   activeCategoryFilter = signal<string>('all');
-  favorites = signal<Set<number>>(new Set<number>());
 
   // Filtered Products for Best Sellers Grid
   filteredProducts = computed(() => {
     const filter = this.activeCategoryFilter().toLowerCase();
     const list = this.products();
     if (filter === 'all') return list;
+    if (filter === 'solde' || filter === 'promo' || filter === 'promotions') {
+      return list.filter(p => p.onSale && (p.discountPercent || 0) > 0);
+    }
     return list.filter(p => {
       const catName = p.category?.name?.toLowerCase() || '';
       return catName.includes(filter);
@@ -165,11 +94,15 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   nextSlide() {
-    this.currentSlide.update((curr) => (curr + 1) % this.slides.length);
+    const total = this.slides().length;
+    if (total === 0) return;
+    this.currentSlide.update((curr) => (curr + 1) % total);
   }
 
   prevSlide() {
-    this.currentSlide.update((curr) => (curr - 1 + this.slides.length) % this.slides.length);
+    const total = this.slides().length;
+    if (total === 0) return;
+    this.currentSlide.update((curr) => (curr - 1 + total) % total);
   }
 
   goToSlide(index: number) {
@@ -180,6 +113,22 @@ export class HomeComponent implements OnInit, OnDestroy {
   loadData() {
     this.productService.getCategories().subscribe({
       next: (cats) => this.categories.set(cats)
+    });
+
+    this.carouselService.getSlides().subscribe({
+      next: (loadedSlides) => {
+        if (loadedSlides && loadedSlides.length > 0) {
+          this.slides.set(loadedSlides);
+        }
+      }
+    });
+
+    this.showcaseService.getShowcaseCards().subscribe({
+      next: (cards) => {
+        if (cards && cards.length > 0) {
+          this.showcaseCards.set(cards);
+        }
+      }
     });
 
     this.productService.getProducts().subscribe({
@@ -200,33 +149,26 @@ export class HomeComponent implements OnInit, OnDestroy {
   toggleFavorite(productId: number, event: Event) {
     event.preventDefault();
     event.stopPropagation();
-    this.favorites.update(set => {
-      const next = new Set(set);
-      if (next.has(productId)) {
-        next.delete(productId);
-      } else {
-        next.add(productId);
-      }
-      return next;
-    });
+    this.wishlistService.toggleFavorite(productId);
   }
 
   isFavorite(productId: number): boolean {
-    return this.favorites().has(productId);
+    return this.wishlistService.isFavorite(productId);
+  }
+
+  getEffectivePrice(product: Product): number {
+    if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+      return Number((product.price * (100 - product.discountPercent) / 100).toFixed(2));
+    }
+    return product.price;
   }
 
   addToCart(product: Product, event: Event) {
     event.preventDefault();
     event.stopPropagation();
 
-    this.cartService.addToCart(product, 1).subscribe({
-      next: () => {
-        alert(`${product.name} a été ajouté à votre panier !`);
-      },
-      error: () => {
-        alert('Impossible d’ajouter l’article au panier. Veuillez réessayer.');
-      }
-    });
+    this.cartService.addToCart(product, 1);
+    alert(`${product.name} a été ajouté à votre panier !`);
   }
 
   getBadge(index: number): { text: string; type: string } | null {

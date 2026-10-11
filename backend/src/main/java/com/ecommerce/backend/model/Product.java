@@ -56,8 +56,28 @@ public class Product {
     @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
+    @Column(name = "on_sale")
+    @Builder.Default
+    private Boolean onSale = false;
+
+    @Column(name = "discount_percent")
+    @Builder.Default
+    private Integer discountPercent = 0;
+
+    @Column(name = "department")
+    @Builder.Default
+    private String department = "FEMME";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public BigDecimal getSalePrice() {
+        if (Boolean.TRUE.equals(onSale) && discountPercent != null && discountPercent > 0 && price != null) {
+            BigDecimal factor = BigDecimal.valueOf(100 - discountPercent);
+            return price.multiply(factor).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+        }
+        return price;
+    }
 
     public void initializeSizeStocks() {
         if (sizeStocks == null) {

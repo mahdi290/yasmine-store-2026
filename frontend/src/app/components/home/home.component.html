@@ -3,7 +3,7 @@
          (mouseenter)="stopAutoPlay()" 
          (mouseleave)="startAutoPlay()">
   <div class="carousel-inner h-100 position-relative">
-    @for (slide of slides; track slide.id; let idx = $index) {
+    @for (slide of slides(); track slide.id; let idx = $index) {
       <div class="carousel-slide position-absolute top-0 start-0 w-100 h-100"
            [class.active]="currentSlide() === idx"
            [style.background-image]="'url(' + slide.imageUrl + ')'">
@@ -14,9 +14,11 @@
         <!-- Slide Content -->
         <div class="container h-100 position-relative d-flex flex-column justify-content-center align-items-center text-center text-white px-3">
           <!-- Pill Badge -->
-          <div class="hero-badge mb-3">
-            <span>{{ slide.badge }}</span>
-          </div>
+          @if (slide.badge) {
+            <div class="hero-badge mb-3">
+              <span>{{ slide.badge }}</span>
+            </div>
+          }
 
           <!-- Title -->
           <h1 class="hero-title fw-bold mb-3 text-uppercase">
@@ -24,14 +26,16 @@
           </h1>
 
           <!-- Subtitle -->
-          <p class="hero-subtitle mb-4 text-light">
-            {{ slide.subtitle }}
-          </p>
+          @if (slide.subtitle) {
+            <p class="hero-subtitle mb-4 text-light">
+              {{ slide.subtitle }}
+            </p>
+          }
 
           <!-- CTA Button -->
           <div class="hero-cta">
-            <a [routerLink]="slide.link" class="btn btn-hero-cta text-uppercase fw-bold shadow-lg">
-              {{ slide.btnText }} <i class="bi bi-cart3 ms-2 fs-5"></i>
+            <a [routerLink]="slide.link || '/category'" class="btn btn-hero-cta text-uppercase fw-bold shadow-lg">
+              {{ slide.btnText || 'DÉCOUVRIR' }} <i class="bi bi-cart3 ms-2 fs-5"></i>
             </a>
           </div>
         </div>
@@ -49,7 +53,7 @@
 
   <!-- Indicators / Pill Lines -->
   <div class="carousel-indicators-wrapper position-absolute bottom-0 start-50 translate-middle-x mb-4 d-flex align-items-center gap-2">
-    @for (slide of slides; track slide.id; let idx = $index) {
+    @for (slide of slides(); track slide.id; let idx = $index) {
       <button type="button" 
               class="carousel-indicator-bar" 
               [class.active]="currentSlide() === idx" 
@@ -106,7 +110,7 @@
     </div>
 
     <div class="row g-4">
-      @for (cat of featuredCategories; track cat.title) {
+      @for (cat of showcaseCards(); track cat.cardKey) {
         <div [class]="cat.colClass">
           <a [routerLink]="['/category']" 
              [queryParams]="{ category: getCategoryIdByName(cat.categoryQueryName) }" 
@@ -182,6 +186,12 @@
                 (click)="setFilter('accessoires')">
           Accessoires
         </button>
+        <button type="button" 
+                class="filter-pill-btn text-danger fw-bold" 
+                [class.active]="activeCategoryFilter() === 'solde'" 
+                (click)="setFilter('solde')">
+          <i class="bi bi-tag-fill me-1"></i> Soldes & Promos
+        </button>
       </div>
     </div>
 
@@ -202,8 +212,12 @@
               <!-- Image Container (Consistent Aspect Ratio & Visuals) -->
               <div class="product-img-box position-relative overflow-hidden">
                 <!-- Badges -->
-                <div class="product-badge-pos position-absolute start-0 top-0 m-3 z-2">
-                  @if (getBadge(idx); as badge) {
+                <div class="product-badge-pos position-absolute start-0 top-0 m-3 z-2 d-flex flex-column gap-1">
+                  @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+                    <span class="badge bg-danger rounded-pill px-2.5 py-1.5 fw-bold shadow-sm" style="font-size: 11px;">
+                      -{{ product.discountPercent }}%
+                    </span>
+                  } @else if (getBadge(idx); as badge) {
                     <span class="badge-luxury badge-luxury-{{badge.type}}">{{ badge.text }}</span>
                   }
                 </div>
@@ -254,9 +268,11 @@
                 <!-- Price Row -->
                 <div class="d-flex align-items-baseline justify-content-between mt-2 pt-2 border-top">
                   <div class="d-flex align-items-baseline gap-2">
-                    <span class="product-price fw-extrabold text-dark">{{ product.price }} DT</span>
-                    @if (getOriginalPrice(product.price, idx); as origPrice) {
-                      <span class="product-old-price text-muted text-decoration-line-through">{{ origPrice }} DT</span>
+                    @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+                      <span class="product-price fw-extrabold text-danger">{{ getEffectivePrice(product) }} DT</span>
+                      <del class="product-old-price text-muted small">{{ product.price }} DT</del>
+                    } @else {
+                      <span class="product-price fw-extrabold text-dark">{{ product.price }} DT</span>
                     }
                   </div>
                   <span class="stock-pill small text-success fw-semibold">

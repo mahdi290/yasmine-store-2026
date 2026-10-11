@@ -170,13 +170,19 @@
                 <div class="card card-ns text-start h-100" [routerLink]="['/product-details', product.id]" style="border-radius: 12px; overflow: hidden; border: 1px solid #eaeaea; cursor: pointer;">
                   <!-- Image Wrapper -->
                   <div class="card-img-wrapper p-3 d-flex align-items-center justify-content-center" style="height: 260px; position: relative; background: #fbfbfb;">
-                    @if (idx % 3 === 0) {
+                    @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+                      <span class="badge bg-danger text-white position-absolute m-3 start-0 top-0 fw-bold" style="font-size: 10px;">
+                        -{{ product.discountPercent }}%
+                      </span>
+                    } @else if (idx % 4 === 0) {
                       <span class="badge bg-black text-white position-absolute m-3 start-0 top-0" style="font-size: 9px;">NOUVEAU</span>
-                    } @else if (idx % 3 === 1) {
-                      <span class="badge bg-danger text-white position-absolute m-3 start-0 top-0" style="font-size: 9px;">-20%</span>
                     }
-                    <button class="btn btn-light rounded-circle shadow-sm position-absolute m-3 end-0 top-0 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; border: none;" (click)="$event.stopPropagation()">
-                      <i class="bi bi-heart"></i>
+
+                    <button class="btn btn-light rounded-circle shadow-sm position-absolute m-3 end-0 top-0 d-flex align-items-center justify-content-center" 
+                            style="width: 36px; height: 36px; border: none;" 
+                            (click)="toggleFavorite(product.id, $event)"
+                            [title]="isFavorite(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                      <i class="bi fs-6" [class.bi-heart-fill]="isFavorite(product.id)" [class.bi-heart]="!isFavorite(product.id)" [class.text-danger]="isFavorite(product.id)"></i>
                     </button>
                     <img [src]="product.imageUrl" class="img-fluid" [alt]="product.name" style="max-height: 200px; object-fit: contain;">
                     
@@ -191,7 +197,14 @@
                     <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">{{ product.brand }}</small>
                     <h6 class="fw-semibold text-dark mt-1 mb-2 text-truncate">{{ product.name }}</h6>
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                      <span class="fw-bold text-dark fs-5">{{ product.price }} DT</span>
+                      @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+                        <div class="d-flex align-items-baseline gap-2">
+                          <span class="fw-bold text-danger fs-5">{{ getEffectivePrice(product) }} DT</span>
+                          <del class="text-muted small">{{ product.price }} DT</del>
+                        </div>
+                      } @else {
+                        <span class="fw-bold text-dark fs-5">{{ product.price }} DT</span>
+                      }
                     </div>
                   </div>
                 </div>

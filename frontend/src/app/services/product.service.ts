@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 export interface Category {
   id: number;
   name: string;
+  department?: string;
+  icon?: string;
 }
 
 export interface Product {
@@ -18,6 +20,9 @@ export interface Product {
   imageUrl: string;
   createdAt?: string;
   sizeStocks?: { [key: string]: number };
+  onSale?: boolean;
+  discountPercent?: number;
+  salePrice?: number;
 }
 
 @Injectable({
