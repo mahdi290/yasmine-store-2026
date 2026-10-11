@@ -22,6 +22,9 @@ export class AdminCategoriesComponent implements OnInit {
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
 
+  // Department Filter
+  selectedDepartmentFilter = signal<string>('ALL');
+
   // Modal Control
   modalMode = signal<'add' | 'edit' | 'delete' | 'none'>('none');
   selectedCategory = signal<Category | null>(null);
@@ -29,7 +32,9 @@ export class AdminCategoriesComponent implements OnInit {
   // Form Model
   categoryForm = {
     id: 0,
-    name: ''
+    name: '',
+    department: 'Femme',
+    icon: ''
   };
 
   searchTerm = signal<string>('');
@@ -59,9 +64,17 @@ export class AdminCategoriesComponent implements OnInit {
 
   getFilteredCategories(): Category[] {
     const term = this.searchTerm().trim().toLowerCase();
-    if (!term) return this.categories();
-    return this.categories().filter(c => 
-      c.name.toLowerCase().includes(term)
+    const deptFilter = this.selectedDepartmentFilter();
+    let list = this.categories();
+
+    if (deptFilter !== 'ALL') {
+      list = list.filter(c => (c.department || 'Femme').toLowerCase() === deptFilter.toLowerCase());
+    }
+
+    if (!term) return list;
+    return list.filter(c => 
+      c.name.toLowerCase().includes(term) ||
+      (c.department && c.department.toLowerCase().includes(term))
     );
   }
 
@@ -70,7 +83,9 @@ export class AdminCategoriesComponent implements OnInit {
     this.selectedCategory.set(null);
     this.categoryForm = {
       id: 0,
-      name: ''
+      name: '',
+      department: this.selectedDepartmentFilter() !== 'ALL' ? this.selectedDepartmentFilter() : 'Femme',
+      icon: ''
     };
   }
 
@@ -79,7 +94,9 @@ export class AdminCategoriesComponent implements OnInit {
     this.selectedCategory.set(cat);
     this.categoryForm = {
       id: cat.id,
-      name: cat.name
+      name: cat.name,
+      department: cat.department || 'Femme',
+      icon: cat.icon || ''
     };
   }
 
@@ -103,45 +120,42 @@ export class AdminCategoriesComponent implements OnInit {
     }
 
     if (this.modalMode() === 'add') {
-      this.adminService.createCategory({ name: this.categoryForm.name }).subscribe({
+      this.adminService.createCategory(this.categoryForm).subscribe({
         next: () => {
-          this.successMsg.set('Catégorie créée avec succès !');
-          this.loadCategories();
+          this.successMsg.set('Catégorie créée avec succès.');
           this.closeModal();
+          this.loadCategories();
         },
         error: (err) => {
-          this.errorMsg.set(err.error || 'Échec de la création de la catégorie.');
+          this.errorMsg.set(err.error?.error || 'Erreur lors de la création de la catégorie.');
         }
       });
     } else if (this.modalMode() === 'edit') {
-      this.adminService.updateCategory(this.categoryForm.id, { name: this.categoryForm.name }).subscribe({
+      this.adminService.updateCategory(this.categoryForm.id, this.categoryForm).subscribe({
         next: () => {
-          this.successMsg.set('Catégorie mise à jour avec succès !');
-          this.loadCategories();
+          this.successMsg.set('Catégorie mise à jour avec succès.');
           this.closeModal();
+          this.loadCategories();
         },
         error: (err) => {
-          this.errorMsg.set(err.error || 'Échec de la mise à jour de la catégorie.');
+          this.errorMsg.set(err.error?.error || 'Erreur lors de la mise à jour.');
         }
       });
     }
   }
 
-  deleteCategory() {
+  confirmDelete() {
     const cat = this.selectedCategory();
     if (!cat) return;
 
-    this.errorMsg.set(null);
-    this.successMsg.set(null);
-
     this.adminService.deleteCategory(cat.id).subscribe({
       next: () => {
-        this.successMsg.set('Catégorie supprimée avec succès !');
-        this.loadCategories();
+        this.successMsg.set('Catégorie supprimée.');
         this.closeModal();
+        this.loadCategories();
       },
       error: (err) => {
-        this.errorMsg.set(err.error?.error || 'Échec de la suppression de la catégorie.');
+        this.errorMsg.set(err.error?.error || 'Impossible de supprimer cette catégorie car elle contient des produits.');
         this.closeModal();
       }
     });

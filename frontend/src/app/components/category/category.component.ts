@@ -5,6 +5,7 @@ import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { ProductService, Product, Category } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { WishlistService } from '../../services/wishlist.service';
 
 @Component({
   selector: 'app-category',
@@ -17,6 +18,7 @@ export class CategoryComponent implements OnInit {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);
+  wishlistService = inject(WishlistService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private platformId = inject(PLATFORM_ID);
@@ -28,7 +30,9 @@ export class CategoryComponent implements OnInit {
 
   // Active filter states (Signals)
   searchTerm = signal<string>('');
+  selectedDepartment = signal<string>('all');
   selectedCategoryId = signal<number | null>(null);
+  onlyPromotions = signal<boolean>(false);
   minPrice = signal<number>(0);
   maxPrice = signal<number>(300);
   appliedMinPrice = signal<number>(0);
@@ -49,19 +53,51 @@ export class CategoryComponent implements OnInit {
   filteredProducts = computed(() => {
     let prods = this.products();
 
-    // 1. Search filter
-    const search = this.searchTerm().trim().toLowerCase();
-    if (search) {
-      prods = prods.filter(p => 
-        p.name.toLowerCase().includes(search) || 
-        (p.brand && p.brand.toLowerCase().includes(search))
-      );
+    // 1. Department filter
+    const dept = this.selectedDepartment().trim().toLowerCase();
+    if (dept && dept !== 'all') {
+      prods = prods.filter(p => {
+        const pDept = ((p as any).department || 'Femme').toLowerCase();
+        return pDept === dept;
+      });
     }
 
-    // 2. Category filter
+    // 2. Category filter by ID
     const catId = this.selectedCategoryId();
     if (catId !== null) {
       prods = prods.filter(p => p.category && p.category.id === catId);
+    }
+
+    // 3. Search / Subcategory filter
+    const rawSearch = this.searchTerm().trim().toLowerCase();
+    if (rawSearch && rawSearch !== 'all' && rawSearch !== 'tout voir') {
+      // Handle plural/singular in French: "robes" -> "robe", "manteaux" -> "manteau"
+      let stem = rawSearch;
+      if (rawSearch.endsWith('aux')) {
+        stem = rawSearch.slice(0, -1);
+      } else if (rawSearch.endsWith('s')) {
+        stem = rawSearch.slice(0, -1);
+      }
+
+      prods = prods.filter(p => {
+        const name = (p.name || '').toLowerCase();
+        const brand = (p.brand || '').toLowerCase();
+        const catName = (p.category?.name || '').toLowerCase();
+        const desc = (p.description || '').toLowerCase();
+
+        return (
+          name.includes(rawSearch) ||
+          brand.includes(rawSearch) ||
+          catName.includes(rawSearch) ||
+          desc.includes(rawSearch) ||
+          (stem && (name.includes(stem) || catName.includes(stem) || desc.includes(stem)))
+        );
+      });
+    }
+
+    // 4. Promotions filter
+    if (this.onlyPromotions()) {
+      prods = prods.filter(p => p.onSale && (p.discountPercent || 0) > 0);
     }
 
     // 3. Price filter (applied)
@@ -122,6 +158,16 @@ export class CategoryComponent implements OnInit {
         } else {
           this.searchTerm.set('');
         }
+        if (params['department']) {
+          this.selectedDepartment.set(params['department']);
+        } else {
+          this.selectedDepartment.set('all');
+        }
+        if (params['promo'] === 'true' || params['solde'] === 'true') {
+          this.onlyPromotions.set(true);
+        } else {
+          this.onlyPromotions.set(false);
+        }
         this.currentPage.set(1);
       });
     } else {
@@ -177,7 +223,9 @@ export class CategoryComponent implements OnInit {
 
   clearAllFilters() {
     this.searchTerm.set('');
+    this.selectedDepartment.set('all');
     this.selectedCategoryId.set(null);
+    this.onlyPromotions.set(false);
     this.minPrice.set(0);
     this.maxPrice.set(300);
     this.appliedMinPrice.set(0);
@@ -189,8 +237,7 @@ export class CategoryComponent implements OnInit {
 
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { category: null },
-      queryParamsHandling: 'merge'
+      queryParams: { category: null, department: null, search: null, promo: null, solde: null }
     });
   }
 
@@ -198,12 +245,59 @@ export class CategoryComponent implements OnInit {
   getActiveFiltersList() {
     const list: { type: string; label: string; action: () => void }[] = [];
 
+    if (this.selectedDepartment() && this.selectedDepartment().toLowerCase() !== 'all') {
+      const deptName = this.selectedDepartment();
+      list.push({
+        type: 'department',
+        label: `Rayon: ${deptName}`,
+        action: () => {
+          this.selectedDepartment.set('all');
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { department: null },
+            queryParamsHandling: 'merge'
+          });
+        }
+      });
+    }
+
     const catId = this.selectedCategoryId();
     if (catId !== null) {
       const cat = this.categories().find(c => c.id === catId);
       if (cat) {
         list.push({ type: 'category', label: `Catégorie: ${cat.name}`, action: () => this.selectCategory(null) });
       }
+    }
+
+    if (this.searchTerm().trim()) {
+      const s = this.searchTerm().trim();
+      list.push({
+        type: 'search',
+        label: `Recherche: ${s}`,
+        action: () => {
+          this.searchTerm.set('');
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { search: null },
+            queryParamsHandling: 'merge'
+          });
+        }
+      });
+    }
+
+    if (this.onlyPromotions()) {
+      list.push({
+        type: 'promo',
+        label: 'Promotions & Soldes',
+        action: () => {
+          this.onlyPromotions.set(false);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { promo: null, solde: null },
+            queryParamsHandling: 'merge'
+          });
+        }
+      });
     }
 
     if (this.appliedMinPrice() > 0 || this.appliedMaxPrice() < 300) {
@@ -225,18 +319,30 @@ export class CategoryComponent implements OnInit {
     return list;
   }
 
+  // Favorites
+  toggleFavorite(productId: number, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.wishlistService.toggleFavorite(productId);
+  }
+
+  isFavorite(productId: number): boolean {
+    return this.wishlistService.isFavorite(productId);
+  }
+
+  getEffectivePrice(product: Product): number {
+    if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+      return Number((product.price * (100 - product.discountPercent) / 100).toFixed(2));
+    }
+    return product.price;
+  }
+
   // Cart action
   addToCart(product: Product, event: Event) {
     event.preventDefault();
     event.stopPropagation();
 
-    this.cartService.addToCart(product, 1).subscribe({
-      next: () => {
-        alert(`${product.name} a été ajouté au panier !`);
-      },
-      error: () => {
-        alert('Impossible d’ajouter l’article au panier. Veuillez réessayer.');
-      }
-    });
+    this.cartService.addToCart(product, 1);
+    alert(`${product.name} a été ajouté au panier !`);
   }
 }

@@ -1,107 +1,267 @@
-<!-- Main Header -->
-<header class="py-3 bg-white border-bottom">
-  <div class="container d-flex align-items-center justify-content-between">
-    <!-- Brand Logo -->
-    <a routerLink="/" class="navbar-brand d-flex align-items-center gap-3">
-      <img src="/logo.jpg" alt="Yasmina Store Logo" style="height: 75px; width: 75px; object-fit: cover; border-radius: 50%;">
-      <span class="m-0 fw-bold tracking-tight text-dark fs-3" style="font-family: 'Inter Tight', sans-serif;">Yasmina Store</span>
-    </a>
+<!-- Top Luxury Announcement Ribbon -->
+<div class="top-announcement-bar py-1 text-center bg-light border-bottom">
+  <div class="container d-flex justify-content-between align-items-center" style="font-size: 11px; letter-spacing: 0.6px; font-weight: 500;">
+    <span class="d-none d-md-inline text-muted">
+      <i class="bi bi-geo-alt me-1 text-secondary"></i> Sfax, Tunisie • Livraison Express 24-48h
+    </span>
+    <span class="mx-auto text-uppercase fw-semibold tracking-wider text-dark">
+      Paiement à la livraison sur toute la Tunisie • Satisfait ou Échangé
+    </span>
+    <span class="d-none d-md-inline text-muted">
+      <i class="bi bi-whatsapp me-1 text-success"></i> Assistance Client 7j/7
+    </span>
+  </div>
+</div>
 
-    <!-- Search Bar -->
-    <div class="d-none d-lg-flex flex-grow-1 mx-5" style="max-width: 500px;">
-      <div class="input-group">
-        <input #searchInput type="text" (keyup.enter)="search(searchInput.value)" class="form-control border-end-0 py-2 bg-light border-2" placeholder="Rechercher des vêtements, robes, blouses..." aria-label="Search" style="border-color: #eaeaea; border-radius: 4px 0 0 4px; font-size: 14px;">
-        <button (click)="search(searchInput.value)" class="btn btn-dark px-4" type="button" style="border-radius: 0 4px 4px 0;">
-          <i class="bi bi-search"></i>
-        </button>
-      </div>
-    </div>
+<!-- Transparent backdrop to dismiss fixed dropdown when clicking outside -->
+@if (activeDeptId() !== null) {
+  <div class="dropdown-backdrop-transparent" (click)="closeDropdown()"></div>
+}
 
-    <!-- Right Header Actions -->
-    <div class="d-flex align-items-center gap-3">
-      <!-- Admin Account Action -->
-      <div class="dropdown">
-        <button class="btn btn-link text-dark p-1 position-relative dropdown-toggle no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="box-shadow: none;">
-          <i class="bi bi-shield-lock fs-4"></i>
+<!-- Main Nawara-Style Luxury Header -->
+<header class="nawara-header bg-white sticky-top">
+  <div class="container-fluid px-3 px-xl-5 py-2.5">
+    <div class="d-flex align-items-center justify-content-between position-relative">
+      
+      <!-- Left: Mobile Trigger + Department Pills (FEMME, HOMME...) + Links -->
+      <div class="d-flex align-items-center gap-3">
+        <!-- Mobile Hamburger Button -->
+        <button class="btn btn-link text-dark p-1 d-lg-none border-0" 
+                type="button" 
+                (click)="toggleMobileMenu()" 
+                aria-label="Menu de navigation">
+          <i class="bi bi-list fs-2"></i>
         </button>
-        
-        <!-- Admin Dropdown Menu -->
-        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-3 mt-2" style="width: 250px; z-index: 1050; border-radius: 12px;">
-          @if (authService.currentUser(); as user) {
-            <!-- Admin logged in -->
-            <h6 class="fw-bold text-dark mb-1">Espace Administrateur</h6>
-            <p class="text-muted mb-3" style="font-size: 12px;">{{ user.email }}</p>
-            <hr class="my-2">
-            @if (user.role === 'ADMIN') {
-              <a class="dropdown-item py-2 fw-semibold text-warning-emphasis" routerLink="/admin"><i class="bi bi-shield-lock me-2"></i> Panneau d'Administration</a>
-            }
-            <a class="dropdown-item py-2" routerLink="/orders"><i class="bi bi-bag me-2"></i> Mes Commandes</a>
-            <a class="dropdown-item py-2" routerLink="/category"><i class="bi bi-heart me-2"></i> Nos Collections</a>
-            <hr class="my-2">
-            <button (click)="logout()" class="btn btn-outline-danger w-100 btn-sm mt-1">Se déconnecter</button>
-          } @else {
-            <!-- Guest/Logged out state -->
-            <h6 class="fw-bold text-dark mb-0" style="font-family: 'Inter Tight', sans-serif; font-size: 15px;">Bienvenue chez Yasmina Store</h6>
-            <p class="text-muted mb-3" style="font-size: 12px;">Accédez à votre compte et vos commandes</p>
-            
-            <a class="dropdown-item py-2 text-muted" routerLink="/auth" [queryParams]="{mode: 'login'}"><i class="bi bi-bag me-2"></i> Mes Commandes</a>
-            <a class="dropdown-item py-2 text-muted" routerLink="/category"><i class="bi bi-heart me-2"></i> Nos Collections</a>
-            
-            <hr class="my-3">
-            
-            <div class="d-grid gap-2">
-              <a routerLink="/auth" [queryParams]="{mode: 'login'}" class="btn btn-dark btn-sm py-2 fw-semibold" style="border-radius: 20px; font-size: 13px;">Se Connecter</a>
-              <a routerLink="/auth" [queryParams]="{mode: 'register'}" class="btn btn-outline-dark btn-sm py-2 fw-semibold" style="border-radius: 20px; font-size: 13px;">S'Inscrire</a>
+
+        <!-- Desktop Navigation Bar -->
+        <nav class="d-none d-lg-flex align-items-center gap-3 text-uppercase fw-semibold nawara-nav" style="font-size: 12px; letter-spacing: 0.5px;">
+          
+          <!-- Dynamic Department Buttons (e.g. FEMME, HOMME...) with Fixed Click Dropdown -->
+          @for (dept of departments(); track dept.id) {
+            <div class="position-relative d-inline-block">
+              <button class="nawara-dept-btn d-inline-flex align-items-center gap-1.5"
+                      [class.active]="activeDeptId() === dept.id"
+                      type="button"
+                      (click)="toggleDeptDropdown(dept, $event)"
+                      [attr.aria-expanded]="activeDeptId() === dept.id"
+                      title="Cliquer pour afficher les catégories de {{ dept.name }}">
+                <span>{{ dept.name }}</span>
+                <i class="bi bi-chevron-down transition-transform" 
+                   [class.rotate-180]="activeDeptId() === dept.id" 
+                   style="font-size: 10px;"></i>
+              </button>
+
+              <!-- Fixed Luxury Dropdown Menu -->
+              @if (activeDeptId() === dept.id) {
+                <div class="nawara-dropdown-menu shadow-lg border rounded-3 p-3 mt-1" 
+                     (click)="$event.stopPropagation()">
+                  <div class="dropdown-header text-uppercase fw-bold text-dark px-2 mb-1 d-flex justify-content-between align-items-center" style="font-size: 11px; letter-spacing: 1px;">
+                    <span>Rayon {{ dept.name }}</span>
+                    <button type="button" class="btn-close btn-close-sm" style="font-size: 8px;" (click)="closeDropdown()"></button>
+                  </div>
+                  
+                  <a class="dropdown-item rounded-2 py-1.5 px-2 fw-semibold" 
+                     routerLink="/category" 
+                     [queryParams]="{department: dept.code}" 
+                     (click)="closeDropdown()">
+                    <i class="bi bi-grid-fill me-2 text-muted"></i> Toute la collection {{ dept.name }}
+                  </a>
+                  
+                  <div class="dropdown-divider my-1.5"></div>
+                  
+                  <!-- Department Subcategories with Icons (Zalando Style) -->
+                  @for (sub of getSubcategories(dept.subcategories); track sub) {
+                    <a class="dropdown-item rounded-2 py-2 px-2.5 d-flex align-items-center gap-2.5" 
+                       [class.text-danger]="isPromoSub(sub)"
+                       [class.fw-bold]="isPromoSub(sub)"
+                       routerLink="/category" 
+                       [queryParams]="isPromoSub(sub) ? {promo: 'true', department: dept.code} : {search: sub, department: dept.code}"
+                       (click)="closeDropdown()">
+                      <i [class]="getCategoryIcon(sub)" style="font-size: 15px; width: 20px; text-align: center;"></i>
+                      <span class="text-uppercase" style="letter-spacing: 0.3px;">{{ sub }}</span>
+                    </a>
+                  }
+                </div>
+              }
             </div>
           }
-        </div>
+
+          <!-- Direct Navigation Links -->
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nawara-link">
+            Accueil
+          </a>
+          <a routerLink="/category" [queryParams]="{category: null}" routerLinkActive="active" class="nawara-link">
+            Nouveautés
+          </a>
+          <a [routerLink]="['/category']" [queryParams]="{search: 'Robe'}" routerLinkActive="active" class="nawara-link">
+            Robes
+          </a>
+          <a [routerLink]="['/category']" [queryParams]="{search: 'Maille'}" routerLinkActive="active" class="nawara-link">
+            Maille
+          </a>
+          <a [routerLink]="['/category']" [queryParams]="{search: 'Accessoires'}" routerLinkActive="active" class="nawara-link">
+            Accessoires
+          </a>
+          
+          <!-- Soldes / Promos Pill -->
+          <a routerLink="/category" [queryParams]="{promo: 'true'}" routerLinkActive="active" class="nawara-link text-danger fw-bold d-inline-flex align-items-center gap-1">
+            <span class="badge bg-danger text-white rounded-pill px-1.5 py-0.5" style="font-size: 9px;">-PROMO</span>
+            <span>Soldes</span>
+          </a>
+        </nav>
       </div>
 
-      <!-- Wishlist Link -->
-      <a routerLink="/category" class="position-relative text-dark p-1" title="Voir les collections">
-        <i class="bi bi-heart fs-4"></i>
-      </a>
+      <!-- Center: Yasmina Store Luxury Brand Identity -->
+      <div class="header-brand-wrap text-center">
+        <a routerLink="/" class="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none py-1">
+          <img src="/logo.jpg" alt="Yasmina Store" class="rounded-circle shadow-xs brand-logo-img">
+          <span class="brand-title fw-bold text-dark">
+            Yasmina Store
+          </span>
+        </a>
+      </div>
 
-      <!-- Cart Button Link -->
-      <a routerLink="/cart" class="position-relative text-dark p-1 me-1">
-        <i class="bi bi-cart3 fs-4"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px; padding: 3px 6px;">
-          {{ cartService.cartCount() }}
-        </span>
-      </a>
+      <!-- Right: Search Bar, Wishlist (Heart), Cart -->
+      <div class="d-flex align-items-center gap-2.5 gap-md-3">
+        
+        <!-- Desktop Search Bar -->
+        <div class="search-box position-relative d-none d-md-block">
+          <input #searchInput 
+                 type="text" 
+                 (keyup.enter)="search(searchInput.value)" 
+                 class="form-control form-control-sm rounded-pill pe-4 ps-3 bg-light border-0 search-input" 
+                 placeholder="Rechercher..." 
+                 style="font-size: 13px; height: 36px; width: 200px;">
+          <button (click)="search(searchInput.value)" class="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y p-0 pe-2.5 border-0" type="button" aria-label="Rechercher">
+            <i class="bi bi-search" style="font-size: 13px;"></i>
+          </button>
+        </div>
+
+        <!-- Mobile Search Toggle Button -->
+        <button class="btn btn-link text-dark p-1 d-md-none border-0" (click)="toggleSearch()" aria-label="Ouvrir la recherche">
+          <i class="bi bi-search fs-5"></i>
+        </button>
+
+        <!-- Wishlist / Favorites Link with Live Counter (Links to /favorites) -->
+        <a routerLink="/favorites" class="header-action-btn position-relative text-dark p-1.5" title="Mes Favoris (Coups de Cœur)">
+          <i class="bi bi-heart fs-4"></i>
+          @if (wishlistService.favoritesCount() > 0) {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px; padding: 2.5px 5.5px;">
+              {{ wishlistService.favoritesCount() }}
+            </span>
+          }
+        </a>
+
+        <!-- Cart Bag Link with Live Counter -->
+        <a routerLink="/cart" class="header-action-btn position-relative text-dark p-1.5" title="Mon Panier">
+          <i class="bi bi-bag fs-4"></i>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="font-size: 10px; padding: 2.5px 5.5px;">
+            {{ cartService.cartCount() }}
+          </span>
+        </a>
+
+        <!-- Discreet link for logged in Admin ONLY (No public login/shield button shown!) -->
+        @if (authService.currentUser(); as user) {
+          @if (user.role === 'ADMIN') {
+            <a routerLink="/admin" class="btn btn-dark btn-sm rounded-pill px-3 py-1 ms-1 d-inline-flex align-items-center gap-1.5 shadow-xs" style="font-size: 11px; font-weight: 600;">
+              <i class="bi bi-shield-lock-fill text-warning"></i>
+              <span>Admin</span>
+            </a>
+          }
+        }
+      </div>
+
     </div>
+
+    <!-- Mobile Search Expandable Bar -->
+    @if (searchOpen()) {
+      <div class="pt-2 pb-1 d-md-none border-top mt-2">
+        <div class="position-relative">
+          <input #mobileSearchInput 
+                 type="text" 
+                 (keyup.enter)="search(mobileSearchInput.value)" 
+                 class="form-control rounded-pill pe-4 ps-3 bg-light border" 
+                 placeholder="Rechercher des vêtements, robes, hauts..." 
+                 style="font-size: 13px; height: 38px;">
+          <button (click)="search(mobileSearchInput.value)" class="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y p-0 pe-3 border-0" type="button">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </div>
+    }
+
   </div>
 </header>
 
-<!-- Navigation Menu Bar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark py-1">
-  <div class="container">
-    <button class="navbar-expand navbar-toggler border-0 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="mainNavbar">
-      <ul class="navbar-nav gap-2 py-1" style="font-size: 14px; font-weight: 500;">
-        <li class="nav-item">
-          <a class="nav-link text-light-hover" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle text-light-hover cursor-pointer" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Nos Catégories
-          </a>
-          <ul class="dropdown-menu border-0 shadow-sm">
-            <li><a class="dropdown-item" routerLink="/category" [queryParams]="{category: null}">Tous les vêtements</a></li>
-            <li><hr class="dropdown-divider"></li>
-            @for (cat of categories(); track cat.id) {
-              <li>
-                <a class="dropdown-item" routerLink="/category" [queryParams]="{category: cat.id}">{{ cat.name }}</a>
-              </li>
-            }
-          </ul>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link text-light-hover" routerLink="/category" routerLinkActive="active">Tout Parcourir</a>
-        </li>
-      </ul>
+<!-- Mobile Navigation Drawer / Offcanvas -->
+@if (mobileMenuOpen()) {
+  <div class="mobile-drawer-backdrop" (click)="closeMobileMenu()"></div>
+  <div class="mobile-drawer bg-white shadow-lg d-flex flex-column">
+    
+    <!-- Drawer Header -->
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <img src="/logo.jpg" alt="Logo" class="rounded-circle" style="width: 34px; height: 34px; object-fit: cover;">
+        <span class="fw-bold fs-5" style="font-family: 'Playfair Display', Georgia, serif;">Yasmina Store</span>
+      </div>
+      <button class="btn btn-link text-dark p-1 border-0" (click)="closeMobileMenu()">
+        <i class="bi bi-x-lg fs-5"></i>
+      </button>
     </div>
+
+    <!-- Drawer Navigation Links -->
+    <div class="p-3 flex-grow-1 overflow-y-auto">
+      
+      <!-- Departments list -->
+      <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 11px; letter-spacing: 0.8px;">
+        Rayons
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        @for (dept of departments(); track dept.id) {
+          <a [routerLink]="['/category']" [queryParams]="{department: dept.code}" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-bold" (click)="closeMobileMenu()">
+            {{ dept.name }}
+          </a>
+        }
+      </div>
+
+      <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 11px; letter-spacing: 0.8px;">
+        Navigation
+      </div>
+      <div class="list-group list-group-flush mb-4">
+        <a routerLink="/" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
+          <i class="bi bi-house me-2"></i> Accueil
+        </a>
+        <a routerLink="/category" [queryParams]="{category: null}" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
+          <i class="bi bi-grid me-2"></i> Tout Parcourir
+        </a>
+        <a routerLink="/category" [queryParams]="{promo: 'true'}" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-bold text-danger" (click)="closeMobileMenu()">
+          <i class="bi bi-percent me-2"></i> Soldes & Promotions
+        </a>
+        <a routerLink="/favorites" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
+          <i class="bi bi-heart me-2 text-danger"></i> Mes Favoris ({{ wishlistService.favoritesCount() }})
+        </a>
+        <a routerLink="/cart" class="list-group-item list-group-item-action border-0 py-2.5 px-0 fw-semibold text-dark" (click)="closeMobileMenu()">
+          <i class="bi bi-bag me-2"></i> Mon Panier ({{ cartService.cartCount() }})
+        </a>
+      </div>
+
+      <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 11px; letter-spacing: 0.8px;">
+        Catégories Populaires
+      </div>
+      <div class="list-group list-group-flush">
+        @for (cat of categories(); track cat.id) {
+          <a [routerLink]="['/category']" [queryParams]="{category: cat.id}" class="list-group-item list-group-item-action border-0 py-2 px-0 text-dark" (click)="closeMobileMenu()">
+            <i class="bi bi-chevron-right me-2 small text-muted"></i> {{ cat.name }}
+          </a>
+        }
+      </div>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="p-3 bg-light border-top text-center text-muted small">
+      <div>Livraison partout en Tunisie</div>
+      <div class="fw-semibold text-dark">Yasmina Store • Mode & Prêt-à-porter</div>
+    </div>
+
   </div>
-</nav>
+}

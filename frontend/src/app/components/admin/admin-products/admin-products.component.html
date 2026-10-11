@@ -18,12 +18,35 @@
     </div>
   }
 
-  <!-- Search -->
-  <div class="mb-4">
-    <div class="input-group" style="max-width: 400px;">
+  <!-- Search & Filters -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div class="input-group" style="max-width: 380px;">
       <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
       <input type="text" class="form-control border-start-0 py-2" placeholder="Rechercher par nom, marque ou catégorie..." 
              [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" style="font-size: 14px;">
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="btn-group p-1 bg-white rounded-pill border shadow-sm">
+      <button type="button" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold"
+              [class.btn-dark]="filterMode() === 'all'"
+              [class.btn-light]="filterMode() !== 'all'"
+              (click)="filterMode.set('all')">
+        Tous ({{ products().length }})
+      </button>
+      <button type="button" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-danger"
+              [class.btn-danger]="filterMode() === 'solde'"
+              [class.text-white]="filterMode() === 'solde'"
+              [class.btn-light]="filterMode() !== 'solde'"
+              (click)="filterMode.set('solde')">
+        <i class="bi bi-tag-fill me-1"></i> En Solde
+      </button>
+      <button type="button" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold"
+              [class.btn-secondary]="filterMode() === 'out_of_stock'"
+              [class.btn-light]="filterMode() !== 'out_of_stock'"
+              (click)="filterMode.set('out_of_stock')">
+        Rupture
+      </button>
     </div>
   </div>
 
@@ -40,6 +63,7 @@
               <th class="border-0 pb-3 ps-4">Produit</th>
               <th class="border-0 pb-3">Catégorie</th>
               <th class="border-0 pb-3">Prix</th>
+              <th class="border-0 pb-3">Solde / Promo</th>
               <th class="border-0 pb-3">Stock Total</th>
               <th class="border-0 pb-3 pe-4 text-end">Actions</th>
             </tr>
@@ -59,7 +83,27 @@
                 <td>
                   <span class="badge bg-light text-dark border" style="font-size: 11px;">{{ prod.category?.name || 'N/A' }}</span>
                 </td>
-                <td class="fw-semibold">{{ prod.price }} DT</td>
+                <td>
+                  @if (prod.onSale && prod.discountPercent && prod.discountPercent > 0) {
+                    <div class="fw-bold text-danger">{{ getEffectivePrice(prod.price, prod.discountPercent) }} DT</div>
+                    <small class="text-muted text-decoration-line-through" style="font-size: 11px;">{{ prod.price }} DT</small>
+                  } @else {
+                    <span class="fw-semibold">{{ prod.price }} DT</span>
+                  }
+                </td>
+                <td>
+                  @if (prod.onSale && prod.discountPercent && prod.discountPercent > 0) {
+                    <span class="badge bg-danger rounded-pill px-2.5 py-1.5 fw-bold shadow-sm d-inline-flex align-items-center gap-1 cursor-pointer"
+                          (click)="quickToggleSolde(prod, false)"
+                          title="Cliquez pour désactiver le solde">
+                      <i class="bi bi-tag-fill"></i> -{{ prod.discountPercent }}% (Actif)
+                    </span>
+                  } @else {
+                    <button type="button" (click)="quickToggleSolde(prod, true, 20)" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-0.5" style="font-size: 11px;">
+                      <i class="bi bi-percent"></i> Mettre en solde
+                    </button>
+                  }
+                </td>
                 <td>
                   @if (prod.stock > 10) {
                     <span class="text-success fw-semibold">{{ prod.stock }}</span>
@@ -80,7 +124,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="text-center text-muted py-5">Aucun produit trouvé.</td>
+                <td colspan="6" class="text-center text-muted py-5">Aucun produit trouvé.</td>
               </tr>
             }
           </tbody>
@@ -127,17 +171,64 @@
           </div>
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <label class="form-label fw-semibold" style="font-size: 13px;">Marque</label>
         <input type="text" class="form-control py-2" [(ngModel)]="productForm.brand" placeholder="Ex: Aura Paris" style="border-radius: 6px; font-size: 14px;">
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Rayon / Département</label>
+        <select class="form-select py-2" [(ngModel)]="productForm.department" style="border-radius: 6px; font-size: 14px;">
+          <option value="Femme">Femme</option>
+          <option value="Homme">Homme</option>
+          <option value="Enfant">Enfant</option>
+        </select>
+      </div>
+      <div class="col-md-4">
         <label class="form-label fw-semibold" style="font-size: 13px;">Catégorie *</label>
         <select class="form-select py-2" [(ngModel)]="productForm.categoryId" style="border-radius: 6px; font-size: 14px;">
           @for (cat of categories(); track cat.id) {
-            <option [ngValue]="cat.id">{{ cat.name }}</option>
+            <option [ngValue]="cat.id">{{ cat.name }} ({{ cat.department || 'Femme' }})</option>
           }
         </select>
+      </div>
+
+      <!-- Solde & Promotion Section -->
+      <div class="col-12 border rounded-3 p-3 bg-light my-2">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <label class="form-label fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 13px;">
+            <i class="bi bi-tag-fill text-danger"></i>
+            <span>Gestion du Solde & Promotion</span>
+          </label>
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" role="switch" id="onSaleSwitch" [(ngModel)]="productForm.onSale">
+            <label class="form-check-label fw-semibold" for="onSaleSwitch" style="font-size: 12px;">
+              {{ productForm.onSale ? 'En Solde (Actif)' : 'Prix Normal' }}
+            </label>
+          </div>
+        </div>
+
+        @if (productForm.onSale) {
+          <div class="row g-2 align-items-center mt-1 pt-2 border-top">
+            <div class="col-md-6">
+              <label class="form-label small text-muted mb-1" style="font-size: 12px;">Pourcentage de réduction (%)</label>
+              <div class="input-group input-group-sm">
+                <input type="number" class="form-control" [(ngModel)]="productForm.discountPercent" placeholder="20" min="1" max="99">
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-2 bg-white rounded border text-center">
+                <small class="text-muted d-block" style="font-size: 11px;">Prix après remise</small>
+                <span class="fw-bold text-danger fs-6">
+                  {{ getEffectivePrice(productForm.price, productForm.discountPercent) }} DT
+                </span>
+                <small class="text-muted ms-1 text-decoration-line-through" style="font-size: 11px;">
+                  {{ productForm.price }} DT
+                </small>
+              </div>
+            </div>
+          </div>
+        }
       </div>
       <!-- Direct Image Upload Component -->
       <div class="col-12">

@@ -1,0 +1,28 @@
+
+SET NAMES utf8mb4;
+USE ecommerce;
+
+UPDATE departments SET 
+  name = 'Femme',
+  subcategories = 'Robes,Hauts & Blouses,Maille,Manteaux & Vestes,Accessoires,Nouveautés,Manteaux,Jeans,Pépites à petits prix'
+WHERE code = 'femme' OR id = 1;
+
+UPDATE departments SET 
+  name = 'Homme',
+  subcategories = 'Tout voir,Nouveautés,Manteaux,Jeans,Chemises & Polos,Pantalons,Chaussures,Accessoires,Pépites à petits prix'
+WHERE code = 'homme' OR id = 2;
+
+UPDATE departments SET 
+  name = 'Enfant',
+  subcategories = 'Tout voir,Bébé,Fille,Garçon,Nouveautés,Pépites à petits prix'
+WHERE code = 'enfant' OR id = 3;
+
+UPDATE categories SET name = 'Nouveautés' WHERE id IN (6, 11, 23);
+UPDATE categories SET name = 'Pépites à petits prix' WHERE id IN (9, 18, 24);
+UPDATE categories SET name = 'Bébé' WHERE id = 20;
+UPDATE categories SET name = 'Garçon' WHERE id = 22;
+
+UPDATE products SET name = 'Robe d'Été Fleurie Maxi' WHERE id = 1;
+UPDATE products SET name = 'Pull en Maille Épaisse' WHERE id = 3;
+UPDATE products SET name = 'Sac à Main en Cuir de Luxe' WHERE id = 6;
+UPDATE products SET name = 'Robe Plissée Émeraude' WHERE id = 7;

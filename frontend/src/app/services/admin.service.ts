@@ -75,11 +75,11 @@ export class AdminService {
   }
 
   // Categories CRUD
-  createCategory(category: { name: string }): Observable<Category> {
+  createCategory(category: { name: string; department?: string; icon?: string }): Observable<Category> {
     return this.http.post<Category>(`${this.apiUrl}/categories`, category);
   }
 
-  updateCategory(id: number, category: { name: string }): Observable<Category> {
+  updateCategory(id: number, category: { name: string; department?: string; icon?: string }): Observable<Category> {
     return this.http.put<Category>(`${this.apiUrl}/categories/${id}`, category);
   }
 

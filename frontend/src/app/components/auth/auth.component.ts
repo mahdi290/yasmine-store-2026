@@ -18,7 +18,7 @@ export class AuthComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   // States
-  isRegisterMode = signal<boolean>(true);
+  isRegisterMode = signal<boolean>(false);
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
   loading = signal<boolean>(false);
@@ -28,7 +28,7 @@ export class AuthComponent implements OnInit {
       const mode = params['mode'];
       if (mode === 'register') {
         this.isRegisterMode.set(true);
-      } else if (mode === 'login') {
+      } else {
         this.isRegisterMode.set(false);
       }
     });
