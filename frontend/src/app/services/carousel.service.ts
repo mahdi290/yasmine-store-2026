@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../environments/environment';
 
 export interface CarouselSlide {
   id?: number;
@@ -57,7 +57,7 @@ export const DEFAULT_CAROUSEL_SLIDES: CarouselSlide[] = [
 })
 export class CarouselService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8081/api';
+  private apiUrl = environment.apiUrl;
 
   getSlides(): Observable<CarouselSlide[]> {
     return this.http.get<CarouselSlide[]>(`${this.apiUrl}/carousel`).pipe(
