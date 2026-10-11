@@ -173,10 +173,17 @@ public class AdminController {
 
     @PostMapping("/products")
     public ResponseEntity<?> createProduct(@RequestBody ProductRequest req) {
-        Category category = categoryRepository.findById(req.categoryId())
-                .orElse(null);
+        Category category = null;
+        if (req.categoryId() != null) {
+            category = categoryRepository.findById(req.categoryId()).orElse(null);
+        }
         if (category == null) {
-            return ResponseEntity.badRequest().body("Error: Category not found!");
+            List<Category> allCategories = categoryRepository.findAll();
+            if (!allCategories.isEmpty()) {
+                category = allCategories.get(0);
+            } else {
+                return ResponseEntity.badRequest().body("Error: Category not found! Please create a category first.");
+            }
         }
 
         Product product = Product.builder()
@@ -200,9 +207,12 @@ public class AdminController {
             return ResponseEntity.notFound().build();
         }
 
-        Category category = categoryRepository.findById(req.categoryId()).orElse(null);
+        Category category = null;
+        if (req.categoryId() != null) {
+            category = categoryRepository.findById(req.categoryId()).orElse(null);
+        }
         if (category == null) {
-            return ResponseEntity.badRequest().body("Error: Category not found!");
+            category = product.getCategory();
         }
 
         product.setName(req.name());

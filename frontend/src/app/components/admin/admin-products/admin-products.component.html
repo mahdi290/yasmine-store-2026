@@ -13,8 +13,15 @@
     </div>
   }
   @if (errorMsg()) {
-    <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+    <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center justify-content-between" style="font-size: 13px; border-radius: 8px;">
+      <div>
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+      </div>
+      @if (errorMsg()?.includes('403') || errorMsg()?.includes('expirée')) {
+        <a routerLink="/auth" [queryParams]="{mode: 'login'}" class="btn btn-dark btn-sm ms-3" style="font-size: 12px;">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Se Connecter
+        </a>
+      }
     </div>
   }
 

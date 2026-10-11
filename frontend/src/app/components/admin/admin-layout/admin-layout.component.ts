@@ -16,6 +16,6 @@ export class AdminLayoutComponent {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/auth']);
+    this.router.navigate(['/']);
   }
 }

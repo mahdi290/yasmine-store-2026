@@ -46,9 +46,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   slides: CarouselSlide[] = [
     {
       id: 1,
-      badge: 'PHILOSOPHY',
-      title: 'I TAKE THE RISK BECAUSE...',
-      subtitle: "Exprimez votre audace. Un design inspiré par la modernité, conçu pour celles qui n'ont pas peur de marquer leur différence.",
+      badge: 'COLLECTION EXCLUSIVE',
+      title: 'SOULEVEZ VOTRE STYLE',
+      subtitle: 'Affirmez votre personnalité avec des pièces uniques et raffinées, conçues pour marquer les esprits.',
       btnText: 'ACHETER MAINTENANT',
       link: '/category',
       imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&auto=format&fit=crop&q=80'

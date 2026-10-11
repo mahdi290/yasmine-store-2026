@@ -4,10 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
 import { ProductService, Product, Category } from '../../../services/product.service';
 
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-admin-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-products.component.html',
   styleUrls: ['./admin-products.component.scss']
 })
@@ -186,10 +188,27 @@ export class AdminProductsComponent implements OnInit {
     this.errorMsg.set(null);
     this.successMsg.set(null);
 
-    if (!this.productForm.name || !this.productForm.price || !this.productForm.categoryId) {
-      this.errorMsg.set('Veuillez remplir tous les champs obligatoires.');
+    // Auto-resolve categoryId if unselected or string
+    let catId = Number(this.productForm.categoryId);
+    if ((!catId || isNaN(catId) || catId === 0) && this.categories().length > 0) {
+      catId = this.categories()[0].id;
+      this.productForm.categoryId = catId;
+    }
+
+    if (!this.productForm.name || !this.productForm.price) {
+      this.errorMsg.set('Veuillez remplir tous les champs obligatoires (Nom, Prix, Photo).');
       return;
     }
+
+    const extractMsg = (err: any, fallback: string) => {
+      if (err.status === 403 || err.status === 401) {
+        return 'Session expirée ou non autorisée (403). Veuillez vous connecter avec le compte administrateur (admin@shop.com / adminpassword).';
+      }
+      if (typeof err.error === 'string') return err.error;
+      if (err.error?.error) return err.error.error;
+      if (err.error?.message) return err.error.message;
+      return fallback;
+    };
 
     // Calculate total stock from sizeStocks
     const s = this.productForm.sizeStocks;
@@ -203,7 +222,7 @@ export class AdminProductsComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.errorMsg.set(err.error || 'Échec de la création du produit.');
+          this.errorMsg.set(extractMsg(err, 'Échec de la création du produit.'));
         }
       });
     } else if (this.modalMode() === 'edit') {
@@ -214,7 +233,7 @@ export class AdminProductsComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.errorMsg.set(err.error || 'Échec de la mise à jour du produit.');
+          this.errorMsg.set(extractMsg(err, 'Échec de la mise à jour du produit.'));
         }
       });
     }

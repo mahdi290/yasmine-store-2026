@@ -2,25 +2,49 @@
 @use "bootstrap/scss/bootstrap";
 @import "bootstrap-icons/font/bootstrap-icons.css";
 
+/* ============================================================
+   GREEN & PINK COLOR PALETTE THEME (Yasmina Store)
+   - #C09BAC : Dusty Pink / Soft Mauve (Accent & Highlights)
+   - #314021 : Dark Forest Green (Primary Brand & Navigation)
+   - #617246 : Sage / Olive Green (Secondary & Interactive)
+   - #0C0D07 : Deep Obsidian (Footer, Dark Backgrounds & Typography)
+   - #D8C6BA : Warm Sand / Soft Nude (Light Card Backgrounds & Borders)
+   ============================================================ */
+
 :root {
   --primary-font: 'Inter', sans-serif;
   --heading-font: 'Inter Tight', sans-serif;
-  --ns-dark: #000000;
-  --ns-gray-light: #f8f9fa;
-  --ns-border-color: #eaeaea;
+
+  /* Palette Hex Codes */
+  --c-dusty-pink: #C09BAC;
+  --c-dark-green: #314021;
+  --c-sage-green: #617246;
+  --c-deep-obsidian: #0C0D07;
+  --c-warm-sand: #D8C6BA;
+
+  /* Brand Theme Variables */
+  --ns-dark: #314021;
+  --ns-primary: #314021;
+  --ns-secondary: #617246;
+  --ns-accent: #C09BAC;
+  --ns-sand: #D8C6BA;
+  --ns-deep-dark: #0C0D07;
+
+  --ns-gray-light: #F7F4F0;
+  --ns-border-color: rgba(97, 114, 70, 0.2);
 }
 
 body {
   font-family: var(--primary-font);
-  color: #2b2b2b;
-  background-color: #ffffff;
+  color: #24291F;
+  background-color: #FAF8F5;
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--heading-font);
   font-weight: 700;
-  color: var(--ns-dark);
+  color: var(--c-deep-obsidian);
 }
 
 a {
@@ -30,37 +54,99 @@ a {
 }
 
 a:hover {
-  color: #5b21b6;
+  color: var(--c-sage-green);
+}
+
+/* Selection Color */
+::selection {
+  background-color: var(--c-dusty-pink);
+  color: #ffffff;
 }
 
 /* Custom buttons */
-.btn-dark {
-  background-color: var(--ns-dark);
-  border-color: var(--ns-dark);
-  border-radius: 4px;
-  font-weight: 500;
+.btn-dark, .btn-primary {
+  background-color: var(--c-dark-green) !important;
+  border-color: var(--c-dark-green) !important;
+  color: #ffffff !important;
+  border-radius: 6px;
+  font-weight: 600;
   padding: 10px 24px;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+
+  &:hover {
+    background-color: var(--c-sage-green) !important;
+    border-color: var(--c-sage-green) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(49, 64, 33, 0.35);
+  }
 }
 
-.btn-dark:hover {
-  background-color: #333333;
-  border-color: #333333;
-  transform: translateY(-1px);
+.btn-accent, .btn-pink {
+  background-color: var(--c-dusty-pink) !important;
+  border-color: var(--c-dusty-pink) !important;
+  color: #ffffff !important;
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 10px 24px;
+
+  &:hover {
+    background-color: #b0899b !important;
+    border-color: #b0899b !important;
+    box-shadow: 0 4px 14px rgba(192, 155, 172, 0.4);
+  }
 }
 
 .btn-outline-dark {
-  border-color: var(--ns-dark);
-  color: var(--ns-dark);
-  border-radius: 4px;
-  font-weight: 500;
+  border-color: var(--c-dark-green) !important;
+  color: var(--c-dark-green) !important;
+  border-radius: 6px;
+  font-weight: 600;
   padding: 10px 24px;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+
+  &:hover {
+    background-color: var(--c-dark-green) !important;
+    border-color: var(--c-dark-green) !important;
+    color: #ffffff !important;
+  }
 }
 
-.btn-outline-dark:hover {
-  background-color: var(--ns-dark);
-  color: #ffffff;
+.btn-outline-pink {
+  border-color: var(--c-dusty-pink) !important;
+  color: var(--c-dusty-pink) !important;
+  border-radius: 6px;
+  font-weight: 600;
+
+  &:hover {
+    background-color: var(--c-dusty-pink) !important;
+    color: #ffffff !important;
+  }
+}
+
+/* Bootstrap Color Utility Overrides for Brand Harmony */
+.bg-dark {
+  background-color: var(--c-dark-green) !important;
+}
+
+.bg-black {
+  background-color: var(--c-deep-obsidian) !important;
+}
+
+.bg-light {
+  background-color: #F3EFEA !important;
+}
+
+.text-dark {
+  color: var(--c-deep-obsidian) !important;
+}
+
+.text-pink {
+  color: var(--c-dusty-pink) !important;
+}
+
+.text-sage {
+  color: var(--c-sage-green) !important;
 }
 
 /* Badges */
@@ -68,28 +154,28 @@ a:hover {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 2px;
+  padding: 5px 10px;
+  border-radius: 4px;
   letter-spacing: 0.5px;
 }
 
 .badge-ns-limited {
-  background-color: #000000;
+  background-color: var(--c-dark-green);
   color: #ffffff;
 }
 
 .badge-ns-discount {
-  background-color: #dc3545;
+  background-color: var(--c-dusty-pink);
   color: #ffffff;
 }
 
 .badge-ns-new {
-  background-color: #0d6efd;
+  background-color: var(--c-sage-green);
   color: #ffffff;
 }
 
 .badge-ns-trending {
-  background-color: #000000;
+  background-color: var(--c-deep-obsidian);
   color: #ffffff;
 }
 
@@ -101,14 +187,13 @@ a:hover {
 }
 
 .card-ns .card-img-wrapper {
-  background-color: var(--ns-gray-light);
+  background-color: var(--c-warm-sand);
   border-radius: 8px;
   overflow: hidden;
   position: relative;
 }
 
 .card-ns img {
-  mix-blend-mode: multiply;
   transition: transform 0.5s ease;
 }
 
@@ -118,7 +203,7 @@ a:hover {
 
 /* Star rating colors */
 .text-warning-ns {
-  color: #ffc107;
+  color: #D4A373;
 }
 
 /* Scrollbar styling */
@@ -126,15 +211,16 @@ a:hover {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #EFEBE6;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--c-sage-green);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--c-dark-green);
 }
+
 /* Hide main header and footer on admin routes */
 .is-admin-route {
   app-header,
