@@ -6,12 +6,16 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -26,6 +30,22 @@ public class EmailService {
 
     @Value("${spring.mail.username:yasminestoresf@gmail.com}")
     private String mailSenderUsername;
+
+    // Render gratuit bloque le SMTP : si BREVO_API_KEY est défini, les emails passent par l'API HTTPS de Brevo
+    @Value("${app.brevo.api-key:}")
+    private String brevoApiKey;
+
+    @Value("${app.frontend.url:https://yasmine-store-2026.vercel.app}")
+    private String frontendUrl;
+
+    private final RestClient restClient = createRestClient();
+
+    private static RestClient createRestClient() {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(10_000);
+        requestFactory.setReadTimeout(30_000);
+        return RestClient.builder().requestFactory(requestFactory).build();
+    }
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -51,9 +71,9 @@ public class EmailService {
         // 1. Toujours afficher un récapitulatif complet dans la console
         logOrderSummaryToConsole(order, items, formattedDate);
 
-        // 2. Si JavaMailSender n'est pas disponible
-        if (mailSender == null) {
-            log.warn("JavaMailSender n'est pas initialisé. Vérifiez les paramètres spring.mail dans application.properties.");
+        // 2. Si aucun moyen d'envoi n'est configuré
+        if (brevoApiKey.isBlank() && mailSender == null) {
+            log.warn("Aucun service email configuré. Définissez BREVO_API_KEY (ou les paramètres spring.mail en local).");
             return;
         }
 
@@ -62,7 +82,7 @@ public class EmailService {
             sendHtmlEmail(storeNotificationEmail, subject, htmlContent);
             log.info("Email de notification de commande #{} envoyé avec succès à {}", order.getId(), storeNotificationEmail);
         } catch (Exception e) {
-            log.warn("Échec d'envoi de l'email à la boutique ({}): {}. (Note: Si vous utilisez Gmail, vous devez générer un 'Mot de passe d'application' Google de 16 caractères).", storeNotificationEmail, e.getMessage());
+            log.warn("Échec d'envoi de l'email à la boutique ({}): {}", storeNotificationEmail, e.getMessage());
         }
 
         // 4. Si le client a renseigné son email, lui envoyer également un accusé de réception
@@ -78,6 +98,11 @@ public class EmailService {
     }
 
     private void sendHtmlEmail(String to, String subject, String htmlContent) throws Exception {
+        if (!brevoApiKey.isBlank()) {
+            sendWithBrevo(to, subject, htmlContent);
+            return;
+        }
+
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -87,6 +112,22 @@ public class EmailService {
         helper.setText(htmlContent, true);
 
         mailSender.send(message);
+    }
+
+    private void sendWithBrevo(String to, String subject, String htmlContent) {
+        Map<String, Object> payload = Map.of(
+                "sender", Map.of("name", "Yasmina Store", "email", mailSenderUsername),
+                "to", List.of(Map.of("email", to)),
+                "subject", subject,
+                "htmlContent", htmlContent
+        );
+        restClient.post()
+                .uri("https://api.brevo.com/v3/smtp/email")
+                .header("api-key", brevoApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private String buildOrderEmailHtml(Order order, List<OrderItem> items, String formattedDate) {
@@ -178,7 +219,7 @@ public class EmailService {
             + "<td align=\"right\" style=\"font-size: 20px; font-weight: 800; color: #0f172a; padding-top: 12px;\">" + order.getTotalPrice() + " DT</td>"
             + "</tr></table></td></tr>"
             + "<tr><td align=\"center\" style=\"padding: 10px 30px 30px;\">"
-            + "<a href=\"http://localhost:4200/admin/orders\" style=\"display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 13px; letter-spacing: 0.5px; padding: 12px 28px; border-radius: 8px; text-transform: uppercase;\">"
+            + "<a href=\"" + frontendUrl + "/admin/orders\" style=\"display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 13px; letter-spacing: 0.5px; padding: 12px 28px; border-radius: 8px; text-transform: uppercase;\">"
             + "Gérer la commande dans l'Admin &rarr;"
             + "</a></td></tr>"
             + "<tr><td style=\"background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;\">"

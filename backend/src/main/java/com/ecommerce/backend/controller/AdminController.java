@@ -2,17 +2,13 @@ package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.model.*;
 import com.ecommerce.backend.repository.*;
+import com.ecommerce.backend.service.ImageStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,6 +25,7 @@ public class AdminController {
     private final ShowcaseCardRepository showcaseCardRepository;
     private final CarouselSlideRepository carouselSlideRepository;
     private final DepartmentRepository departmentRepository;
+    private final ImageStorageService imageStorageService;
 
     // DTO records
     public record CategorySales(String categoryName, int salesCount, BigDecimal revenue) {}
@@ -151,21 +148,7 @@ public class AdminController {
             return ResponseEntity.badRequest().body(Map.of("error", "Veuillez sélectionner un fichier image."));
         }
         try {
-            String uploadDir = "uploads/products/";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            String newFilename = UUID.randomUUID().toString() + extension;
-            Path filePath = Paths.get(uploadDir + newFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = "http://localhost:8081/uploads/products/" + newFilename;
+            String fileUrl = imageStorageService.store(file, "products");
             return ResponseEntity.ok(Map.of("imageUrl", fileUrl));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Erreur lors de l'enregistrement de l'image : " + e.getMessage()));
@@ -481,21 +464,7 @@ public class AdminController {
             return ResponseEntity.badRequest().body(Map.of("error", "Veuillez sélectionner un fichier image."));
         }
         try {
-            String uploadDir = "uploads/carousel/";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            String newFilename = UUID.randomUUID().toString() + extension;
-            Path filePath = Paths.get(uploadDir + newFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = "http://localhost:8081/uploads/carousel/" + newFilename;
+            String fileUrl = imageStorageService.store(file, "carousel");
             return ResponseEntity.ok(Map.of("imageUrl", fileUrl));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Erreur lors de l'enregistrement de l'image : " + e.getMessage()));
