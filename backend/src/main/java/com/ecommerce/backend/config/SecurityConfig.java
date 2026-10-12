@@ -2,6 +2,7 @@ package com.ecommerce.backend.config;
 
 import com.ecommerce.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,6 +26,10 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+
+    // FRONTEND_URL (Render) : autorisé aussi en CORS, utile si le sous-domaine pages.dev diffère
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -57,7 +62,11 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:4200",
                 "https://*.vercel.app",
-                "https://yasmine-store-2026.vercel.app"
+                "https://yasmine-store-2026.vercel.app",
+                // Cloudflare Pages : domaine de production + déploiements de prévisualisation
+                "https://yasmine-store.pages.dev",
+                "https://*.yasmine-store.pages.dev",
+                frontendUrl
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

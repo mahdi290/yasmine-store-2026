@@ -35,7 +35,7 @@ public class EmailService {
     @Value("${app.brevo.api-key:}")
     private String brevoApiKey;
 
-    @Value("${app.frontend.url:https://yasmine-store-2026.vercel.app}")
+    @Value("${app.frontend.url:https://yasmine-store.pages.dev}")
     private String frontendUrl;
 
     private final RestClient restClient = createRestClient();
