@@ -3,6 +3,7 @@ package com.ecommerce.backend.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +17,16 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // 256-bit secret key for local development
-    private static final String SECRET_STRING = "your-256-bit-secret-key-must-be-very-long-and-secure-for-development";
-    private final SecretKey secretKey = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
+    private final SecretKey secretKey;
     private static final long EXPIRATION_TIME = 86400000; // 24 hours
+
+    // Clé lue depuis la variable d'environnement JWT_SECRET (au moins 32 caractères)
+    public JwtService(@Value("${app.jwt.secret}") String secret) {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("JWT_SECRET doit contenir au moins 32 caractères.");
+        }
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

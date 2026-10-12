@@ -249,7 +249,7 @@ export class AdminProductsComponent implements OnInit {
 
     const extractMsg = (err: any, fallback: string) => {
       if (err.status === 403 || err.status === 401) {
-        return 'Session expirée ou non autorisée (403). Veuillez vous connecter avec le compte administrateur (admin@shop.com / adminpassword).';
+        return 'Session expirée ou non autorisée (403). Veuillez vous connecter avec le compte administrateur.';
       }
       if (typeof err.error === 'string') return err.error;
       if (err.error?.error) return err.error.error;

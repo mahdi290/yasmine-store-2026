@@ -39,7 +39,7 @@ export class AdminDashboardComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         if (err.status === 403 || err.status === 401) {
-          this.errorMsg.set('Accès refusé (403). Veuillez vous connecter avec le compte administrateur (admin@shop.com / adminpassword).');
+          this.errorMsg.set('Accès refusé (403). Veuillez vous connecter avec le compte administrateur.');
         } else {
           this.errorMsg.set('Impossible de charger les statistiques du tableau de bord.');
         }
