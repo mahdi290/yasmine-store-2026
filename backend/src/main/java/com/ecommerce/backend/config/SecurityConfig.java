@@ -66,6 +66,9 @@ public class SecurityConfig {
                 // Cloudflare Pages : domaine de production + déploiements de prévisualisation
                 "https://yasmine-store.pages.dev",
                 "https://*.yasmine-store.pages.dev",
+                // Domaine personnalisé (Cloudflare Pages → Custom domains)
+                "https://yasmine-store.tn",
+                "https://www.yasmine-store.tn",
                 frontendUrl
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
