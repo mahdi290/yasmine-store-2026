@@ -183,41 +183,59 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
+  normalizeDept(dept?: string): string {
+    if (!dept) return 'Femme';
+    const d = dept.toLowerCase().trim();
+    if (d === 'homme') return 'Homme';
+    if (d === 'enfant') return 'Enfant';
+    return 'Femme';
+  }
+
+  onCategoryChange() {
+    const cat = this.categories().find(c => c.id === Number(this.productForm.categoryId));
+    if (cat && cat.department) {
+      this.productForm.department = this.normalizeDept(cat.department);
+    }
+  }
+
   openAddModal() {
     this.modalMode.set('add');
     this.selectedProduct.set(null);
+    const initialCat = this.categories().length > 0 ? this.categories()[0] : null;
     this.productForm = {
       id: 0,
       name: '',
       description: '',
       price: 0,
-      categoryId: this.categories().length > 0 ? this.categories()[0].id : 0,
+      categoryId: initialCat ? initialCat.id : 0,
       brand: '',
       stock: 0,
       imageUrl: '',
       sizeStocks: { S: 0, M: 0, L: 0, XL: 0 },
       onSale: false,
       discountPercent: 0,
-      department: 'Femme'
+      department: initialCat ? this.normalizeDept(initialCat.department) : 'Femme'
     };
   }
 
   openEditModal(prod: Product) {
     this.modalMode.set('edit');
     this.selectedProduct.set(prod);
+    const catId = prod.category ? prod.category.id : (this.categories().length > 0 ? this.categories()[0].id : 0);
+    const dept = prod.department ? this.normalizeDept(prod.department) : (prod.category?.department ? this.normalizeDept(prod.category.department) : 'Femme');
     this.productForm = {
       id: prod.id,
       name: prod.name,
       description: prod.description || '',
       price: prod.price,
-      categoryId: prod.category ? prod.category.id : (this.categories().length > 0 ? this.categories()[0].id : 0),
+      categoryId: catId,
       brand: prod.brand || '',
       stock: prod.stock,
       imageUrl: prod.imageUrl || '',
       sizeStocks: prod.sizeStocks ? { ...prod.sizeStocks } : { S: 0, M: 0, L: 0, XL: 0 },
       onSale: !!prod.onSale,
       discountPercent: prod.discountPercent || 0,
-      department: prod.department || 'Femme'
+      department: dept
     };
   }
 

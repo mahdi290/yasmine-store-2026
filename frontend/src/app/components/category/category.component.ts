@@ -34,9 +34,10 @@ export class CategoryComponent implements OnInit {
   selectedCategoryId = signal<number | null>(null);
   onlyPromotions = signal<boolean>(false);
   minPrice = signal<number>(0);
-  maxPrice = signal<number>(300);
+  maxPrice = signal<number>(5000);
   appliedMinPrice = signal<number>(0);
-  appliedMaxPrice = signal<number>(300);
+  appliedMaxPrice = signal<number>(5000);
+  isPriceFilterActive = signal<boolean>(false);
   selectedBrands = signal<string[]>([]);
   selectedColors = signal<string[]>([]);
   sortBy = signal<string>('featured');
@@ -58,7 +59,7 @@ export class CategoryComponent implements OnInit {
     if (this.selectedCategoryId() !== null) count++;
     if (this.searchTerm().trim()) count++;
     if (this.onlyPromotions()) count++;
-    if (this.appliedMinPrice() > 0 || this.appliedMaxPrice() < 300) count++;
+    if (this.isPriceFilterActive()) count++;
     count += this.selectedBrands().length;
     return count;
   });
@@ -131,8 +132,10 @@ export class CategoryComponent implements OnInit {
       prods = prods.filter(p => p.onSale && (p.discountPercent || 0) > 0);
     }
 
-    // 3. Price filter (applied)
-    prods = prods.filter(p => p.price >= this.appliedMinPrice() && p.price <= this.appliedMaxPrice());
+    // 3. Price filter (applied only if user explicitly activated it)
+    if (this.isPriceFilterActive()) {
+      prods = prods.filter(p => p.price >= this.appliedMinPrice() && p.price <= this.appliedMaxPrice());
+    }
 
     // 4. Brand filter
     const brands = this.selectedBrands();
@@ -321,6 +324,7 @@ export class CategoryComponent implements OnInit {
   applyPriceFilter() {
     this.appliedMinPrice.set(this.minPrice());
     this.appliedMaxPrice.set(this.maxPrice());
+    this.isPriceFilterActive.set(true);
     this.currentPage.set(1);
   }
 
@@ -330,9 +334,10 @@ export class CategoryComponent implements OnInit {
     this.selectedCategoryId.set(null);
     this.onlyPromotions.set(false);
     this.minPrice.set(0);
-    this.maxPrice.set(300);
+    this.maxPrice.set(5000);
     this.appliedMinPrice.set(0);
-    this.appliedMaxPrice.set(300);
+    this.appliedMaxPrice.set(5000);
+    this.isPriceFilterActive.set(false);
     this.selectedBrands.set([]);
     this.selectedColors.set([]);
     this.sortBy.set('featured');
@@ -403,14 +408,16 @@ export class CategoryComponent implements OnInit {
       });
     }
 
-    if (this.appliedMinPrice() > 0 || this.appliedMaxPrice() < 300) {
+    if (this.isPriceFilterActive()) {
       list.push({ 
         type: 'price', 
         label: `Prix: ${this.appliedMinPrice()} DT - ${this.appliedMaxPrice()} DT`, 
         action: () => {
           this.minPrice.set(0);
-          this.maxPrice.set(300);
-          this.applyPriceFilter();
+          this.maxPrice.set(5000);
+          this.appliedMinPrice.set(0);
+          this.appliedMaxPrice.set(5000);
+          this.isPriceFilterActive.set(false);
         } 
       });
     }

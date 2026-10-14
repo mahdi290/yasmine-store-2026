@@ -197,7 +197,7 @@
       </div>
       <div class="col-md-4">
         <label class="form-label fw-semibold" style="font-size: 13px;">Catégorie *</label>
-        <select class="form-select py-2" [(ngModel)]="productForm.categoryId" style="border-radius: 6px; font-size: 14px;">
+        <select class="form-select py-2" [(ngModel)]="productForm.categoryId" (change)="onCategoryChange()" style="border-radius: 6px; font-size: 14px;">
           @for (cat of categories(); track cat.id) {
             <option [ngValue]="cat.id">{{ cat.name }} ({{ cat.department || 'Femme' }})</option>
           }

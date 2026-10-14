@@ -394,7 +394,7 @@
           <h6 class="filter-group-title m-0">Prix</h6>
           <span class="text-muted small">{{ appliedMinPrice() }} DT - {{ appliedMaxPrice() }} DT</span>
         </div>
-        <input type="range" class="form-range mb-2" min="0" max="300" 
+        <input type="range" class="form-range mb-2" min="0" max="5000" step="10" 
                [ngModel]="maxPrice()" (ngModelChange)="maxPrice.set($event)">
         
         <div class="row g-2 mb-2">
