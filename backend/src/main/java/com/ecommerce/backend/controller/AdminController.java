@@ -268,12 +268,18 @@ public class AdminController {
     @PostMapping("/categories")
     public ResponseEntity<?> createCategory(@RequestBody Category category) {
         if (category.getName() == null || category.getName().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Error: Category name cannot be empty!");
+            return ResponseEntity.badRequest().body(Map.of("error", "Le nom de la catégorie est obligatoire."));
         }
         if (category.getDepartment() == null || category.getDepartment().trim().isEmpty()) {
             category.setDepartment("Femme");
         }
-        return ResponseEntity.ok(categoryRepository.save(category));
+        category.setId(null);
+        try {
+            Category saved = categoryRepository.save(category);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Erreur lors de la création de la catégorie : " + e.getMessage()));
+        }
     }
 
     @PutMapping("/categories/{id}")
@@ -285,7 +291,11 @@ public class AdminController {
         category.setName(req.getName());
         if (req.getDepartment() != null) category.setDepartment(req.getDepartment());
         if (req.getIcon() != null) category.setIcon(req.getIcon());
-        return ResponseEntity.ok(categoryRepository.save(category));
+        try {
+            return ResponseEntity.ok(categoryRepository.save(category));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Erreur lors de la mise à jour : " + e.getMessage()));
+        }
     }
 
     @DeleteMapping("/categories/{id}")

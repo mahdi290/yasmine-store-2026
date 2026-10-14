@@ -120,7 +120,12 @@ export class AdminCategoriesComponent implements OnInit {
     }
 
     if (this.modalMode() === 'add') {
-      this.adminService.createCategory(this.categoryForm).subscribe({
+      const payload = {
+        name: this.categoryForm.name.trim(),
+        department: this.categoryForm.department || 'Femme',
+        icon: this.categoryForm.icon || ''
+      };
+      this.adminService.createCategory(payload).subscribe({
         next: () => {
           this.successMsg.set('Catégorie créée avec succès.');
           this.closeModal();
