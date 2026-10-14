@@ -202,6 +202,12 @@
             <option [ngValue]="cat.id">{{ cat.name }} ({{ cat.department || 'Femme' }})</option>
           }
         </select>
+        @if (categories().length === 0) {
+          <div class="small text-danger mt-1">
+            <i class="bi bi-exclamation-circle me-1"></i>Aucune catégorie. 
+            <a routerLink="/admin/categories" (click)="closeModal()" class="text-primary fw-semibold text-decoration-underline">Créer une catégorie</a>
+          </div>
+        }
       </div>
 
       <!-- Solde & Promotion Section -->
@@ -286,6 +292,10 @@
               <small class="text-muted d-block mt-1" style="font-size: 12px;">ou glissez-déposez le fichier ici (JPG, PNG, WebP)</small>
             </div>
           }
+        </div>
+        <div class="mt-2">
+          <small class="text-muted d-block mb-1">Ou saisissez directement une URL d'image (ex: Unsplash) :</small>
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="productForm.imageUrl" placeholder="https://images.unsplash.com/...">
         </div>
       </div>
       <div class="col-12">

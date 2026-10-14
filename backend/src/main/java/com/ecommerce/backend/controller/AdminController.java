@@ -21,6 +21,7 @@ public class AdminController {
     private final CategoryRepository categoryRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ShowcaseCardRepository showcaseCardRepository;
     private final CarouselSlideRepository carouselSlideRepository;
@@ -249,11 +250,13 @@ public class AdminController {
     }
 
     @DeleteMapping("/products/{id}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         if (!productRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         try {
+            cartItemRepository.deleteByProductId(id);
             productRepository.deleteById(id);
             return ResponseEntity.ok(Map.of("message", "Product deleted successfully"));
         } catch (Exception e) {

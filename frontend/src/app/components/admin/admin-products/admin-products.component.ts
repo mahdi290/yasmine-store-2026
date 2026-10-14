@@ -242,9 +242,18 @@ export class AdminProductsComponent implements OnInit {
       this.productForm.categoryId = catId;
     }
 
-    if (!this.productForm.name || !this.productForm.price) {
-      this.errorMsg.set('Veuillez remplir tous les champs obligatoires (Nom, Prix, Photo).');
+    if (this.categories().length === 0) {
+      this.errorMsg.set('Veuillez d\'abord créer au moins une catégorie dans "Gestion des Catégories".');
       return;
+    }
+
+    if (!this.productForm.name || !this.productForm.price) {
+      this.errorMsg.set('Veuillez remplir tous les champs obligatoires (Nom et Prix).');
+      return;
+    }
+
+    if (!this.productForm.imageUrl) {
+      this.productForm.imageUrl = 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600';
     }
 
     const extractMsg = (err: any, fallback: string) => {

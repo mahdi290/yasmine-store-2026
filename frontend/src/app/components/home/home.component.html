@@ -163,7 +163,7 @@
       <h2 class="section-title fw-bold mt-2 mb-2">Meilleures Ventes</h2>
       <p class="section-subtitle text-muted mb-4">Les pièces coup de cœur les plus convoitées par nos clientes.</p>
 
-      <!-- Category Filter Tabs -->
+      <!-- Category Filter Tabs (Dynamic from DB) -->
       <div class="category-filters d-flex flex-wrap justify-content-center gap-2 p-1 bg-white rounded-pill shadow-sm border">
         <button type="button" 
                 class="filter-pill-btn" 
@@ -171,30 +171,14 @@
                 (click)="setFilter('all')">
           Tous les Articles
         </button>
-        <button type="button" 
-                class="filter-pill-btn" 
-                [class.active]="activeCategoryFilter() === 'robes'" 
-                (click)="setFilter('robes')">
-          Robes
-        </button>
-        <button type="button" 
-                class="filter-pill-btn" 
-                [class.active]="activeCategoryFilter() === 'hauts'" 
-                (click)="setFilter('hauts')">
-          Hauts & Blouses
-        </button>
-        <button type="button" 
-                class="filter-pill-btn" 
-                [class.active]="activeCategoryFilter() === 'maille'" 
-                (click)="setFilter('maille')">
-          Maille & Sweats
-        </button>
-        <button type="button" 
-                class="filter-pill-btn" 
-                [class.active]="activeCategoryFilter() === 'accessoires'" 
-                (click)="setFilter('accessoires')">
-          Accessoires
-        </button>
+        @for (cat of categories(); track cat.id) {
+          <button type="button" 
+                  class="filter-pill-btn" 
+                  [class.active]="activeCategoryFilter() === ('cat-' + cat.id)" 
+                  (click)="setFilter('cat-' + cat.id)">
+            {{ cat.name }}
+          </button>
+        }
         <button type="button" 
                 class="filter-pill-btn text-danger fw-bold" 
                 [class.active]="activeCategoryFilter() === 'solde'" 

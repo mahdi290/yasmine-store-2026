@@ -29,41 +29,52 @@ export class HeaderComponent implements OnInit {
   // Current active department tracking (empty by default so neither is pre-selected)
   currentDepartment = signal<string>('');
 
-  // Dynamic secondary navigation links matching active department
+  // Dynamic secondary navigation links built from categories in DB
   navLinks = computed(() => {
-    const isHomme = this.currentDepartment().toLowerCase() === 'homme';
-    const isFemme = this.currentDepartment().toLowerCase() === 'femme';
-    if (isHomme) {
-      return [
-        { label: 'Accueil', path: '/', queryParams: {}, exact: true, isPromo: false },
-        { label: 'Tout le vestiaire', path: '/category', queryParams: { department: 'homme' }, exact: false, isPromo: false },
-        { label: 'Chemises', path: '/category', queryParams: { department: 'homme', search: 'Chemise' }, exact: false, isPromo: false },
-        { label: 'Pulls & Maille', path: '/category', queryParams: { department: 'homme', search: 'Pull' }, exact: false, isPromo: false },
-        { label: 'Vestes & Blazers', path: '/category', queryParams: { department: 'homme', search: 'Blazer' }, exact: false, isPromo: false },
-        { label: 'Accessoires', path: '/category', queryParams: { department: 'homme', search: 'Montre' }, exact: false, isPromo: false },
-        { label: 'Soldes', path: '/category', queryParams: { department: 'homme', promo: 'true' }, exact: false, isPromo: true }
-      ];
+    const dept = this.currentDepartment().toLowerCase();
+    const cats = this.categories();
+
+    // Filter categories by active department if one is selected
+    const filteredCats = dept && dept !== ''
+      ? cats.filter(c => (c.department || 'Femme').toLowerCase() === dept)
+      : cats;
+
+    // Build the links array dynamically
+    const links: { label: string; path: string; queryParams: any; exact: boolean; isPromo: boolean }[] = [];
+
+    // Always start with Accueil
+    links.push({ label: 'ACCUEIL', path: '/', queryParams: {}, exact: true, isPromo: false });
+
+    // "Nouveautés" / "Toutes les créations" link
+    if (dept) {
+      links.push({ label: 'NOUVEAUTÉS', path: '/category', queryParams: { department: dept }, exact: false, isPromo: false });
+    } else {
+      links.push({ label: 'NOUVEAUTÉS', path: '/category', queryParams: {}, exact: false, isPromo: false });
     }
-    if (isFemme) {
-      return [
-        { label: 'Accueil', path: '/', queryParams: {}, exact: true, isPromo: false },
-        { label: 'Toutes les créations', path: '/category', queryParams: { department: 'femme' }, exact: false, isPromo: false },
-        { label: 'Robes', path: '/category', queryParams: { department: 'femme', search: 'Robe' }, exact: false, isPromo: false },
-        { label: 'Hauts & Blouses', path: '/category', queryParams: { department: 'femme', search: 'Blouse' }, exact: false, isPromo: false },
-        { label: 'Maille & Pulls', path: '/category', queryParams: { department: 'femme', search: 'Maille' }, exact: false, isPromo: false },
-        { label: 'Accessoires', path: '/category', queryParams: { department: 'femme', search: 'Accessoires' }, exact: false, isPromo: false },
-        { label: 'Soldes', path: '/category', queryParams: { department: 'femme', promo: 'true' }, exact: false, isPromo: true }
-      ];
+
+    // Add each category from DB as a nav link
+    for (const cat of filteredCats) {
+      const qp: any = { category: cat.id };
+      if (dept) {
+        qp['department'] = dept;
+      }
+      links.push({
+        label: cat.name.toUpperCase(),
+        path: '/category',
+        queryParams: qp,
+        exact: false,
+        isPromo: false
+      });
     }
-    return [
-      { label: 'Accueil', path: '/', queryParams: {}, exact: true, isPromo: false },
-      { label: 'Nouveautés', path: '/category', queryParams: {}, exact: false, isPromo: false },
-      { label: 'Robes', path: '/category', queryParams: { search: 'Robe' }, exact: false, isPromo: false },
-      { label: 'Hauts & Blouses', path: '/category', queryParams: { search: 'Blouse' }, exact: false, isPromo: false },
-      { label: 'Maille & Pulls', path: '/category', queryParams: { search: 'Maille' }, exact: false, isPromo: false },
-      { label: 'Accessoires', path: '/category', queryParams: { search: 'Accessoires' }, exact: false, isPromo: false },
-      { label: 'Soldes', path: '/category', queryParams: { promo: 'true' }, exact: false, isPromo: true }
-    ];
+
+    // Always end with Soldes / Promos
+    const soldesQp: any = { promo: 'true' };
+    if (dept) {
+      soldesQp['department'] = dept;
+    }
+    links.push({ label: 'SOLDES', path: '/category', queryParams: soldesQp, exact: false, isPromo: true });
+
+    return links;
   });
 
   mobileMenuOpen = signal<boolean>(false);

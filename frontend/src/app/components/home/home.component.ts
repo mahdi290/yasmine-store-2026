@@ -53,17 +53,25 @@ export class HomeComponent implements OnInit, OnDestroy {
   // Active Category Filter for Best Sellers
   activeCategoryFilter = signal<string>('all');
 
-  // Filtered Products for Best Sellers Grid
+  // Filtered Products for Best Sellers Grid (dynamic from DB categories)
   filteredProducts = computed(() => {
-    const filter = this.activeCategoryFilter().toLowerCase();
+    const filter = this.activeCategoryFilter();
     const list = this.products();
     if (filter === 'all') return list;
     if (filter === 'solde' || filter === 'promo' || filter === 'promotions') {
       return list.filter(p => p.onSale && (p.discountPercent || 0) > 0);
     }
+    // Dynamic category filter: 'cat-{id}'
+    if (filter.startsWith('cat-')) {
+      const catId = parseInt(filter.replace('cat-', ''), 10);
+      if (!isNaN(catId)) {
+        return list.filter(p => p.category?.id === catId);
+      }
+    }
+    // Fallback: match by category name (for legacy compatibility)
     return list.filter(p => {
       const catName = p.category?.name?.toLowerCase() || '';
-      return catName.includes(filter);
+      return catName.includes(filter.toLowerCase());
     });
   });
 
