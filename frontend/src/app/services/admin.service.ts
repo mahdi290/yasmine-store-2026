@@ -21,6 +21,8 @@ export interface AdminOrderItem {
   size: string;
   quantity: number;
   price: number;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
 }
 
 export interface AdminOrder {
@@ -34,6 +36,33 @@ export interface AdminOrder {
   status: string;
   createdAt: string;
   items?: AdminOrderItem[];
+  subtotal?: number | null;
+  discountAmount?: number | null;
+  discountDetails?: string | null;
+  email?: string | null;
+}
+
+// Corps de PUT /api/admin/orders/{id}
+export interface AdminOrderUpdate {
+  status: string;
+  customerName: string;
+  phone: string;
+  email?: string | null;
+  address: string;
+  city?: string | null;
+  items: { productId: number; variantId?: number | null; size: string; quantity: number }[];
+}
+
+export const ORDER_STATUSES: { value: string; label: string }[] = [
+  { value: 'PENDING', label: 'En attente' },
+  { value: 'CONFIRMED', label: 'Confirmée' },
+  { value: 'SHIPPED', label: 'Expédiée' },
+  { value: 'DELIVERED', label: 'Livrée' },
+  { value: 'CANCELLED', label: 'Annulée' }
+];
+
+export function orderStatusLabel(status: string): string {
+  return ORDER_STATUSES.find(s => s.value === status)?.label.toUpperCase() ?? status;
 }
 
 export interface DashboardStats {
@@ -107,8 +136,20 @@ export class AdminService {
     return this.http.get<AdminOrder[]>(`${this.apiUrl}/orders`);
   }
 
-  updateOrderStatus(id: number, status: string): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/orders/${id}/status`, { status });
+  updateOrderStatus(id: number, status: string): Observable<AdminOrder> {
+    return this.http.put<AdminOrder>(`${this.apiUrl}/orders/${id}/status`, { status });
+  }
+
+  getOrder(id: number): Observable<AdminOrder> {
+    return this.http.get<AdminOrder>(`${this.apiUrl}/orders/${id}`);
+  }
+
+  updateOrder(id: number, order: AdminOrderUpdate): Observable<AdminOrder> {
+    return this.http.put<AdminOrder>(`${this.apiUrl}/orders/${id}`, order);
+  }
+
+  deleteOrder(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/orders/${id}`);
   }
 
   // Users CRUD

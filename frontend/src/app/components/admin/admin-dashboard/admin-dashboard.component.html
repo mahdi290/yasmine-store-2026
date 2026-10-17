@@ -152,7 +152,7 @@
                               [class.bg-info-ns]="order.status === 'SHIPPED'"
                               [class.bg-success-ns]="order.status === 'DELIVERED'"
                               [class.bg-danger-ns]="order.status === 'CANCELLED'">
-                          {{ order.status === 'PENDING' ? 'EN ATTENTE' : (order.status === 'SHIPPED' ? 'EXPÉDIÉE' : (order.status === 'DELIVERED' ? 'LIVRÉE' : (order.status === 'CANCELLED' ? 'ANNULÉE' : order.status))) }}
+                          {{ order.status === 'PENDING' ? 'EN ATTENTE' : (order.status === 'SHIPPED' ? 'EXPÉDIÉE' : (order.status === 'DELIVERED' ? 'LIVRÉE' : (order.status === 'CANCELLED' ? 'ANNULÉE' : (order.status === 'CONFIRMED' ? 'CONFIRMÉE' : order.status)))) }}
                         </span>
                       </td>
                     </tr>

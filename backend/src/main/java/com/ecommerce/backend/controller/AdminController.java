@@ -2,6 +2,7 @@ package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.model.*;
 import com.ecommerce.backend.repository.*;
+import com.ecommerce.backend.service.AdminOrderService;
 import com.ecommerce.backend.service.ImageStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class AdminController {
     private final CarouselSlideRepository carouselSlideRepository;
     private final DepartmentRepository departmentRepository;
     private final ImageStorageService imageStorageService;
+    private final AdminOrderService adminOrderService;
 
     // DTO records
     public record CategorySales(String categoryName, int salesCount, BigDecimal revenue) {}
@@ -59,7 +61,9 @@ public class AdminController {
             List<OrderItemResponse> items,
             BigDecimal subtotal,
             BigDecimal discountAmount,
-            String discountDetails
+            String discountDetails,
+            // Email saisi lors de la commande (customerEmail = email du compte client)
+            String email
     ) {}
 
     private OrderItemResponse mapToOrderItemResponse(OrderItem item) {
@@ -99,7 +103,8 @@ public class AdminController {
             orderItemRepository.findByOrderId(order.getId()).stream().map(this::mapToOrderItemResponse).toList(),
             order.getSubtotal(),
             order.getDiscountAmount(),
-            order.getDiscountDetails()
+            order.getDiscountDetails(),
+            order.getEmail()
         );
     }
 
@@ -463,20 +468,36 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<?> getOrder(@PathVariable Long id) {
+        return orderRepository.findById(id)
+                .<ResponseEntity<?>>map(order -> ResponseEntity.ok(mapToOrderResponse(order)))
+                .orElse(ResponseEntity.status(404).body(Map.of("error", "Commande #" + id + " introuvable.")));
+    }
+
+    // Statut seul (liste déroulante) : annuler remet le stock, réactiver le reprend
     @PutMapping("/orders/{id}/status")
     public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        Order order = orderRepository.findById(id).orElse(null);
-        if (order == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        String status = body.get("status");
-        if (status == null || status.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Error: Status cannot be empty!");
-        }
+        Order order = adminOrderService.changeStatus(id, body != null ? body.get("status") : null);
+        return ResponseEntity.ok(mapToOrderResponse(order));
+    }
 
-        order.setStatus(status.toUpperCase());
-        return ResponseEntity.ok(orderRepository.save(order));
+    // Modification complète : statut, client, articles / couleurs / quantités (total et remise recalculés)
+    @PutMapping("/orders/{id}")
+    public ResponseEntity<?> updateOrder(@PathVariable Long id, @RequestBody AdminOrderService.UpdateRequest body) {
+        Order order = adminOrderService.update(id, body);
+        return ResponseEntity.ok(mapToOrderResponse(order));
+    }
+
+    @DeleteMapping("/orders/{id}")
+    public ResponseEntity<?> deleteOrder(@PathVariable Long id) {
+        adminOrderService.delete(id);
+        return ResponseEntity.ok(Map.of("message", "Commande #" + id + " supprimée."));
+    }
+
+    @ExceptionHandler(AdminOrderService.OrderUpdateException.class)
+    public ResponseEntity<?> handleOrderUpdateError(AdminOrderService.OrderUpdateException e) {
+        return ResponseEntity.status(e.getStatus()).body(Map.of("error", e.getMessage()));
     }
 
     // 5. User Management

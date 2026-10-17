@@ -37,7 +37,7 @@
                 <div>
                   <span class="text-secondary d-block text-uppercase" style="font-size: 10px;">Statut</span>
                   <span class="badge bg-warning text-dark uppercase fw-bold" style="font-size: 10px;">
-                    {{ item.order.status === 'PENDING' ? 'EN ATTENTE' : (item.order.status === 'SHIPPED' ? 'EXPÉDIÉE' : (item.order.status === 'DELIVERED' ? 'LIVRÉE' : (item.order.status === 'CANCELLED' ? 'ANNULÉE' : item.order.status))) }}
+                    {{ item.order.status === 'PENDING' ? 'EN ATTENTE' : (item.order.status === 'SHIPPED' ? 'EXPÉDIÉE' : (item.order.status === 'DELIVERED' ? 'LIVRÉE' : (item.order.status === 'CANCELLED' ? 'ANNULÉE' : (item.order.status === 'CONFIRMED' ? 'CONFIRMÉE' : item.order.status)))) }}
                   </span>
                 </div>
               </div>

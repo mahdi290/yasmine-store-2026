@@ -37,3 +37,42 @@
   border: 1px solid rgba(12, 13, 7, 0.2);
   vertical-align: middle;
 }
+
+.badge.bg-primary-ns {
+  background-color: #e3ebd9 !important;
+  color: #314021 !important;
+}
+
+// Modales modifier / supprimer
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1040;
+  backdrop-filter: blur(2px);
+}
+
+.modal-dialog-custom {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1050;
+  width: 92%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #fff;
+
+  &.modal-wide {
+    max-width: 820px;
+  }
+}
+
+.edit-line {
+  background-color: #fbfaf8;
+}
+
+.total-preview {
+  background-color: #F7F4F0;
+}

@@ -23,32 +23,22 @@
     <!-- Search -->
     <div class="input-group" style="max-width: 400px; flex-grow: 1;">
       <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-      <input type="text" class="form-control border-start-0 py-2" placeholder="Rechercher par ID, client ou email..." 
+      <input type="text" class="form-control border-start-0 py-2" placeholder="Rechercher par ID, client ou email..."
              [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" style="font-size: 14px;">
     </div>
 
     <!-- Status Filter Pills -->
-    <div class="d-flex gap-2">
-      <button (click)="statusFilter.set('ALL')" class="btn btn-sm py-2 px-3" 
+    <div class="d-flex flex-wrap gap-2">
+      <button (click)="statusFilter.set('ALL')" class="btn btn-sm py-2 px-3"
               [class.btn-dark]="statusFilter() === 'ALL'" [class.btn-outline-dark]="statusFilter() !== 'ALL'" style="border-radius: 8px; font-size: 13px;">
         Toutes
       </button>
-      <button (click)="statusFilter.set('PENDING')" class="btn btn-sm py-2 px-3" 
-              [class.btn-dark]="statusFilter() === 'PENDING'" [class.btn-outline-dark]="statusFilter() !== 'PENDING'" style="border-radius: 8px; font-size: 13px;">
-        En attente
-      </button>
-      <button (click)="statusFilter.set('SHIPPED')" class="btn btn-sm py-2 px-3" 
-              [class.btn-dark]="statusFilter() === 'SHIPPED'" [class.btn-outline-dark]="statusFilter() !== 'SHIPPED'" style="border-radius: 8px; font-size: 13px;">
-        Expédiée
-      </button>
-      <button (click)="statusFilter.set('DELIVERED')" class="btn btn-sm py-2 px-3" 
-              [class.btn-dark]="statusFilter() === 'DELIVERED'" [class.btn-outline-dark]="statusFilter() !== 'DELIVERED'" style="border-radius: 8px; font-size: 13px;">
-        Livrée
-      </button>
-      <button (click)="statusFilter.set('CANCELLED')" class="btn btn-sm py-2 px-3" 
-              [class.btn-dark]="statusFilter() === 'CANCELLED'" [class.btn-outline-dark]="statusFilter() !== 'CANCELLED'" style="border-radius: 8px; font-size: 13px;">
-        Annulée
-      </button>
+      @for (s of statuses; track s.value) {
+        <button (click)="statusFilter.set(s.value)" class="btn btn-sm py-2 px-3"
+                [class.btn-dark]="statusFilter() === s.value" [class.btn-outline-dark]="statusFilter() !== s.value" style="border-radius: 8px; font-size: 13px;">
+          {{ s.label }}
+        </button>
+      }
     </div>
   </div>
 
@@ -70,7 +60,7 @@
               <th class="border-0 pb-3">Date</th>
               <th class="border-0 pb-3">Total</th>
               <th class="border-0 pb-3">Statut</th>
-              <th class="border-0 pb-3 pe-4 text-end">Changer Statut</th>
+              <th class="border-0 pb-3 pe-4 text-end">Actions</th>
             </tr>
           </thead>
           <tbody style="font-size: 14px;">
@@ -100,31 +90,45 @@
                             <span class="order-swatch" [style.background-color]="it.colorHex || '#cccccc'"></span> {{ it.color }} ·
                           }
                           Taille {{ it.size }}
+                          @if (it.discountPercent) {
+                            · <span class="text-danger">-{{ it.discountPercent }}%</span>
+                          }
                         </span>
                       </div>
                     </div>
                   }
                 </td>
                 <td class="text-secondary" style="font-size: 13px;">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td class="fw-bold text-dark">{{ order.totalPrice.toFixed(2) }} DT</td>
+                <td class="fw-bold text-dark">
+                  {{ order.totalPrice.toFixed(2) }} DT
+                  @if (order.discountAmount) {
+                    <small class="d-block text-danger fw-normal" style="font-size: 11px;" [title]="order.discountDetails || ''">Remise -{{ order.discountAmount.toFixed(2) }} DT</small>
+                  }
+                </td>
                 <td>
-                  <span class="badge" 
+                  <span class="badge"
                         [class.bg-warning-ns]="order.status === 'PENDING'"
+                        [class.bg-primary-ns]="order.status === 'CONFIRMED'"
                         [class.bg-info-ns]="order.status === 'SHIPPED'"
                         [class.bg-success-ns]="order.status === 'DELIVERED'"
                         [class.bg-danger-ns]="order.status === 'CANCELLED'">
-                    {{ order.status === 'PENDING' ? 'EN ATTENTE' : (order.status === 'SHIPPED' ? 'EXPÉDIÉE' : (order.status === 'DELIVERED' ? 'LIVRÉE' : (order.status === 'CANCELLED' ? 'ANNULÉE' : order.status))) }}
+                    {{ statusLabel(order.status) }}
                   </span>
                 </td>
                 <td class="pe-4 text-end">
-                  <div class="d-inline-block" style="max-width: 150px;">
-                    <select [ngModel]="order.status" (ngModelChange)="updateStatus(order, $event)" 
-                            class="form-select form-select-sm py-1.5 px-2.5" style="font-size: 13px; border-radius: 6px;">
-                      <option value="PENDING">EN ATTENTE</option>
-                      <option value="SHIPPED">EXPÉDIÉE</option>
-                      <option value="DELIVERED">LIVRÉE</option>
-                      <option value="CANCELLED">ANNULÉE</option>
+                  <div class="d-inline-flex align-items-center gap-1">
+                    <select [ngModel]="order.status" (ngModelChange)="updateStatus(order, $event)"
+                            class="form-select form-select-sm py-1.5 px-2.5" style="font-size: 12px; border-radius: 6px; min-width: 128px;" aria-label="Changer le statut">
+                      @for (s of statuses; track s.value) {
+                        <option [value]="s.value">{{ s.label.toUpperCase() }}</option>
+                      }
                     </select>
+                    <button (click)="openEdit(order)" class="btn btn-sm btn-outline-dark" style="border-radius: 6px;" title="Modifier la commande">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button (click)="openDelete(order)" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;" title="Supprimer la commande">
+                      <i class="bi bi-trash"></i>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -139,3 +143,153 @@
     </div>
   }
 </div>
+
+<!-- MODAL : modifier la commande -->
+@if (modalMode() === 'edit' && selectedOrder(); as order) {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom modal-wide card border-0 shadow p-4" style="border-radius: 16px;" role="dialog" aria-modal="true">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-dark m-0" style="font-family: 'Inter Tight', sans-serif;">Modifier la commande #{{ order.id }}</h5>
+      <button type="button" class="btn btn-link text-dark p-0" (click)="closeModal()" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    @if (modalError()) {
+      <div class="alert alert-danger py-2 px-3 mb-3" style="font-size: 13px; border-radius: 8px;">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ modalError() }}
+      </div>
+    }
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small">Statut</label>
+        <select class="form-select form-select-sm" [(ngModel)]="editForm.status">
+          @for (s of statuses; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-8">
+        <label class="form-label fw-semibold small">Nom & prénom *</label>
+        <input type="text" class="form-control form-control-sm" [(ngModel)]="editForm.customerName">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small">Téléphone *</label>
+        <input type="tel" class="form-control form-control-sm" [(ngModel)]="editForm.phone">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label fw-semibold small">Email</label>
+        <input type="email" class="form-control form-control-sm" [(ngModel)]="editForm.email" placeholder="(optionnel)">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label fw-semibold small">Adresse *</label>
+        <input type="text" class="form-control form-control-sm" [(ngModel)]="editForm.address">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small">Ville</label>
+        <input type="text" class="form-control form-control-sm" [(ngModel)]="editForm.city">
+      </div>
+    </div>
+
+    <h6 class="fw-bold mt-4 mb-2" style="font-size: 13px;">Articles</h6>
+    @if (products().length === 0) {
+      <div class="text-muted small py-2"><span class="spinner-border spinner-border-sm me-2"></span>Chargement des produits...</div>
+    } @else {
+      <div class="d-flex flex-column gap-2">
+        @for (line of editForm.lines; track $index; let i = $index) {
+          <div class="edit-line border rounded-3 p-2">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Produit</label>
+                <select class="form-select form-select-sm" [(ngModel)]="line.productId" (ngModelChange)="onProductChange(line)">
+                  @for (p of products(); track p.id) {
+                    <option [ngValue]="p.id">{{ p.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Couleur</label>
+                @if (variantsOf(line).length > 0) {
+                  <select class="form-select form-select-sm" [(ngModel)]="line.variantId">
+                    @for (v of variantsOf(line); track v.id) {
+                      <option [ngValue]="v.id">{{ v.colorName }}</option>
+                    }
+                  </select>
+                } @else {
+                  <input type="text" class="form-control form-control-sm" value="Sans couleur" disabled>
+                }
+              </div>
+              <div class="col-4 col-md-2">
+                <label class="form-label small text-muted mb-1">Taille</label>
+                <select class="form-select form-select-sm" [(ngModel)]="line.size">
+                  @for (sz of sizes; track sz) {
+                    <option [value]="sz">{{ sz }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-4 col-md-2">
+                <label class="form-label small text-muted mb-1">Qté</label>
+                <input type="number" min="1" max="100" class="form-control form-control-sm" [(ngModel)]="line.quantity">
+              </div>
+              <div class="col-4 col-md-1 text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeLine(i)" title="Retirer l'article" aria-label="Retirer l'article">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            @if (availableFor(line); as avail) {
+              <small class="d-block mt-1" [class.text-danger]="avail < line.quantity" [class.text-muted]="avail >= line.quantity" style="font-size: 11px;">
+                Stock disponible : {{ avail }}
+              </small>
+            } @else if (availableFor(line) === 0) {
+              <small class="d-block mt-1 text-danger" style="font-size: 11px;">Rupture de stock pour cette couleur / taille</small>
+            }
+          </div>
+        }
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-dark mt-2 align-self-start" (click)="addLine()">
+        <i class="bi bi-plus-lg me-1"></i> Ajouter un article
+      </button>
+    }
+
+    <!-- Aperçu du total recalculé -->
+    @if (preview(); as q) {
+      <div class="total-preview rounded-3 p-3 mt-3" style="font-size: 13px;">
+        <div class="d-flex justify-content-between"><span class="text-muted">Sous-total</span><span>{{ q.subtotal.toFixed(2) }} DT</span></div>
+        @for (d of q.discounts; track d.ruleId) {
+          <div class="d-flex justify-content-between text-danger"><span>Remise -{{ d.percent }}% ({{ d.label }})</span><span>-{{ d.amount.toFixed(2) }} DT</span></div>
+        }
+        <div class="d-flex justify-content-between fw-bold mt-1 pt-1 border-top"><span>Total</span><span>{{ q.total.toFixed(2) }} DT</span></div>
+        <small class="text-muted d-block mt-1" style="font-size: 11px;">Les articles déjà commandés gardent leur prix d'origine ; total et remise sont recalculés par le serveur à l'enregistrement.</small>
+      </div>
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px; font-size: 14px;">Annuler</button>
+      <button (click)="saveOrder()" [disabled]="saving() || products().length === 0" class="btn btn-dark px-4 py-2" style="border-radius: 8px; font-size: 14px;">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        Enregistrer
+      </button>
+    </div>
+  </div>
+}
+
+<!-- MODAL : confirmation de suppression -->
+@if (modalMode() === 'delete' && selectedOrder(); as order) {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4 text-center" style="border-radius: 16px; max-width: 420px;" role="alertdialog" aria-modal="true">
+    <i class="bi bi-exclamation-triangle text-danger mb-3" style="font-size: 48px;"></i>
+    <h5 class="fw-bold text-dark mb-2">Êtes-vous sûr ?</h5>
+    <p class="text-muted mb-4" style="font-size: 14px;">
+      La commande <strong>#{{ order.id }}</strong> de <strong>{{ order.customerName }}</strong> sera définitivement supprimée.
+      @if (order.status !== 'CANCELLED') {
+        Les articles seront remis en stock.
+      }
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px;">Annuler</button>
+      <button (click)="confirmDelete()" [disabled]="saving()" class="btn btn-danger px-4 py-2" style="border-radius: 8px;">Supprimer</button>
+    </div>
+  </div>
+}

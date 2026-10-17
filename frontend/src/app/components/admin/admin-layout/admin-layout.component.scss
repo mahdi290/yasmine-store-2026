@@ -47,3 +47,9 @@
   font-family: 'Inter Tight', sans-serif;
   letter-spacing: 0px;
 }
+
+// Permet aux tableaux larges (.table-responsive) de défiler dans la zone de travail
+// au lieu d'élargir toute la page
+.main-workspace {
+  min-width: 0;
+}
