@@ -54,6 +54,14 @@ public class OrderItem {
     @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
+    // Prix unitaire payé (prix soldé le cas échéant), avant remise par quantité
     @Column(name = "price", nullable = false)
     private BigDecimal price;
+
+    // Remise par quantité appliquée à la ligne (null pour les anciennes commandes)
+    @Column(name = "discount_percent")
+    private Integer discountPercent;
+
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
 }

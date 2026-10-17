@@ -86,3 +86,17 @@
     border-color: #314021;
   }
 }
+
+// Offre "Achetez 2, économisez 10%"
+.qty-offer {
+  background-color: #F7F4F0;
+  border: 1px dashed rgba(192, 155, 172, 0.8);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #314021;
+
+  i {
+    color: #C09BAC;
+  }
+}

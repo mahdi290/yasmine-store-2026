@@ -16,6 +16,7 @@ import { AdminUsersComponent } from './components/admin/admin-users/admin-users.
 import { AdminShowcaseComponent } from './components/admin/admin-showcase/admin-showcase.component';
 import { AdminCarouselComponent } from './components/admin/admin-carousel/admin-carousel.component';
 import { AdminDepartmentsComponent } from './components/admin/admin-departments/admin-departments.component';
+import { AdminDiscountsComponent } from './components/admin/admin-discounts/admin-discounts.component';
 import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
@@ -42,6 +43,7 @@ export const routes: Routes = [
       { path: 'carousel', component: AdminCarouselComponent },
       { path: 'showcase', component: AdminShowcaseComponent },
       { path: 'categories', component: AdminCategoriesComponent },
+      { path: 'discounts', component: AdminDiscountsComponent },
       { path: 'orders', component: AdminOrdersComponent },
       { path: 'users', component: AdminUsersComponent }
     ]

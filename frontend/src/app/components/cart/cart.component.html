@@ -55,7 +55,12 @@
                   </td>
                   
                   <!-- Price -->
-                  <td class="py-4 fw-semibold text-dark">{{ item.product.price }} DT</td>
+                  <td class="py-4 fw-semibold text-dark">
+                    {{ cartService.lineQuote(item).unitPrice }} DT
+                    @if (cartService.lineQuote(item).unitPrice < item.product.price) {
+                      <small class="d-block text-muted text-decoration-line-through fw-normal" style="font-size: 11px;">{{ item.product.price }} DT</small>
+                    }
+                  </td>
                   
                   <!-- Quantity adjuster -->
                   <td class="py-4">
@@ -73,7 +78,17 @@
                   </td>
                   
                   <!-- Total -->
-                  <td class="py-4 text-end fw-bold text-dark">{{ Math.round(item.product.price * item.quantity * 100) / 100 }} DT</td>
+                  <td class="py-4 text-end fw-bold text-dark">
+                    @if (cartService.lineQuote(item); as lq) {
+                      @if (lq.discountPercent > 0) {
+                        <small class="d-block text-muted text-decoration-line-through fw-normal" style="font-size: 11px;">{{ lq.subtotal }} DT</small>
+                        <span class="text-danger">{{ lq.total }} DT</span>
+                        <span class="d-block badge-qty-discount mt-1">Remise -{{ lq.discountPercent }}%</span>
+                      } @else {
+                        {{ lq.total }} DT
+                      }
+                    }
+                  </td>
                 </tr>
               }
             </tbody>
@@ -105,6 +120,14 @@
           <span class="text-secondary">Sous-total</span>
           <span class="fw-bold text-dark">{{ cartService.cartSubtotal() }} DT</span>
         </div>
+
+        <!-- Remise par quantité -->
+        @for (d of cartService.quote().discounts; track d.ruleId) {
+          <div class="d-flex justify-content-between mb-3 border-bottom pb-2 text-danger" style="font-size: 14px;">
+            <span>Remise -{{ d.percent }}% <small class="d-block text-muted" style="font-size: 11px;">{{ d.label }} ({{ d.quantity }} articles)</small></span>
+            <span class="fw-semibold">-{{ d.amount }} DT</span>
+          </div>
+        }
 
         <!-- Delivery -->
         <div class="d-flex justify-content-between mb-3 border-bottom pb-2" style="font-size: 14px;">

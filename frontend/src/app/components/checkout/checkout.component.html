@@ -38,6 +38,12 @@
                 <span class="text-secondary">Téléphone :</span>
                 <span class="fw-bold text-dark">{{ order.phone }}</span>
               </div>
+              @if (order.discountAmount > 0) {
+                <div class="d-flex justify-content-between mb-2 text-danger">
+                  <span>Remise par quantité :</span>
+                  <span class="fw-bold">-{{ order.discountAmount }} DT</span>
+                </div>
+              }
               <div class="d-flex justify-content-between mb-2">
                 <span class="text-secondary">Total (Paiement à la livraison) :</span>
                 <span class="fw-bold text-success">{{ order.totalPrice }} DT</span>
@@ -114,7 +120,16 @@
                       <small class="text-muted d-block" style="font-size: 11px;">Qté : {{ item.quantity }}@if (item.colorName) { | Couleur : {{ item.colorName }}} | Taille : {{ item.size || 'M' }}</small>
                     </div>
                   </div>
-                  <span class="fw-bold text-dark">{{ Math.round(item.product.price * item.quantity * 100) / 100 }} DT</span>
+                  @if (cartService.lineQuote(item); as lq) {
+                    <span class="fw-bold text-end text-dark">
+                      @if (lq.discountPercent > 0) {
+                        <small class="d-block text-muted text-decoration-line-through fw-normal" style="font-size: 11px;">{{ lq.subtotal }} DT</small>
+                        <span class="text-danger">{{ lq.total }} DT</span>
+                      } @else {
+                        {{ lq.total }} DT
+                      }
+                    </span>
+                  }
                 </div>
               }
             </div>
@@ -127,6 +142,14 @@
               <span class="fw-bold text-dark">{{ cartService.cartSubtotal() }} DT</span>
             </div>
 
+            <!-- Remise par quantité -->
+            @for (d of cartService.quote().discounts; track d.ruleId) {
+              <div class="d-flex justify-content-between mb-2 text-danger" style="font-size: 14px;">
+                <span>Remise -{{ d.percent }}% <small class="d-block text-muted" style="font-size: 11px;">{{ d.label }}</small></span>
+                <span class="fw-semibold">-{{ d.amount }} DT</span>
+              </div>
+            }
+
             <!-- Delivery -->
             <div class="d-flex justify-content-between mb-3 border-bottom pb-3" style="font-size: 14px;">
               <span class="text-secondary">Frais de livraison</span>
@@ -137,7 +160,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
               <span class="h5 fw-bold m-0 text-dark">Total</span>
               <span class="h4 fw-bold m-0 text-dark">
-                {{ cartService.cartSubtotal() + 7 }} DT
+                {{ Math.round((cartService.cartTotal() + 7) * 100) / 100 }} DT
               </span>
             </div>
 

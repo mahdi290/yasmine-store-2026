@@ -44,6 +44,19 @@ public class Order {
     @Column(name = "city")
     private String city;
 
+    // Total des articles avant remise par quantité (null pour les anciennes commandes)
+    @Column(name = "subtotal")
+    private BigDecimal subtotal;
+
+    // Montant total de la remise par quantité
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
+
+    // Détail lisible des remises appliquées, une règle par ligne
+    @Column(name = "discount_details", columnDefinition = "TEXT")
+    private String discountDetails;
+
+    // Total à payer pour les articles, remise déduite (hors livraison)
     @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
 

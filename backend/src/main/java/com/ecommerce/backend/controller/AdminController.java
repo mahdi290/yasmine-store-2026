@@ -41,7 +41,9 @@ public class AdminController {
             String colorHex,
             String size,
             Integer quantity,
-            BigDecimal price
+            BigDecimal price,
+            Integer discountPercent,
+            BigDecimal discountAmount
     ) {}
 
     public record OrderResponse(
@@ -54,7 +56,10 @@ public class AdminController {
             BigDecimal totalPrice,
             String status,
             java.time.LocalDateTime createdAt,
-            List<OrderItemResponse> items
+            List<OrderItemResponse> items,
+            BigDecimal subtotal,
+            BigDecimal discountAmount,
+            String discountDetails
     ) {}
 
     private OrderItemResponse mapToOrderItemResponse(OrderItem item) {
@@ -71,7 +76,9 @@ public class AdminController {
                 item.getColorHex(),
                 item.getSize(),
                 item.getQuantity(),
-                item.getPrice()
+                item.getPrice(),
+                item.getDiscountPercent(),
+                item.getDiscountAmount()
         );
     }
 
@@ -89,7 +96,10 @@ public class AdminController {
             order.getTotalPrice(),
             order.getStatus(),
             order.getCreatedAt(),
-            orderItemRepository.findByOrderId(order.getId()).stream().map(this::mapToOrderItemResponse).toList()
+            orderItemRepository.findByOrderId(order.getId()).stream().map(this::mapToOrderItemResponse).toList(),
+            order.getSubtotal(),
+            order.getDiscountAmount(),
+            order.getDiscountDetails()
         );
     }
 
@@ -225,6 +235,9 @@ public class AdminController {
                 if (p != null && p.getCategory() != null) {
                     String catName = p.getCategory().getName();
                     BigDecimal revenue = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                    if (item.getDiscountAmount() != null) {
+                        revenue = revenue.subtract(item.getDiscountAmount());
+                    }
                     
                     CategorySales existing = salesMap.get(catName);
                     if (existing == null) {

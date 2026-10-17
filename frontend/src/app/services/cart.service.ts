@@ -2,6 +2,7 @@ import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { Observable, of } from 'rxjs';
 import { Product, ProductVariant } from './product.service';
+import { DiscountService, computeQuote, effectivePrice, LineQuote } from './discount.service';
 
 export interface CartItem {
   id: number;
@@ -21,6 +22,7 @@ export interface CartItem {
 export class CartService {
   private readonly STORAGE_KEY = 'yasmina_guest_cart';
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly discountService = inject(DiscountService);
 
   // State
   cartItems = signal<CartItem[]>([]);
@@ -30,9 +32,29 @@ export class CartService {
     return this.cartItems().reduce((total, item) => total + item.quantity, 0);
   });
 
-  cartSubtotal = computed(() => {
-    return Math.round(this.cartItems().reduce((total, item) => total + (item.product.price * item.quantity), 0) * 100) / 100;
-  });
+  // Prix soldés + remise par quantité (affichage ; le serveur recalcule tout à la commande)
+  quote = computed(() => computeQuote(
+    this.cartItems().map(item => ({ product: item.product, quantity: item.quantity })),
+    this.discountService.activeRules()
+  ));
+
+  // Sous-total des articles au prix soldé, avant remise par quantité
+  cartSubtotal = computed(() => this.quote().subtotal);
+  cartDiscount = computed(() => this.quote().discountAmount);
+  cartTotal = computed(() => this.quote().total);
+
+  /** Détail de prix d'une ligne du panier. */
+  lineQuote(item: CartItem): LineQuote {
+    const idx = this.cartItems().findIndex(i => i.id === item.id);
+    return this.quote().lines[idx] ?? {
+      unitPrice: effectivePrice(item.product), subtotal: 0, discountPercent: 0, discountAmount: 0, total: 0, ruleId: null
+    };
+  }
+
+  /** Prix unitaire actuel (soldé si le produit est en solde). */
+  unitPrice(product: Product): number {
+    return effectivePrice(product);
+  }
 
   constructor() {
     this.loadCart();

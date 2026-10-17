@@ -25,11 +25,11 @@ export class CartComponent {
   });
 
   grandTotal = computed(() => {
-    const subtotal = this.cartService.cartSubtotal();
+    const total = this.cartService.cartTotal();
     const delivery = this.deliveryCost();
     const disc = this.discount();
-    
-    return Math.max(0, Math.round((subtotal + delivery - disc) * 100) / 100);
+
+    return Math.max(0, Math.round((total + delivery - disc) * 100) / 100);
   });
 
   increaseQty(item: CartItem) {

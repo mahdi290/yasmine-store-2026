@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { ProductService, Product, ProductVariant } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { DiscountService, effectivePrice, rulesForProduct } from '../../services/discount.service';
 
 @Component({
   selector: 'app-product-details',
@@ -19,6 +20,7 @@ export class ProductDetailsComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
+  private discountService = inject(DiscountService);
 
   // States
   product = signal<Product | null>(null);
@@ -30,6 +32,18 @@ export class ProductDetailsComponent implements OnInit {
   availableSizes = ['S', 'M', 'L', 'XL'];
 
   variants = computed<ProductVariant[]>(() => this.product()?.variants ?? []);
+
+  // Prix unitaire actuel (soldé le cas échéant)
+  unitPrice = computed(() => {
+    const prod = this.product();
+    return prod ? effectivePrice(prod) : 0;
+  });
+
+  // Offres "Achetez 2, économisez 10%" applicables à ce produit
+  quantityOffers = computed(() => {
+    const prod = this.product();
+    return prod ? rulesForProduct(prod, this.discountService.activeRules()) : [];
+  });
 
   selectedVariant = computed<ProductVariant | null>(() => {
     const id = this.selectedVariantId();

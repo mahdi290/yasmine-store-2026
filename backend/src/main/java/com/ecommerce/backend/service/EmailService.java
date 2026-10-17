@@ -147,7 +147,14 @@ public class EmailService {
             String size = item.getSize() != null ? item.getSize() : "M";
             int qty = item.getQuantity() != null ? item.getQuantity() : 1;
             String unitPrice = item.getPrice() != null ? item.getPrice().toString() : "0.00";
-            String subtotal = item.getPrice() != null ? item.getPrice().multiply(java.math.BigDecimal.valueOf(qty)).toString() : unitPrice;
+            java.math.BigDecimal lineTotal = item.getPrice() != null ? item.getPrice().multiply(java.math.BigDecimal.valueOf(qty)) : java.math.BigDecimal.ZERO;
+            if (item.getDiscountAmount() != null) {
+                lineTotal = lineTotal.subtract(item.getDiscountAmount());
+            }
+            String subtotal = lineTotal.setScale(2, java.math.RoundingMode.HALF_UP).toString();
+            String discountHtml = item.getDiscountPercent() != null && item.getDiscountPercent() > 0
+                    ? "<div style=\"color: #b91c1c; font-size: 11px; font-weight: normal;\">Remise -" + item.getDiscountPercent() + "%</div>"
+                    : "";
 
             String imgTd = !prodImg.isEmpty() 
                 ? "<td style=\"width: 55px; padding-right: 10px;\"><img src=\"" + prodImg + "\" alt=\"photo\" style=\"width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;\" /></td>" 
@@ -167,8 +174,16 @@ public class EmailService {
                 .append("</td>")
                 .append("<td style=\"padding: 12px; text-align: center; color: #374151; font-weight: bold;\">").append(qty).append("</td>")
                 .append("<td style=\"padding: 12px; text-align: right; color: #374151;\">").append(unitPrice).append(" DT</td>")
-                .append("<td style=\"padding: 12px; text-align: right; color: #111827; font-weight: bold;\">").append(subtotal).append(" DT</td>")
+                .append("<td style=\"padding: 12px; text-align: right; color: #111827; font-weight: bold;\">").append(subtotal).append(" DT").append(discountHtml).append("</td>")
                 .append("</tr>");
+        }
+
+        java.math.BigDecimal itemsSubtotal = order.getSubtotal() != null ? order.getSubtotal() : order.getTotalPrice();
+        String discountRowsHtml = "";
+        if (order.getDiscountAmount() != null && order.getDiscountAmount().signum() > 0) {
+            String details = order.getDiscountDetails() != null ? order.getDiscountDetails().replace("\n", "<br>") : "Remise par quantité";
+            discountRowsHtml = "<tr><td align=\"right\" style=\"color: #b91c1c;\">" + details + "</td>"
+                    + "<td align=\"right\" style=\"width: 120px; color: #b91c1c; font-weight: 600;\">-" + order.getDiscountAmount() + " DT</td></tr>";
         }
 
         String customerEmail = order.getEmail() != null && !order.getEmail().trim().isEmpty() ? order.getEmail() : "Non renseigné";
@@ -220,7 +235,8 @@ public class EmailService {
             + "</tbody></table></td></tr>"
             + "<tr><td style=\"padding: 20px 30px;\">"
             + "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"6\" style=\"font-size: 14px;\">"
-            + "<tr><td align=\"right\" style=\"color: #64748b;\">Sous-total :</td><td align=\"right\" style=\"width: 120px; color: #0f172a; font-weight: 600;\">" + order.getTotalPrice() + " DT</td></tr>"
+            + "<tr><td align=\"right\" style=\"color: #64748b;\">Sous-total :</td><td align=\"right\" style=\"width: 120px; color: #0f172a; font-weight: 600;\">" + itemsSubtotal + " DT</td></tr>"
+            + discountRowsHtml
             + "<tr><td align=\"right\" style=\"color: #64748b;\">Livraison Express :</td><td align=\"right\" style=\"color: #10b981; font-weight: 600;\">Inclus / À confirmer</td></tr>"
             + "<tr style=\"border-top: 2px solid #e2e8f0;\">"
             + "<td align=\"right\" style=\"font-size: 16px; font-weight: bold; color: #0f172a; padding-top: 12px;\">Total à encaisser :</td>"
@@ -250,6 +266,10 @@ public class EmailService {
         System.out.println("Téléphone    : " + order.getPhone());
         System.out.println("Email        : " + (order.getEmail() != null ? order.getEmail() : "N/A"));
         System.out.println("Adresse      : " + order.getAddress() + ", " + order.getCity());
+        if (order.getDiscountAmount() != null && order.getDiscountAmount().signum() > 0) {
+            System.out.println("Sous-total   : " + order.getSubtotal() + " DT");
+            System.out.println("Remise       : -" + order.getDiscountAmount() + " DT (" + order.getDiscountDetails() + ")");
+        }
         System.out.println("Total        : " + order.getTotalPrice() + " DT (Paiement à la livraison)");
         System.out.println("--------------------------------------------------------------------------------");
         System.out.println("Articles :");

@@ -52,9 +52,35 @@
             <h2 class="fw-bold text-dark mb-3" style="font-family: 'Inter Tight', sans-serif; font-size: 32px; letter-spacing: -0.5px;">{{ prod.name }}</h2>
 
             <!-- Price -->
-            <div class="mb-4">
-              <span class="h3 fw-bold text-dark">{{ prod.price }} DT</span>
+            <div class="mb-3">
+              @if (unitPrice() < prod.price) {
+                <span class="h3 fw-bold text-danger">{{ unitPrice() }} DT</span>
+                <span class="text-muted text-decoration-line-through ms-2">{{ prod.price }} DT</span>
+                <span class="badge bg-danger ms-2">-{{ prod.discountPercent }}%</span>
+              } @else {
+                <span class="h3 fw-bold text-dark">{{ prod.price }} DT</span>
+              }
               <span class="text-muted ms-2" style="font-size: 14px;">+ livraison gratuite</span>
+            </div>
+
+            <!-- Remise par quantité -->
+            <div class="mb-4">
+            @for (rule of quantityOffers(); track rule.id) {
+              <div class="qty-offer d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-tags-fill"></i>
+                <span>
+                  <strong>Achetez {{ rule.minQuantity }}, économisez {{ rule.percent }}%</strong>
+                  @if (rule.scope === 'CATEGORY' && rule.targetName) {
+                    <span class="text-muted"> sur les {{ rule.targetName }}</span>
+                  } @else if (rule.scope === 'CART') {
+                    <span class="text-muted"> sur tout le panier</span>
+                  }
+                  @if (variants().length > 1 && rule.scope !== 'CART') {
+                    <span class="text-muted"> — couleurs mélangeables</span>
+                  }
+                </span>
+              </div>
+            }
             </div>
 
             <hr class="my-4">

@@ -1,0 +1,186 @@
+<div class="container-fluid p-0 text-start">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+    <h2 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Remise par Quantité</h2>
+    <button (click)="openAdd()" class="btn btn-dark btn-sm d-flex align-items-center gap-2 px-3 py-2" style="border-radius: 8px;">
+      <i class="bi bi-plus-lg"></i> Nouvelle remise
+    </button>
+  </div>
+  <p class="text-muted mb-4" style="font-size: 13px;">
+    Exemple : « Achetez 2, économisez 10% » sur les pulls. Les quantités de toutes les couleurs d'un même produit
+    (ou de toute la catégorie selon la portée) sont additionnées. Si plusieurs remises s'appliquent à un article,
+    seule la plus avantageuse est retenue. Le calcul final est toujours refait par le serveur à la commande.
+  </p>
+
+  @if (successMsg()) {
+    <div class="alert alert-success py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg() }}
+    </div>
+  }
+  @if (errorMsg() && modalMode() === 'none') {
+    <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 13px; border-radius: 8px;">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Chargement...</span></div>
+    </div>
+  } @else {
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+      <div class="table-responsive">
+        <table class="table align-middle table-hover mb-0">
+          <thead>
+            <tr class="text-muted" style="font-size: 12px; text-transform: uppercase;">
+              <th class="border-0 pb-3 ps-4">Remise</th>
+              <th class="border-0 pb-3">À partir de</th>
+              <th class="border-0 pb-3">Réduction</th>
+              <th class="border-0 pb-3">Portée</th>
+              <th class="border-0 pb-3">Statut</th>
+              <th class="border-0 pb-3 pe-4 text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody style="font-size: 14px;">
+            @for (rule of rules(); track rule.id) {
+              <tr>
+                <td class="ps-4 fw-semibold text-dark">{{ rule.displayLabel }}</td>
+                <td>{{ rule.minQuantity }} article(s)</td>
+                <td><span class="badge badge-percent">-{{ rule.percent }}%</span></td>
+                <td class="text-secondary" style="font-size: 13px;">{{ scopeText(rule) }}</td>
+                <td>
+                  <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch" [checked]="rule.active" (change)="toggle(rule)" [attr.aria-label]="'Activer ' + rule.displayLabel">
+                    <label class="form-check-label small" [class.text-success]="rule.active" [class.text-muted]="!rule.active">
+                      {{ rule.active ? 'Active' : 'Désactivée' }}
+                    </label>
+                  </div>
+                </td>
+                <td class="pe-4 text-end">
+                  <button (click)="openEdit(rule)" class="btn btn-sm btn-outline-dark me-1" style="border-radius: 6px;" title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button (click)="openDelete(rule)" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;" title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                  Aucune remise par quantité. Cliquez sur « Nouvelle remise » pour en créer une.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- MODAL : création / modification -->
+@if (modalMode() === 'add' || modalMode() === 'edit') {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4" style="border-radius: 16px;">
+    <h5 class="fw-bold text-dark mb-4" style="font-family: 'Inter Tight', sans-serif;">
+      {{ modalMode() === 'add' ? 'Nouvelle remise par quantité' : 'Modifier la remise' }}
+    </h5>
+
+    @if (errorMsg()) {
+      <div class="alert alert-danger py-2 px-3 mb-3" style="font-size: 13px; border-radius: 8px;">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg() }}
+      </div>
+    }
+
+    <div class="row g-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Quantité minimale *</label>
+        <input type="number" min="1" class="form-control" [(ngModel)]="form.minQuantity" placeholder="2">
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Remise (%) *</label>
+        <div class="input-group">
+          <input type="number" min="1" max="90" class="form-control" [(ngModel)]="form.percent" placeholder="10">
+          <span class="input-group-text">%</span>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Portée *</label>
+        <select class="form-select" [(ngModel)]="form.scope">
+          @for (s of scopes; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+
+      @if (form.scope === 'CATEGORY') {
+        <div class="col-12">
+          <label class="form-label fw-semibold" style="font-size: 13px;">Catégorie *</label>
+          <select class="form-select" [(ngModel)]="form.categoryId">
+            @for (c of categories(); track c.id) {
+              <option [ngValue]="c.id">{{ c.name }} ({{ c.department || 'Femme' }})</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (form.scope === 'PRODUCT') {
+        <div class="col-12">
+          <label class="form-label fw-semibold" style="font-size: 13px;">Produit *</label>
+          <select class="form-select" [(ngModel)]="form.productId">
+            <option [ngValue]="null" disabled>Choisir un produit</option>
+            @for (p of products(); track p.id) {
+              <option [ngValue]="p.id">{{ p.name }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="col-12">
+        <label class="form-label fw-semibold" style="font-size: 13px;">Libellé affiché <span class="text-muted fw-normal">(optionnel)</span></label>
+        <input type="text" class="form-control" [(ngModel)]="form.label" placeholder="Laisser vide pour un libellé automatique">
+      </div>
+
+      <div class="col-12 d-flex align-items-center justify-content-between">
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="ruleActive" [(ngModel)]="form.active">
+          <label class="form-check-label fw-semibold" for="ruleActive" style="font-size: 13px;">
+            {{ form.active ? 'Règle activée' : 'Règle désactivée' }}
+          </label>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="preview-box p-3 rounded-3">
+          <small class="text-muted d-block mb-1" style="font-size: 11px;">Aperçu côté client</small>
+          <i class="bi bi-tags-fill me-1"></i> <strong>{{ previewLabel() }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px; font-size: 14px;">Annuler</button>
+      <button (click)="save()" [disabled]="saving()" class="btn btn-dark px-4 py-2" style="border-radius: 8px; font-size: 14px;">
+        {{ modalMode() === 'add' ? 'Créer la remise' : 'Enregistrer' }}
+      </button>
+    </div>
+  </div>
+}
+
+<!-- MODAL : suppression -->
+@if (modalMode() === 'delete') {
+  <div class="modal-backdrop-custom" (click)="closeModal()"></div>
+  <div class="modal-dialog-custom card border-0 shadow p-4 text-center" style="border-radius: 16px; max-width: 420px;">
+    <i class="bi bi-exclamation-triangle text-danger mb-3" style="font-size: 48px;"></i>
+    <h5 class="fw-bold text-dark mb-2">Supprimer cette remise ?</h5>
+    <p class="text-muted mb-4" style="font-size: 14px;">
+      Êtes-vous sûr de vouloir supprimer <strong>{{ selectedRule()?.displayLabel }}</strong> ?
+      Les commandes déjà passées gardent leur remise.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+      <button (click)="closeModal()" class="btn btn-light px-4 py-2" style="border-radius: 8px;">Annuler</button>
+      <button (click)="confirmDelete()" class="btn btn-danger px-4 py-2" style="border-radius: 8px;">Supprimer</button>
+    </div>
+  </div>
+}

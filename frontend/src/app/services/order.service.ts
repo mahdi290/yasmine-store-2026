@@ -7,6 +7,9 @@ import { Product } from './product.service';
 export interface Order {
   id: number;
   totalPrice: number;
+  subtotal?: number | null;
+  discountAmount?: number | null;
+  discountDetails?: string | null;
   status: string;
   createdAt: string;
   customerName?: string;
@@ -25,6 +28,8 @@ export interface OrderItem {
   variantId?: number | null;
   imageUrl?: string | null;
   price: number;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
 }
 
 export interface OrderHistoryItem {

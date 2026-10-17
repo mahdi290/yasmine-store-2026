@@ -11,6 +11,7 @@ import com.ecommerce.backend.repository.OrderItemRepository;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.ProductRepository;
 import com.ecommerce.backend.service.EmailService;
+import com.ecommerce.backend.service.PricingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +34,7 @@ public class OrderController {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final EmailService emailService;
+    private final PricingService pricingService;
 
     public record OrderItemRequest(Long productId, Integer quantity, String size, Long variantId) {}
     public record GuestOrderRequest(String customerName, String phone, String email, String address, String city, List<OrderItemRequest> items) {}
@@ -72,7 +73,7 @@ public class OrderController {
         OrderItem orderItem = OrderItem.builder()
                 .product(product)
                 .quantity(qty)
-                .price(product.getPrice())
+                .price(PricingService.effectivePrice(product))
                 .size(size)
                 .color(variant != null ? variant.getColorName() : "Default")
                 .variantId(variant != null ? variant.getId() : null)
@@ -89,7 +90,6 @@ public class OrderController {
             @AuthenticationPrincipal User user) {
 
         List<OrderItem> orderItemsToSave = new ArrayList<>();
-        BigDecimal totalPrice = BigDecimal.ZERO;
 
         String customerName = null;
         String phone = null;
@@ -117,7 +117,6 @@ public class OrderController {
                 if (line.error() != null) {
                     return rollback(line.error());
                 }
-                totalPrice = totalPrice.add(line.item().getPrice().multiply(BigDecimal.valueOf(qty)));
                 orderItemsToSave.add(line.item());
             }
         } else if (user != null) {
@@ -134,7 +133,6 @@ public class OrderController {
                 if (line.error() != null) {
                     return rollback(line.error());
                 }
-                totalPrice = totalPrice.add(line.item().getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
                 orderItemsToSave.add(line.item());
             }
             cartItemRepository.deleteByUserId(user.getId());
@@ -146,6 +144,18 @@ public class OrderController {
             return ResponseEntity.badRequest().body("Votre panier est vide.");
         }
 
+        // Prix et remise par quantité recalculés ici, jamais repris du navigateur
+        PricingService.Quote quote = pricingService.quote(orderItemsToSave.stream()
+                .map(i -> new PricingService.Line(i.getProduct(), i.getQuantity(), i.getPrice()))
+                .toList());
+        for (int i = 0; i < orderItemsToSave.size(); i++) {
+            PricingService.LineResult r = quote.lines().get(i);
+            OrderItem item = orderItemsToSave.get(i);
+            item.setPrice(r.unitPrice());
+            item.setDiscountPercent(r.discountPercent());
+            item.setDiscountAmount(r.discountAmount());
+        }
+
         // Save Order
         Order order = Order.builder()
                 .user(user)
@@ -154,7 +164,10 @@ public class OrderController {
                 .email(email)
                 .address(address)
                 .city(city)
-                .totalPrice(totalPrice)
+                .subtotal(quote.subtotal())
+                .discountAmount(quote.discountAmount())
+                .discountDetails(quote.describe())
+                .totalPrice(quote.total())
                 .status("PENDING")
                 .build();
         orderRepository.save(order);
