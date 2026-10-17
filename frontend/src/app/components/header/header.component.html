@@ -21,36 +21,23 @@
   <!-- Row 1: Brand & Key Actions Bar -->
   <div class="header-main-bar border-bottom">
     <div class="container-fluid px-3 px-xl-5 py-2.5">
-      <div class="d-flex align-items-center justify-content-between position-relative">
-        
-        <!-- Left: Mobile Trigger + Department Pills (FEMME / HOMME) -->
-        <div class="header-left d-flex align-items-center gap-2 gap-md-3">
+      <div class="header-grid">
+
+        <!-- Left: Mobile Trigger (les rayons sont intégrés à la barre de navigation) -->
+        <div class="header-left d-flex align-items-center">
           <!-- Mobile Hamburger Toggle -->
-          <button class="btn btn-link text-dark p-1 d-lg-none border-0" 
-                  type="button" 
-                  (click)="toggleMobileMenu()" 
+          <button class="btn btn-link text-dark p-1 d-lg-none border-0"
+                  type="button"
+                  (click)="toggleMobileMenu()"
                   aria-label="Menu de navigation">
             <i class="bi bi-list fs-2"></i>
           </button>
-
-          <!-- Desktop Department Pill Selector (Direct 1-Click Navigation to Femme or Homme) -->
-          <div class="d-none d-lg-flex align-items-center gap-2 department-pills">
-            @for (dept of departments(); track dept.id) {
-              <button class="dept-pill-btn d-inline-flex align-items-center"
-                      [class.active]="isDepartmentActive(dept.code)"
-                      type="button"
-                      (click)="selectDepartment(dept.code)"
-                      [title]="'Voir toute la collection ' + dept.name">
-                <span>{{ dept.name }}</span>
-              </button>
-            }
-          </div>
         </div>
 
         <!-- Center: Prominent Brand Identity -->
         <div class="header-center text-center">
-          <a routerLink="/" class="navbar-brand d-inline-flex align-items-center gap-2.5 text-decoration-none py-1">
-            <img src="/logo.jpg" alt="Yasmina Store" class="brand-logo rounded-circle shadow-xs">
+          <a routerLink="/" class="navbar-brand d-inline-flex align-items-center text-decoration-none py-1">
+            <img src="/logo.jpg" alt="Yasmina Store" class="brand-logo rounded-circle shadow-xs" width="72" height="72" decoding="async">
             <span class="brand-title fw-bold">
               Yasmina Store
             </span>
@@ -58,7 +45,7 @@
         </div>
 
         <!-- Right: Search Bar, Wishlist, Cart -->
-        <div class="header-right d-flex align-items-center justify-content-end gap-2 gap-md-3">
+        <div class="header-right d-flex align-items-center justify-content-end gap-1 gap-md-3">
           
           <!-- Desktop Search Bar -->
           <div class="search-box position-relative d-none d-md-block">
@@ -121,6 +108,7 @@
                routerLinkActive="active" 
                [routerLinkActiveOptions]="{exact: item.exact}" 
                class="nav-link-item"
+               [class.dept-link]="item.isDepartment"
                [class.promo-link]="item.isPromo">
               @if (item.isPromo) {
                 <span class="promo-badge">PROMO</span>
@@ -160,7 +148,7 @@
     <!-- Drawer Header -->
     <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-2">
-        <img src="/logo.jpg" alt="Logo" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
+        <img src="/logo.jpg" alt="Logo" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover;">
         <span class="fw-bold fs-5" style="font-family: 'Playfair Display', Georgia, serif;">Yasmina Store</span>
       </div>
       <button class="btn btn-link text-dark p-1 border-0" (click)="closeMobileMenu()">
@@ -171,20 +159,22 @@
     <!-- Drawer Navigation Links -->
     <div class="p-3 flex-grow-1 overflow-y-auto">
       
-      <!-- Departments list -->
-      <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 11px; letter-spacing: 0.8px;">
-        Rayons
-      </div>
-      <div class="drawer-department-switcher d-flex align-items-center gap-2 mb-3">
-        @for (dept of departments(); track dept.id) {
-          <button type="button" 
-                  class="drawer-dept-pill" 
-                  [class.active]="isDepartmentActive(dept.code)"
-                  (click)="selectDepartment(dept.code)">
-            {{ dept.name }}
-          </button>
-        }
-      </div>
+      <!-- Departments list (uniquement s'il existe plusieurs rayons actifs) -->
+      @if (navDepartments().length > 0) {
+        <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 11px; letter-spacing: 0.8px;">
+          Rayons
+        </div>
+        <div class="drawer-department-switcher d-flex flex-wrap align-items-center gap-2 mb-3">
+          @for (dept of navDepartments(); track dept.code) {
+            <button type="button"
+                    class="drawer-dept-pill"
+                    [class.active]="isDepartmentActive(dept.code)"
+                    (click)="selectDepartment(dept.code)">
+              {{ dept.name }}
+            </button>
+          }
+        </div>
+      }
 
       <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 11px; letter-spacing: 0.8px;">
         Navigation

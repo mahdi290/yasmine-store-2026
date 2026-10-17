@@ -5,7 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
 import { WishlistService } from '../../services/wishlist.service';
 import { ProductService, Category } from '../../services/product.service';
-import { DepartmentService, Department, DEFAULT_DEPARTMENTS } from '../../services/department.service';
+import { DepartmentService, Department } from '../../services/department.service';
 
 @Component({
   selector: 'app-header',
@@ -24,7 +24,14 @@ export class HeaderComponent implements OnInit {
   private platformId = inject(PLATFORM_ID);
 
   categories = signal<Category[]>([]);
-  departments = signal<Department[]>(DEFAULT_DEPARTMENTS);
+  // Rayons actifs réellement présents en base (vide tant que l'API n'a pas répondu)
+  departments = signal<Department[]>([]);
+
+  // Un seul rayon (ex. FEMME) : inutile de l'afficher. Plusieurs : ils rejoignent la barre de navigation.
+  navDepartments = computed(() => {
+    const active = this.departments().filter(d => d.active !== false);
+    return active.length > 1 ? active : [];
+  });
 
   // Current active department tracking (empty by default so neither is pre-selected)
   currentDepartment = signal<string>('');
@@ -40,10 +47,22 @@ export class HeaderComponent implements OnInit {
       : cats;
 
     // Build the links array dynamically
-    const links: { label: string; path: string; queryParams: any; exact: boolean; isPromo: boolean }[] = [];
+    const links: { label: string; path: string; queryParams: any; exact: boolean; isPromo: boolean; isDepartment?: boolean }[] = [];
 
     // Always start with Accueil
     links.push({ label: 'ACCUEIL', path: '/', queryParams: {}, exact: true, isPromo: false });
+
+    // Rayons (FEMME, HOMME, ENFANT...) intégrés à la navigation lorsqu'il y en a plusieurs
+    for (const d of this.navDepartments()) {
+      links.push({
+        label: d.name.toUpperCase(),
+        path: '/category',
+        queryParams: { department: (d.code || '').toLowerCase() },
+        exact: false,
+        isPromo: false,
+        isDepartment: true
+      });
+    }
 
     // "Nouveautés" / "Toutes les créations" link
     if (dept) {
@@ -87,13 +106,8 @@ export class HeaderComponent implements OnInit {
         error: () => {}
       });
 
-      this.departmentService.getDepartments().subscribe({
-        next: (depts) => {
-          if (depts && depts.length > 0) {
-            this.departments.set(depts);
-          }
-        },
-        error: () => {}
+      this.departmentService.getActiveDepartments().subscribe({
+        next: (depts) => this.departments.set(depts || [])
       });
 
       // Track current URL department query param

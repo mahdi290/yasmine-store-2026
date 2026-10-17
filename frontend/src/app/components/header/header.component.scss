@@ -33,13 +33,63 @@
   border-bottom: 1px solid rgba(216, 198, 186, 0.4);
 }
 
+// Grille 3 colonnes : les deux côtés ont la même largeur, le logo reste parfaitement centré
+.header-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+
+  .header-left {
+    justify-self: start;
+    min-width: 0;
+  }
+
+  .header-center {
+    justify-self: center;
+    min-width: 0;
+  }
+
+  .header-right {
+    justify-self: end;
+    min-width: 0;
+  }
+
+  // Mobile : burger | logo | actions, le logo prend l'espace restant
+  @media (max-width: 575.98px) {
+    grid-template-columns: auto 1fr auto;
+    column-gap: 4px;
+  }
+}
+
 // Brand Identity (Centered Spotlight)
+.navbar-brand {
+  gap: 14px;
+  max-width: 100%;
+}
+
 .brand-logo {
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
   object-fit: cover;
   border: 1.5px solid rgba(216, 198, 186, 0.6);
   transition: transform 0.25s ease;
+
+  @media (max-width: 1199.98px) {
+    width: 60px;
+    height: 60px;
+  }
+
+  @media (max-width: 991.98px) {
+    width: 56px;
+    height: 56px;
+  }
+
+  @media (max-width: 575.98px) {
+    width: 48px;
+    height: 48px;
+  }
 }
 
 .navbar-brand:hover .brand-logo {
@@ -48,13 +98,31 @@
 
 .brand-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.85rem;
+  font-size: 2.6rem;
+  line-height: 1.1;
   letter-spacing: -0.5px;
   color: #0C0D07;
+  white-space: nowrap;
   transition: opacity 0.2s ease;
 
-  @media (max-width: 768px) {
-    font-size: 1.4rem;
+  @media (max-width: 1299.98px) {
+    font-size: 2.2rem;
+  }
+
+  @media (max-width: 1199.98px) {
+    font-size: 1.85rem;
+  }
+
+  @media (max-width: 991.98px) {
+    font-size: 1.9rem;
+  }
+
+  @media (max-width: 575.98px) {
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 359.98px) {
+    font-size: 1.05rem;
   }
 
   &:hover {
@@ -62,39 +130,9 @@
   }
 }
 
-// Department Segmented Switcher (FEMME / HOMME)
-.department-pills {
-  background: #F3EFEA;
-  padding: 3px;
-  border-radius: 50px;
-  border: 1px solid rgba(49, 64, 33, 0.15);
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-
-  .dept-pill-btn {
-    background: transparent;
-    border: none;
-    border-radius: 50px;
-    padding: 6px 18px;
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: #4A5242;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-
-    &:hover:not(.active) {
-      color: #314021;
-      background-color: rgba(255, 255, 255, 0.7);
-    }
-
-    &.active {
-      background-color: #314021;
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(49, 64, 33, 0.28);
-    }
+@media (max-width: 575.98px) {
+  .navbar-brand {
+    gap: 8px;
   }
 }
 
@@ -106,6 +144,10 @@
   height: 38px;
   width: 190px;
   transition: all 0.25s ease;
+
+  @media (max-width: 1199.98px) {
+    width: 150px;
+  }
 
   &:focus {
     background-color: #ffffff !important;
