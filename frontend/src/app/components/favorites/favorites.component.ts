@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { WishlistService } from '../../services/wishlist.service';
 import { CartService } from '../../services/cart.service';
 import { Product } from '../../services/product.service';
@@ -15,6 +15,7 @@ import { Product } from '../../services/product.service';
 export class FavoritesComponent implements OnInit {
   wishlistService = inject(WishlistService);
   cartService = inject(CartService);
+  private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
   favoriteProducts = signal<Product[]>([]);
@@ -52,6 +53,10 @@ export class FavoritesComponent implements OnInit {
   addToCart(product: Product, event: Event) {
     event.preventDefault();
     event.stopPropagation();
+    if (this.cartService.needsColorChoice(product)) {
+      this.router.navigate(['/product-details', product.id]);
+      return;
+    }
     this.cartService.addToCart(product, 1, 'M');
     this.addedToastProductId.set(product.id);
     setTimeout(() => {

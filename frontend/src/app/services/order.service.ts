@@ -21,6 +21,9 @@ export interface OrderItem {
   quantity: number;
   size: string;
   color: string;
+  colorHex?: string | null;
+  variantId?: number | null;
+  imageUrl?: string | null;
   price: number;
 }
 
@@ -39,6 +42,7 @@ export interface GuestOrderPayload {
     productId: number;
     quantity: number;
     size: string;
+    variantId?: number | null;
   }>;
 }
 

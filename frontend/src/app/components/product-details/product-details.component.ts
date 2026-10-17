@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
-import { ProductService, Product } from '../../services/product.service';
+import { ProductService, Product, ProductVariant } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 
@@ -25,16 +25,38 @@ export class ProductDetailsComponent implements OnInit {
   loading = signal<boolean>(true);
   quantity = signal<number>(1);
   selectedSize = signal<string>('M');
+  selectedVariantId = signal<number | null>(null);
+  selectedImage = signal<string | null>(null);
   availableSizes = ['S', 'M', 'L', 'XL'];
 
-  selectedSizeStock = computed(() => {
+  variants = computed<ProductVariant[]>(() => this.product()?.variants ?? []);
+
+  selectedVariant = computed<ProductVariant | null>(() => {
+    const id = this.selectedVariantId();
+    return this.variants().find(v => v.id === id) ?? null;
+  });
+
+  // Photos de la couleur choisie (ou photo du produit pour les produits sans couleur)
+  galleryImages = computed<string[]>(() => {
     const prod = this.product();
-    if (!prod) return 0;
-    const size = this.selectedSize();
-    if (prod.sizeStocks && prod.sizeStocks[size] !== undefined) {
-      return prod.sizeStocks[size];
-    }
-    return 0;
+    if (!prod) return [];
+    const variant = this.selectedVariant();
+    if (variant && variant.images?.length) return variant.images;
+    return prod.imageUrl ? [prod.imageUrl] : [];
+  });
+
+  displayedImage = computed(() => this.selectedImage() || this.galleryImages()[0] || this.product()?.imageUrl || '');
+
+  // Stock par taille de la couleur choisie (ou du produit)
+  private currentSizeStocks = computed<{ [key: string]: number }>(() => {
+    const variant = this.selectedVariant();
+    if (variant) return variant.sizeStocks || {};
+    return this.product()?.sizeStocks || {};
+  });
+
+  selectedSizeStock = computed(() => {
+    if (!this.product()) return 0;
+    return this.currentSizeStocks()[this.selectedSize()] ?? 0;
   });
 
   ngOnInit() {
@@ -90,12 +112,35 @@ export class ProductDetailsComponent implements OnInit {
   private applyProduct(prod: Product) {
     this.product.set(prod);
     this.quantity.set(1);
-    if (prod.sizeStocks) {
-      const inStockSize = this.availableSizes.find(s => (prod.sizeStocks?.[s] ?? 0) > 0);
-      if (inStockSize) {
-        this.selectedSize.set(inStockSize);
-      }
+    this.selectedImage.set(null);
+
+    // Couleur par défaut : la première qui a du stock
+    const variants = prod.variants ?? [];
+    const firstInStock = variants.find(v => (v.stock ?? 0) > 0) ?? variants[0];
+    this.selectedVariantId.set(firstInStock?.id ?? null);
+    this.selectFirstSizeInStock();
+  }
+
+  private selectFirstSizeInStock() {
+    const stocks = this.currentSizeStocks();
+    const inStockSize = this.availableSizes.find(s => (stocks[s] ?? 0) > 0);
+    if (inStockSize) {
+      this.selectedSize.set(inStockSize);
     }
+  }
+
+  selectVariant(variant: ProductVariant) {
+    this.selectedVariantId.set(variant.id ?? null);
+    this.selectedImage.set(null);
+    this.quantity.set(1);
+    // Garde la taille si elle est disponible dans cette couleur, sinon prend la première en stock
+    if ((variant.sizeStocks?.[this.selectedSize()] ?? 0) <= 0) {
+      this.selectFirstSizeInStock();
+    }
+  }
+
+  sizeStock(size: string): number {
+    return this.currentSizeStocks()[size] ?? 0;
   }
 
   increaseQty() {
@@ -117,19 +162,32 @@ export class ProductDetailsComponent implements OnInit {
     const prod = this.product();
     if (!prod) return;
 
+    const variant = this.selectedVariant();
+    if (this.variants().length > 0 && !variant) {
+      alert('Veuillez choisir une couleur.');
+      return;
+    }
+
     if (this.selectedSizeStock() <= 0) {
       alert('Cette taille est actuellement en rupture de stock.');
       return;
     }
 
-    if (this.quantity() > this.selectedSizeStock()) {
-      alert(`Seulement ${this.selectedSizeStock()} unités de taille ${this.selectedSize()} sont disponibles.`);
+    // Quantité déjà dans le panier pour cette couleur / taille
+    const inCart = this.cartService.cartItems()
+      .filter(i => i.product.id === prod.id && (i.size || 'M') === this.selectedSize() && (i.variantId ?? null) === (variant?.id ?? null))
+      .reduce((sum, i) => sum + i.quantity, 0);
+
+    if (this.quantity() + inCart > this.selectedSizeStock()) {
+      const colorTxt = variant ? ` en ${variant.colorName}` : '';
+      alert(`Seulement ${this.selectedSizeStock()} unités de taille ${this.selectedSize()}${colorTxt} sont disponibles.`);
       return;
     }
 
-    this.cartService.addToCart(prod, this.quantity(), this.selectedSize()).subscribe({
+    this.cartService.addToCart(prod, this.quantity(), this.selectedSize(), variant).subscribe({
       next: () => {
-        alert(`${this.quantity()} x ${prod.name} ajouté à votre panier !`);
+        const colorTxt = variant ? ` (${variant.colorName}, ${this.selectedSize()})` : '';
+        alert(`${this.quantity()} x ${prod.name}${colorTxt} ajouté à votre panier !`);
       },
       error: () => {
         alert('Impossible d’ajouter l’article au panier. Veuillez réessayer.');

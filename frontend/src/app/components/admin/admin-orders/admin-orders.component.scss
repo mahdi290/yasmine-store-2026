@@ -28,3 +28,12 @@
   font-family: 'Inter Tight', sans-serif;
   font-weight: 700;
 }
+
+.order-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(12, 13, 7, 0.2);
+  vertical-align: middle;
+}

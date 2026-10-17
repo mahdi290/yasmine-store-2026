@@ -24,8 +24,19 @@
         <!-- Product Image Col -->
         <div class="col-md-6">
           <div class="bg-light p-4 rounded-3 d-flex align-items-center justify-content-center border" style="min-height: 400px;">
-            <img [src]="prod.imageUrl" class="img-fluid" [alt]="prod.name" style="max-height: 380px; object-fit: contain; mix-blend-mode: multiply;">
+            <img [src]="displayedImage()" class="img-fluid main-product-image" [alt]="prod.name + (selectedVariant() ? ' - ' + selectedVariant()!.colorName : '')" style="max-height: 380px; object-fit: contain; mix-blend-mode: multiply;">
           </div>
+
+          <!-- Miniatures de la couleur choisie -->
+          @if (galleryImages().length > 1) {
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              @for (img of galleryImages(); track img) {
+                <button type="button" class="gallery-thumb" [class.active]="displayedImage() === img" (click)="selectedImage.set(img)" [attr.aria-label]="'Voir la photo'">
+                  <img [src]="img" [alt]="prod.name">
+                </button>
+              }
+            </div>
+          }
         </div>
 
         <!-- Product Specs Col -->
@@ -48,16 +59,42 @@
 
             <hr class="my-4">
 
+            <!-- Color Selection (produits multicolores) -->
+            @if (variants().length > 0) {
+              <div class="mb-4 text-start">
+                <h6 class="fw-bold text-dark mb-2" style="font-size: 13px;">
+                  Couleur : <span class="fw-semibold text-secondary">{{ selectedVariant()?.colorName || 'Choisissez une couleur' }}</span>
+                </h6>
+                <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Couleurs disponibles">
+                  @for (v of variants(); track v.id) {
+                    <button type="button"
+                            class="color-swatch"
+                            role="radio"
+                            [attr.aria-checked]="selectedVariantId() === v.id"
+                            [class.active]="selectedVariantId() === v.id"
+                            [class.sold-out]="(v.stock ?? 0) <= 0"
+                            [style.--swatch-color]="v.colorHex || '#cccccc'"
+                            [title]="v.colorName + ((v.stock ?? 0) <= 0 ? ' (rupture)' : '')"
+                            [attr.aria-label]="v.colorName"
+                            (click)="selectVariant(v)">
+                      <span class="swatch-dot"></span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
             <!-- Size Selection -->
             <div class="mb-4 text-start">
               <h6 class="fw-bold text-dark mb-2" style="font-size: 13px;">Sélectionnez une Taille</h6>
               <div class="d-flex gap-2">
                 @for (sz of availableSizes; track sz) {
-                  <button type="button" 
-                          (click)="changeSize(sz)" 
-                          class="btn btn-sm px-3 py-2 fw-semibold" 
-                          [class.btn-dark]="selectedSize() === sz" 
-                          [class.btn-outline-dark]="selectedSize() !== sz" 
+                  <button type="button"
+                          (click)="changeSize(sz)"
+                          class="btn btn-sm px-3 py-2 fw-semibold"
+                          [class.btn-dark]="selectedSize() === sz"
+                          [class.btn-outline-dark]="selectedSize() !== sz"
+                          [class.size-out]="sizeStock(sz) <= 0"
                           style="border-radius: 6px; min-width: 44px; font-size: 13px;">
                     {{ sz }}
                   </button>
@@ -73,9 +110,9 @@
             <div class="d-flex align-items-center gap-2 mb-4" style="font-size: 14px;">
               <span class="fw-bold">Disponibilité :</span>
               @if (selectedSizeStock() > 0) {
-                <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i> En Stock ({{ selectedSizeStock() }} unités en taille {{ selectedSize() }})</span>
+                <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i> En Stock ({{ selectedSizeStock() }} unités en taille {{ selectedSize() }}@if (selectedVariant(); as v) {, {{ v.colorName }}})</span>
               } @else {
-                <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i> Taille {{ selectedSize() }} Rupture de stock</span>
+                <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i> Taille {{ selectedSize() }}@if (selectedVariant(); as v) { ({{ v.colorName }})} Rupture de stock</span>
               }
             </div>
 

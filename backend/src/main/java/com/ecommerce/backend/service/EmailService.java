@@ -135,7 +135,15 @@ public class EmailService {
 
         for (OrderItem item : items) {
             String prodName = item.getProduct() != null ? item.getProduct().getName() : "Article #" + item.getId();
-            String prodImg = item.getProduct() != null && item.getProduct().getImageUrl() != null ? item.getProduct().getImageUrl() : "";
+            String prodImg = item.getImageUrl() != null && !item.getImageUrl().isBlank() ? item.getImageUrl()
+                    : (item.getProduct() != null && item.getProduct().getImageUrl() != null ? item.getProduct().getImageUrl() : "");
+            String colorHtml = "";
+            if (hasColor(item)) {
+                String swatch = item.getColorHex() != null
+                        ? "<span style=\"display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: " + item.getColorHex() + "; border: 1px solid #d1d5db; margin-right: 4px; vertical-align: middle;\"></span>"
+                        : "";
+                colorHtml = " &nbsp;Couleur : <span style=\"background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #111;\">" + swatch + item.getColor() + "</span>";
+            }
             String size = item.getSize() != null ? item.getSize() : "M";
             int qty = item.getQuantity() != null ? item.getQuantity() : 1;
             String unitPrice = item.getPrice() != null ? item.getPrice().toString() : "0.00";
@@ -152,7 +160,7 @@ public class EmailService {
                 .append(imgTd)
                 .append("<td style=\"vertical-align: middle;\">")
                 .append("<strong style=\"color: #111827; font-size: 14px;\">").append(prodName).append("</strong>")
-                .append("<div style=\"color: #6b7280; font-size: 12px; margin-top: 2px;\">Taille : <span style=\"background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #111;\">").append(size).append("</span></div>")
+                .append("<div style=\"color: #6b7280; font-size: 12px; margin-top: 2px;\">Taille : <span style=\"background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #111;\">").append(size).append("</span>").append(colorHtml).append("</div>")
                 .append("</td>")
                 .append("</tr>")
                 .append("</table>")
@@ -228,6 +236,10 @@ public class EmailService {
             + "</td></tr></table></td></tr></table></body></html>";
     }
 
+    private static boolean hasColor(OrderItem item) {
+        return item.getColor() != null && !item.getColor().isBlank() && !"Default".equalsIgnoreCase(item.getColor());
+    }
+
     private void logOrderSummaryToConsole(Order order, List<OrderItem> items, String formattedDate) {
         System.out.println("================================================================================");
         System.out.println("🔔 NOUVELLE COMMANDE REÇUE -> NOTIFICATION POUR : " + storeNotificationEmail);
@@ -243,7 +255,7 @@ public class EmailService {
         System.out.println("Articles :");
         for (OrderItem item : items) {
             String name = item.getProduct() != null ? item.getProduct().getName() : "ID #" + item.getId();
-            System.out.printf("  - %s | Taille: %s | Qté: %d | Prix: %s DT%n", name, item.getSize(), item.getQuantity(), item.getPrice());
+            System.out.printf("  - %s | Couleur: %s | Taille: %s | Qté: %d | Prix: %s DT%n", name, hasColor(item) ? item.getColor() : "-", item.getSize(), item.getQuantity(), item.getPrice());
         }
         System.out.println("================================================================================");
     }

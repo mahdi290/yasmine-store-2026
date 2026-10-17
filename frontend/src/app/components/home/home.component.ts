@@ -206,6 +206,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
+    if (this.cartService.needsColorChoice(product)) {
+      this.router.navigate(['/product-details', product.id]);
+      return;
+    }
+
     this.cartService.addToCart(product, 1);
     alert(`${product.name} a été ajouté à votre panier !`);
   }

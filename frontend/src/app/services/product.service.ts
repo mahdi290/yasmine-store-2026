@@ -10,6 +10,17 @@ export interface Category {
   icon?: string;
 }
 
+// Variante couleur d'un produit (ex. pull rayé blanc / rouge / bleu)
+export interface ProductVariant {
+  id?: number;
+  colorName: string;
+  colorHex?: string | null;
+  images: string[];
+  imageUrl?: string | null;
+  sizeStocks: { [key: string]: number };
+  stock?: number;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -25,6 +36,8 @@ export interface Product {
   discountPercent?: number;
   salePrice?: number;
   department?: string;
+  // Vide ou absent pour les produits sans couleur (anciens produits)
+  variants?: ProductVariant[];
 }
 
 @Injectable({

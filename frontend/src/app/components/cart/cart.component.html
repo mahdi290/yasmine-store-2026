@@ -33,11 +33,20 @@
                   <td class="py-4">
                     <div class="d-flex align-items-center gap-3">
                       <div class="bg-light p-2 rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                        <img [src]="item.product.imageUrl" class="img-fluid" [alt]="item.product.name" style="max-height: 60px; object-fit: contain; mix-blend-mode: multiply;">
+                        <img [src]="cartService.itemImage(item)" class="img-fluid" [alt]="item.product.name" style="max-height: 60px; object-fit: contain; mix-blend-mode: multiply;">
                       </div>
                       <div style="line-height: 1.4;">
                         <h6 class="fw-bold mb-1 text-dark" style="font-size: 15px;">{{ item.product.name }}</h6>
-                        <small class="text-muted d-block" style="font-size: 12px;">Couleur : Standard &nbsp;|&nbsp; Taille : {{ item.size || 'M' }}</small>
+                        <small class="text-muted d-flex align-items-center flex-wrap gap-1" style="font-size: 12px;">
+                          @if (item.colorName) {
+                            <span class="d-inline-flex align-items-center gap-1">Couleur :
+                              <span class="cart-swatch" [style.background-color]="item.colorHex || '#cccccc'"></span>
+                              <strong class="text-dark fw-semibold">{{ item.colorName }}</strong>
+                            </span>
+                            <span>&nbsp;|&nbsp;</span>
+                          }
+                          <span>Taille : {{ item.size || 'M' }}</span>
+                        </small>
                         <button (click)="removeItem(item)" class="btn btn-link text-danger p-0 mt-1 d-flex align-items-center gap-1" style="font-size: 12px; text-decoration: none; box-shadow: none;">
                           <i class="bi bi-trash"></i> Supprimer
                         </button>

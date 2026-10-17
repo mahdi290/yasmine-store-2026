@@ -10,6 +10,19 @@ export interface CategorySales {
   revenue: number;
 }
 
+export interface AdminOrderItem {
+  id: number;
+  productId: number | null;
+  productName: string;
+  imageUrl?: string | null;
+  variantId?: number | null;
+  color?: string | null;
+  colorHex?: string | null;
+  size: string;
+  quantity: number;
+  price: number;
+}
+
 export interface AdminOrder {
   id: number;
   customerName: string;
@@ -20,6 +33,7 @@ export interface AdminOrder {
   totalPrice: number;
   status: string;
   createdAt: string;
+  items?: AdminOrderItem[];
 }
 
 export interface DashboardStats {

@@ -53,12 +53,12 @@
                   <div class="d-flex align-items-center justify-content-between border-bottom pb-3 last-no-border">
                     <div class="d-flex align-items-center gap-3">
                       <div class="bg-light p-1 rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <img [src]="itemDetails.product.imageUrl" class="img-fluid" [alt]="itemDetails.product.name" style="max-height: 50px; object-fit: contain; mix-blend-mode: multiply;">
+                        <img [src]="itemDetails.imageUrl || itemDetails.product.imageUrl" class="img-fluid" [alt]="itemDetails.product.name" style="max-height: 50px; object-fit: contain; mix-blend-mode: multiply;">
                       </div>
                       <div style="line-height: 1.3;">
                         <h6 class="fw-semibold mb-1 text-dark" style="font-size: 14px;">{{ itemDetails.product.name }}</h6>
                         <small class="text-secondary d-block" style="font-size: 11px;">
-                          Qté : {{ itemDetails.quantity }} &nbsp;|&nbsp; Taille : {{ itemDetails.size }} &nbsp;|&nbsp; Couleur : Standard
+                          Qté : {{ itemDetails.quantity }} &nbsp;|&nbsp; Taille : {{ itemDetails.size }}@if (itemDetails.color && itemDetails.color !== 'Default') { &nbsp;|&nbsp; Couleur : {{ itemDetails.color }}}
                         </small>
                       </div>
                     </div>

@@ -37,4 +37,8 @@ public class CartItem {
 
     @Column(name = "size")
     private String size;
+
+    // Couleur choisie (null pour un produit sans variantes)
+    @Column(name = "variant_id")
+    private Long variantId;
 }

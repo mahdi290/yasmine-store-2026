@@ -31,6 +31,19 @@ public class AdminController {
     // DTO records
     public record CategorySales(String categoryName, int salesCount, BigDecimal revenue) {}
     
+    public record OrderItemResponse(
+            Long id,
+            Long productId,
+            String productName,
+            String imageUrl,
+            Long variantId,
+            String color,
+            String colorHex,
+            String size,
+            Integer quantity,
+            BigDecimal price
+    ) {}
+
     public record OrderResponse(
             Long id,
             String customerName,
@@ -40,8 +53,27 @@ public class AdminController {
             String city,
             BigDecimal totalPrice,
             String status,
-            java.time.LocalDateTime createdAt
+            java.time.LocalDateTime createdAt,
+            List<OrderItemResponse> items
     ) {}
+
+    private OrderItemResponse mapToOrderItemResponse(OrderItem item) {
+        Product p = item.getProduct();
+        String color = item.getColor() != null && !"Default".equalsIgnoreCase(item.getColor()) ? item.getColor() : null;
+        String image = item.getImageUrl() != null && !item.getImageUrl().isBlank() ? item.getImageUrl() : (p != null ? p.getImageUrl() : null);
+        return new OrderItemResponse(
+                item.getId(),
+                p != null ? p.getId() : null,
+                p != null ? p.getName() : "Produit supprimé",
+                image,
+                item.getVariantId(),
+                color,
+                item.getColorHex(),
+                item.getSize(),
+                item.getQuantity(),
+                item.getPrice()
+        );
+    }
 
     private OrderResponse mapToOrderResponse(Order order) {
         String name = order.getCustomerName() != null ? order.getCustomerName() :
@@ -56,7 +88,8 @@ public class AdminController {
             order.getCity() != null ? order.getCity() : "N/A",
             order.getTotalPrice(),
             order.getStatus(),
-            order.getCreatedAt()
+            order.getCreatedAt(),
+            orderItemRepository.findByOrderId(order.getId()).stream().map(this::mapToOrderItemResponse).toList()
         );
     }
 
@@ -80,8 +113,85 @@ public class AdminController {
             Map<String, Integer> sizeStocks,
             Boolean onSale,
             Integer discountPercent,
-            String department
+            String department,
+            // null = ne pas toucher aux couleurs (anciens appels), [] = supprimer toutes les couleurs
+            List<VariantRequest> variants
     ) {}
+
+    public record VariantRequest(
+            Long id,
+            String colorName,
+            String colorHex,
+            List<String> images,
+            Map<String, Integer> sizeStocks
+    ) {}
+
+    private static final java.util.regex.Pattern HEX_COLOR = java.util.regex.Pattern.compile("^#[0-9a-fA-F]{6}$");
+
+    private String validateVariants(List<VariantRequest> variants) {
+        if (variants == null) return null;
+        Set<String> names = new HashSet<>();
+        for (VariantRequest v : variants) {
+            if (v == null || v.colorName() == null || v.colorName().trim().isEmpty()) {
+                return "Chaque couleur doit avoir un nom.";
+            }
+            if (!names.add(v.colorName().trim().toLowerCase())) {
+                return "La couleur \"" + v.colorName().trim() + "\" est en double.";
+            }
+            if (v.colorHex() != null && !v.colorHex().isBlank() && !HEX_COLOR.matcher(v.colorHex().trim()).matches()) {
+                return "Code couleur invalide pour \"" + v.colorName().trim() + "\" (format attendu : #RRGGBB).";
+            }
+            if (v.sizeStocks() != null && v.sizeStocks().values().stream().anyMatch(q -> q != null && q < 0)) {
+                return "Le stock ne peut pas être négatif (" + v.colorName().trim() + ").";
+            }
+        }
+        return null;
+    }
+
+    /** Synchronise les couleurs du produit avec la requête (mise à jour, ajout, suppression). */
+    private void applyVariants(Product product, List<VariantRequest> requested) {
+        if (requested == null) {
+            return;
+        }
+        Map<Long, ProductVariant> existing = new HashMap<>();
+        for (ProductVariant v : product.getVariants()) {
+            if (v.getId() != null) existing.put(v.getId(), v);
+        }
+
+        List<ProductVariant> updated = new ArrayList<>();
+        for (VariantRequest req : requested) {
+            ProductVariant variant = req.id() != null ? existing.get(req.id()) : null;
+            if (variant == null) {
+                variant = new ProductVariant();
+                variant.setProduct(product);
+            }
+            variant.setColorName(req.colorName().trim());
+            variant.setColorHex(req.colorHex() != null && !req.colorHex().isBlank() ? req.colorHex().trim().toUpperCase() : null);
+            variant.setImages(req.images() != null ? req.images() : List.of());
+            Map<String, Integer> stocks = new HashMap<>();
+            if (req.sizeStocks() != null) {
+                req.sizeStocks().forEach((size, qty) -> {
+                    if (size != null && !size.isBlank()) stocks.put(size.trim().toUpperCase(), qty != null ? Math.max(0, qty) : 0);
+                });
+            }
+            variant.getSizeStocks().clear();
+            variant.getSizeStocks().putAll(stocks);
+            updated.add(variant);
+        }
+
+        // Même instance de liste : orphanRemoval supprime les couleurs retirées
+        product.getVariants().clear();
+        product.getVariants().addAll(updated);
+        product.syncStockFromVariants();
+    }
+
+    // Produit sans photo principale : on reprend la photo de la première couleur
+    private void fillMissingImage(Product product) {
+        if (product.getImageUrl() == null || product.getImageUrl().isBlank()) {
+            product.getVariants().stream().map(ProductVariant::getImageUrl).filter(Objects::nonNull).findFirst()
+                    .ifPresent(product::setImageUrl);
+        }
+    }
 
     // 1. Dashboard Stats
     @GetMapping("/dashboard/stats")
@@ -162,7 +272,12 @@ public class AdminController {
     }
 
     @PostMapping("/products")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> createProduct(@RequestBody ProductRequest req) {
+        String variantError = validateVariants(req.variants());
+        if (variantError != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", variantError));
+        }
         Category category = null;
         if (req.categoryId() != null) {
             category = categoryRepository.findById(req.categoryId()).orElse(null);
@@ -189,15 +304,22 @@ public class AdminController {
                 .discountPercent(req.discountPercent() != null ? req.discountPercent() : 0)
                 .department(req.department() != null && !req.department().trim().isEmpty() ? req.department().toUpperCase() : "FEMME")
                 .build();
+        applyVariants(product, req.variants());
+        fillMissingImage(product);
 
         return ResponseEntity.ok(productRepository.save(product));
     }
 
     @PutMapping("/products/{id}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody ProductRequest req) {
         Product product = productRepository.findById(id).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
+        }
+        String variantError = validateVariants(req.variants());
+        if (variantError != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", variantError));
         }
 
         Category category = null;
@@ -220,7 +342,13 @@ public class AdminController {
             product.setDepartment(req.department().toUpperCase());
         }
 
-        if (req.sizeStocks() != null) {
+        applyVariants(product, req.variants());
+        fillMissingImage(product);
+
+        if (product.hasVariants()) {
+            // Stock calculé à partir des couleurs
+            product.syncStockFromVariants();
+        } else if (req.sizeStocks() != null) {
             product.getSizeStocks().clear();
             product.getSizeStocks().putAll(req.sizeStocks());
             product.setStock(req.sizeStocks().values().stream().mapToInt(Integer::intValue).sum());

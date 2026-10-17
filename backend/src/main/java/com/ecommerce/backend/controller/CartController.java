@@ -35,7 +35,11 @@ public class CartController {
 
         String size = request.getSize() != null && !request.getSize().trim().isEmpty() ? request.getSize().trim() : "M";
 
-        Optional<CartItem> existingItemOpt = cartItemRepository.findByUserIdAndProductIdAndSize(user.getId(), request.getProductId(), size);
+        // Même produit mais couleur différente = ligne de panier distincte
+        Optional<CartItem> existingItemOpt = request.getVariantId() != null
+                ? cartItemRepository.findByUserIdAndProductIdAndSizeAndVariantId(user.getId(), request.getProductId(), size, request.getVariantId())
+                : cartItemRepository.findByUserIdAndProductIdAndSize(user.getId(), request.getProductId(), size)
+                        .filter(item -> item.getVariantId() == null);
 
         CartItem cartItem;
         if (existingItemOpt.isPresent()) {
@@ -47,6 +51,7 @@ public class CartController {
                     .product(product)
                     .quantity(request.getQuantity())
                     .size(size)
+                    .variantId(request.getVariantId())
                     .build();
         }
 

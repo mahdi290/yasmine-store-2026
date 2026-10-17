@@ -4,6 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
 import { ProductService, Product, Category } from '../../../services/product.service';
 
+// Couleur en cours d'édition dans le formulaire admin
+interface VariantForm {
+  id?: number;
+  colorName: string;
+  colorHex: string;
+  images: string[];
+  newImageUrl: string;
+  sizeStocks: { [key: string]: number };
+  uploading: boolean;
+}
+
+const SIZES = ['S', 'M', 'L', 'XL'];
+
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -45,8 +58,11 @@ export class AdminProductsComponent implements OnInit {
     sizeStocks: { S: 0, M: 0, L: 0, XL: 0 } as { [key: string]: number },
     onSale: false,
     discountPercent: 0,
-    department: 'Femme'
+    department: 'Femme',
+    variants: [] as VariantForm[]
   };
+
+  readonly sizes = SIZES;
 
   searchTerm = signal<string>('');
   filterMode = signal<'all' | 'solde' | 'out_of_stock'>('all');
@@ -214,7 +230,8 @@ export class AdminProductsComponent implements OnInit {
       sizeStocks: { S: 0, M: 0, L: 0, XL: 0 },
       onSale: false,
       discountPercent: 0,
-      department: initialCat ? this.normalizeDept(initialCat.department) : 'Femme'
+      department: initialCat ? this.normalizeDept(initialCat.department) : 'Femme',
+      variants: []
     };
   }
 
@@ -235,8 +252,82 @@ export class AdminProductsComponent implements OnInit {
       sizeStocks: prod.sizeStocks ? { ...prod.sizeStocks } : { S: 0, M: 0, L: 0, XL: 0 },
       onSale: !!prod.onSale,
       discountPercent: prod.discountPercent || 0,
-      department: dept
+      department: dept,
+      variants: (prod.variants || []).map(v => ({
+        id: v.id,
+        colorName: v.colorName,
+        colorHex: v.colorHex || '#000000',
+        images: [...(v.images || [])],
+        newImageUrl: '',
+        sizeStocks: { S: 0, M: 0, L: 0, XL: 0, ...(v.sizeStocks || {}) },
+        uploading: false
+      }))
     };
+  }
+
+  // ---- Couleurs / variantes ----
+  addVariant() {
+    this.productForm.variants.push({
+      colorName: '',
+      colorHex: '#000000',
+      images: [],
+      newImageUrl: '',
+      sizeStocks: { S: 0, M: 0, L: 0, XL: 0 },
+      uploading: false
+    });
+  }
+
+  removeVariant(index: number) {
+    const v = this.productForm.variants[index];
+    const label = v.colorName ? `la couleur "${v.colorName}"` : 'cette couleur';
+    if (confirm(`Supprimer ${label} ?`)) {
+      this.productForm.variants.splice(index, 1);
+    }
+  }
+
+  variantStock(v: VariantForm): number {
+    return SIZES.reduce((sum, s) => sum + (Number(v.sizeStocks[s]) || 0), 0);
+  }
+
+  variantsTotalStock(): number {
+    return this.productForm.variants.reduce((sum, v) => sum + this.variantStock(v), 0);
+  }
+
+  onVariantImagesSelected(v: VariantForm, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    input.value = '';
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      v.uploading = true;
+      this.adminService.uploadImage(file).subscribe({
+        next: (res) => {
+          v.images.push(res.imageUrl);
+          v.uploading = false;
+        },
+        error: () => {
+          v.uploading = false;
+          this.errorMsg.set(`Échec du téléversement de la photo "${file.name}".`);
+        }
+      });
+    }
+  }
+
+  addVariantImageUrl(v: VariantForm) {
+    const url = (v.newImageUrl || '').trim();
+    if (url) {
+      v.images.push(url);
+      v.newImageUrl = '';
+    }
+  }
+
+  removeVariantImage(v: VariantForm, index: number) {
+    v.images.splice(index, 1);
+  }
+
+  setMainVariantImage(v: VariantForm, index: number) {
+    const [img] = v.images.splice(index, 1);
+    v.images.unshift(img);
   }
 
   openDeleteModal(prod: Product) {
@@ -270,8 +361,24 @@ export class AdminProductsComponent implements OnInit {
       return;
     }
 
+    const variants = this.productForm.variants;
+    if (variants.some(v => !v.colorName.trim())) {
+      this.errorMsg.set('Chaque couleur doit avoir un nom.');
+      return;
+    }
+    const names = variants.map(v => v.colorName.trim().toLowerCase());
+    if (new Set(names).size !== names.length) {
+      this.errorMsg.set('Deux couleurs portent le même nom.');
+      return;
+    }
+    if (variants.some(v => v.uploading)) {
+      this.errorMsg.set('Veuillez patienter, des photos sont en cours de téléversement.');
+      return;
+    }
+
     if (!this.productForm.imageUrl) {
-      this.productForm.imageUrl = 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600';
+      const firstVariantImage = variants.find(v => v.images.length > 0)?.images[0];
+      this.productForm.imageUrl = firstVariantImage || 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600';
     }
 
     const extractMsg = (err: any, fallback: string) => {
@@ -288,8 +395,20 @@ export class AdminProductsComponent implements OnInit {
     const s = this.productForm.sizeStocks;
     this.productForm.stock = (Number(s['S']) || 0) + (Number(s['M']) || 0) + (Number(s['L']) || 0) + (Number(s['XL']) || 0);
 
+    const payload = {
+      ...this.productForm,
+      stock: variants.length > 0 ? this.variantsTotalStock() : this.productForm.stock,
+      variants: variants.map(v => ({
+        id: v.id,
+        colorName: v.colorName.trim(),
+        colorHex: v.colorHex,
+        images: v.images,
+        sizeStocks: SIZES.reduce((acc, sz) => ({ ...acc, [sz]: Math.max(0, Number(v.sizeStocks[sz]) || 0) }), {} as { [key: string]: number })
+      }))
+    };
+
     if (this.modalMode() === 'add') {
-      this.adminService.createProduct(this.productForm).subscribe({
+      this.adminService.createProduct(payload).subscribe({
         next: () => {
           this.successMsg.set('Produit créé avec succès !');
           this.loadProducts();
@@ -300,7 +419,7 @@ export class AdminProductsComponent implements OnInit {
         }
       });
     } else if (this.modalMode() === 'edit') {
-      this.adminService.updateProduct(this.productForm.id, this.productForm).subscribe({
+      this.adminService.updateProduct(this.productForm.id, payload).subscribe({
         next: () => {
           this.successMsg.set('Produit mis à jour avec succès !');
           this.loadProducts();

@@ -66,6 +66,7 @@
               <th class="border-0 pb-3">Client</th>
               <th class="border-0 pb-3">Téléphone</th>
               <th class="border-0 pb-3">Adresse & Ville</th>
+              <th class="border-0 pb-3">Articles</th>
               <th class="border-0 pb-3">Date</th>
               <th class="border-0 pb-3">Total</th>
               <th class="border-0 pb-3">Statut</th>
@@ -85,6 +86,24 @@
                 <td>
                   <span class="text-dark d-block text-truncate" style="max-width: 200px;">{{ order.address || 'N/A' }}</span>
                   <small class="text-muted d-block" style="font-size: 11px;">{{ order.city }}</small>
+                </td>
+                <td style="min-width: 220px;">
+                  @for (it of order.items || []; track it.id) {
+                    <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 12px;">
+                      @if (it.imageUrl) {
+                        <img [src]="it.imageUrl" [alt]="it.productName" class="rounded" style="width: 28px; height: 28px; object-fit: cover;">
+                      }
+                      <div class="lh-sm">
+                        <span class="fw-semibold text-dark">{{ it.quantity }} × {{ it.productName }}</span>
+                        <span class="d-block text-muted">
+                          @if (it.color) {
+                            <span class="order-swatch" [style.background-color]="it.colorHex || '#cccccc'"></span> {{ it.color }} ·
+                          }
+                          Taille {{ it.size }}
+                        </span>
+                      </div>
+                    </div>
+                  }
                 </td>
                 <td class="text-secondary" style="font-size: 13px;">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
                 <td class="fw-bold text-dark">{{ order.totalPrice.toFixed(2) }} DT</td>
@@ -111,7 +130,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="text-center text-muted py-5">Aucune commande trouvée.</td>
+                <td colspan="9" class="text-center text-muted py-5">Aucune commande trouvée.</td>
               </tr>
             }
           </tbody>

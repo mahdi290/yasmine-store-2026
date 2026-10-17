@@ -4,6 +4,7 @@ import com.ecommerce.backend.model.CartItem;
 import com.ecommerce.backend.model.Order;
 import com.ecommerce.backend.model.OrderItem;
 import com.ecommerce.backend.model.Product;
+import com.ecommerce.backend.model.ProductVariant;
 import com.ecommerce.backend.model.User;
 import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.repository.OrderItemRepository;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -33,8 +35,52 @@ public class OrderController {
     private final ProductRepository productRepository;
     private final EmailService emailService;
 
-    public record OrderItemRequest(Long productId, Integer quantity, String size) {}
+    public record OrderItemRequest(Long productId, Integer quantity, String size, Long variantId) {}
     public record GuestOrderRequest(String customerName, String phone, String email, String address, String city, List<OrderItemRequest> items) {}
+
+    /** Résultat de la préparation d'une ligne : soit une erreur, soit la ligne prête (stock déjà réservé). */
+    private record PreparedLine(OrderItem item, String error) {}
+
+    /**
+     * Vérifie le stock (par couleur et taille si le produit est multicolore), le décrémente
+     * et construit la ligne de commande avec un instantané de la couleur choisie.
+     */
+    private PreparedLine prepareLine(Product product, Long variantId, String rawSize, int qty) {
+        String size = rawSize != null && !rawSize.trim().isEmpty() ? rawSize.trim().toUpperCase() : "M";
+
+        ProductVariant variant = null;
+        if (product.hasVariants()) {
+            variant = product.findVariant(variantId);
+            if (variant == null && product.getVariants().size() == 1) {
+                variant = product.getVariants().get(0);
+            }
+            if (variant == null) {
+                return new PreparedLine(null, "Veuillez choisir une couleur pour le produit " + product.getName() + ".");
+            }
+        }
+
+        int available = product.getAvailableStock(variant, size);
+        if (available < qty) {
+            String what = variant != null ? "la couleur " + variant.getColorName() + ", taille " + size : "la taille " + size;
+            return new PreparedLine(null, "Stock insuffisant pour " + what + " du produit " + product.getName()
+                    + " (disponible : " + available + ").");
+        }
+
+        product.adjustStock(variant, size, -qty);
+        productRepository.save(product);
+
+        OrderItem orderItem = OrderItem.builder()
+                .product(product)
+                .quantity(qty)
+                .price(product.getPrice())
+                .size(size)
+                .color(variant != null ? variant.getColorName() : "Default")
+                .variantId(variant != null ? variant.getId() : null)
+                .colorHex(variant != null ? variant.getColorHex() : null)
+                .imageUrl(variant != null && variant.getImageUrl() != null ? variant.getImageUrl() : product.getImageUrl())
+                .build();
+        return new PreparedLine(orderItem, null);
+    }
 
     @PostMapping
     @Transactional
@@ -63,35 +109,16 @@ public class OrderController {
                 if (itemReq.productId() == null) continue;
                 Product product = productRepository.findById(itemReq.productId()).orElse(null);
                 if (product == null) {
-                    return ResponseEntity.badRequest().body("Error: Product ID " + itemReq.productId() + " not found!");
+                    return rollback("Produit introuvable (ID " + itemReq.productId() + ").");
                 }
 
                 int qty = itemReq.quantity() != null && itemReq.quantity() > 0 ? itemReq.quantity() : 1;
-                String size = itemReq.size() != null && !itemReq.size().trim().isEmpty() ? itemReq.size().trim() : "M";
-
-                product.initializeSizeStocks();
-                Integer sizeStock = product.getSizeStocks().getOrDefault(size, 0);
-                if (sizeStock < qty) {
-                    return ResponseEntity.badRequest().body("Error: Insufficient stock for size " + size + " of product " + product.getName());
+                PreparedLine line = prepareLine(product, itemReq.variantId(), itemReq.size(), qty);
+                if (line.error() != null) {
+                    return rollback(line.error());
                 }
-
-                // Subtract stock
-                product.getSizeStocks().put(size, sizeStock - qty);
-                product.setStock(product.getSizeStocks().values().stream().mapToInt(Integer::intValue).sum());
-                productRepository.save(product);
-
-                BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(qty));
-                totalPrice = totalPrice.add(itemTotal);
-
-                OrderItem orderItem = OrderItem.builder()
-                        .product(product)
-                        .quantity(qty)
-                        .price(product.getPrice())
-                        .size(size)
-                        .color("Default")
-                        .build();
-
-                orderItemsToSave.add(orderItem);
+                totalPrice = totalPrice.add(line.item().getPrice().multiply(BigDecimal.valueOf(qty)));
+                orderItemsToSave.add(line.item());
             }
         } else if (user != null) {
             // Fallback for logged in user cart
@@ -103,35 +130,20 @@ public class OrderController {
             email = user.getEmail();
 
             for (CartItem cartItem : cartItems) {
-                Product product = cartItem.getProduct();
-                String size = cartItem.getSize() != null && !cartItem.getSize().trim().isEmpty() ? cartItem.getSize().trim() : "M";
-
-                product.initializeSizeStocks();
-                Integer sizeStock = product.getSizeStocks().getOrDefault(size, 0);
-                if (sizeStock < cartItem.getQuantity()) {
-                    return ResponseEntity.badRequest().body("Error: Insufficient stock for size " + size + " of product " + product.getName());
+                PreparedLine line = prepareLine(cartItem.getProduct(), cartItem.getVariantId(), cartItem.getSize(), cartItem.getQuantity());
+                if (line.error() != null) {
+                    return rollback(line.error());
                 }
-
-                product.getSizeStocks().put(size, sizeStock - cartItem.getQuantity());
-                product.setStock(product.getSizeStocks().values().stream().mapToInt(Integer::intValue).sum());
-                productRepository.save(product);
-
-                BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-                totalPrice = totalPrice.add(itemTotal);
-
-                OrderItem orderItem = OrderItem.builder()
-                        .product(product)
-                        .quantity(cartItem.getQuantity())
-                        .price(product.getPrice())
-                        .size(size)
-                        .color("Default")
-                        .build();
-
-                orderItemsToSave.add(orderItem);
+                totalPrice = totalPrice.add(line.item().getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+                orderItemsToSave.add(line.item());
             }
             cartItemRepository.deleteByUserId(user.getId());
         } else {
             return ResponseEntity.badRequest().body("Error: Order items or customer details are required!");
+        }
+
+        if (orderItemsToSave.isEmpty()) {
+            return ResponseEntity.badRequest().body("Votre panier est vide.");
         }
 
         // Save Order
@@ -160,6 +172,12 @@ public class OrderController {
         response.put("items", orderItemsToSave);
 
         return ResponseEntity.ok(response);
+    }
+
+    // Annule les décréments de stock déjà effectués si une ligne est refusée
+    private ResponseEntity<?> rollback(String message) {
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        return ResponseEntity.badRequest().body(message);
     }
 
     @GetMapping

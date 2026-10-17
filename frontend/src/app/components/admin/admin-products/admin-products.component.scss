@@ -18,3 +18,57 @@
   overflow-y: auto;
   background: #fff;
 }
+
+// Couleurs / variantes
+.variants-section {
+  background-color: #F7F4F0;
+}
+
+.variant-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+
+  &.is-main {
+    border-color: #314021;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumb-btn {
+    position: absolute;
+    top: 2px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    line-height: 20px;
+    color: #0C0D07;
+  }
+
+  .thumb-remove {
+    right: 2px;
+    color: #b02a37;
+  }
+
+  .thumb-main {
+    left: 2px;
+  }
+}
+
+.list-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(12, 13, 7, 0.2);
+}

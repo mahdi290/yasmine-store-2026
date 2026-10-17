@@ -1,13 +1,18 @@
 import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable, of } from 'rxjs';
-import { Product } from './product.service';
+import { Product, ProductVariant } from './product.service';
 
 export interface CartItem {
   id: number;
   product: Product;
   quantity: number;
   size?: string;
+  // Couleur choisie (absente pour un produit sans couleur)
+  variantId?: number;
+  colorName?: string;
+  colorHex?: string | null;
+  imageUrl?: string | null;
 }
 
 @Injectable({
@@ -31,6 +36,16 @@ export class CartService {
 
   constructor() {
     this.loadCart();
+  }
+
+  /** Un produit multicolore doit passer par la fiche produit pour choisir sa couleur. */
+  needsColorChoice(product: Product): boolean {
+    return (product.variants?.length ?? 0) > 1;
+  }
+
+  /** Image à afficher pour une ligne de panier (photo de la couleur si disponible). */
+  itemImage(item: CartItem): string {
+    return item.imageUrl || item.product.imageUrl || item.product.variants?.find(v => v.images?.length)?.images[0] || '';
   }
 
   loadCart() {
@@ -59,7 +74,7 @@ export class CartService {
     }
   }
 
-  addToCart(productInput: Product | any, quantity: number = 1, size: string = 'M'): Observable<any> {
+  addToCart(productInput: Product | any, quantity: number = 1, size: string = 'M', variant?: ProductVariant | null): Observable<any> {
     const current = [...this.cartItems()];
     let product: Product;
 
@@ -75,17 +90,32 @@ export class CartService {
       } as Product;
     }
 
+    // Produit avec une seule couleur : elle est choisie d'office
+    if (!variant && product.variants?.length === 1) {
+      variant = product.variants[0];
+    }
+
     const sizeVal = size || 'M';
-    const existingIndex = current.findIndex(item => item.product.id === product.id && (item.size || 'M') === sizeVal);
+    const variantId = variant?.id;
+    // Même produit + même couleur + même taille = même ligne ; une autre couleur crée une nouvelle ligne
+    const existingIndex = current.findIndex(item =>
+      item.product.id === product.id &&
+      (item.size || 'M') === sizeVal &&
+      (item.variantId ?? null) === (variantId ?? null)
+    );
 
     if (existingIndex > -1) {
-      current[existingIndex].quantity += quantity;
+      current[existingIndex] = { ...current[existingIndex], quantity: current[existingIndex].quantity + quantity };
     } else {
       current.push({
         id: Date.now() + Math.floor(Math.random() * 1000),
         product: product,
         quantity: quantity,
-        size: sizeVal
+        size: sizeVal,
+        variantId: variantId,
+        colorName: variant?.colorName,
+        colorHex: variant?.colorHex ?? null,
+        imageUrl: variant ? (variant.images?.[0] || variant.imageUrl || null) : null
       });
     }
 
@@ -100,7 +130,7 @@ export class CartService {
     } else {
       const idx = current.findIndex(item => item.id === cartItemId);
       if (idx > -1) {
-        current[idx].quantity = quantity;
+        current[idx] = { ...current[idx], quantity };
       }
     }
     this.saveCart(current);

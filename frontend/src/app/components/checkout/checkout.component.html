@@ -106,12 +106,12 @@
               @for (item of cartService.cartItems(); track item.id) {
                 <div class="d-flex justify-content-between align-items-center" style="font-size: 14px;">
                   <div class="d-flex align-items-center gap-2" style="max-width: 75%;">
-                    @if (item.product.imageUrl) {
-                      <img [src]="item.product.imageUrl" [alt]="item.product.name" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                    @if (cartService.itemImage(item)) {
+                      <img [src]="cartService.itemImage(item)" [alt]="item.product.name" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
                     }
                     <div>
                       <span class="fw-semibold text-dark d-block text-truncate" style="max-width: 170px;">{{ item.product.name }}</span>
-                      <small class="text-muted d-block" style="font-size: 11px;">Qté : {{ item.quantity }} | Taille : {{ item.size || 'M' }}</small>
+                      <small class="text-muted d-block" style="font-size: 11px;">Qté : {{ item.quantity }}@if (item.colorName) { | Couleur : {{ item.colorName }}} | Taille : {{ item.size || 'M' }}</small>
                     </div>
                   </div>
                   <span class="fw-bold text-dark">{{ Math.round(item.product.price * item.quantity * 100) / 100 }} DT</span>

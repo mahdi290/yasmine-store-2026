@@ -39,8 +39,20 @@ public class OrderItem {
     @Column(name = "size")
     private String size;
 
+    // Nom de la couleur choisie ("Default" pour les anciennes commandes / produits sans couleur)
     @Column(name = "color")
     private String color;
+
+    // Instantané de la variante au moment de la commande (pas de clé étrangère :
+    // la commande reste lisible même si la couleur est supprimée ensuite)
+    @Column(name = "variant_id")
+    private Long variantId;
+
+    @Column(name = "color_hex", length = 20)
+    private String colorHex;
+
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
+    private String imageUrl;
 
     @Column(name = "price", nullable = false)
     private BigDecimal price;

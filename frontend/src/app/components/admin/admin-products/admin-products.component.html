@@ -88,6 +88,9 @@
                           {{ prod.department || 'FEMME' }}
                         </span>
                         <small class="text-muted" style="font-size: 11px;">{{ prod.brand }}</small>
+                        @for (v of prod.variants || []; track v.id) {
+                          <span class="list-swatch" [style.background-color]="v.colorHex || '#cccccc'" [title]="v.colorName + ' (' + (v.stock ?? 0) + ')'"></span>
+                        }
                       </div>
                     </div>
                   </div>
@@ -162,6 +165,7 @@
         <label class="form-label fw-semibold" style="font-size: 13px;">Prix (DT) *</label>
         <input type="number" class="form-control py-2" [(ngModel)]="productForm.price" placeholder="0.00" style="border-radius: 6px; font-size: 14px;">
       </div>
+      @if (productForm.variants.length === 0) {
       <div class="col-12 border rounded p-3 bg-light my-2">
         <label class="form-label fw-bold text-dark mb-2" style="font-size: 13px;">Stock par Taille</label>
         <div class="row g-2">
@@ -182,6 +186,87 @@
             <input type="number" class="form-control py-1.5 px-2" [(ngModel)]="productForm.sizeStocks['XL']" placeholder="0" style="border-radius: 6px; font-size: 13px;">
           </div>
         </div>
+      </div>
+      }
+
+      <!-- Couleurs (variantes) -->
+      <div class="col-12 border rounded-3 p-3 my-2 variants-section">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+          <label class="form-label fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 13px;">
+            <i class="bi bi-palette-fill" style="color: #617246;"></i>
+            <span>Couleurs du produit</span>
+            @if (productForm.variants.length > 0) {
+              <span class="badge bg-light text-dark border">{{ productForm.variants.length }} couleur(s) · stock total {{ variantsTotalStock() }}</span>
+            }
+          </label>
+          <button type="button" class="btn btn-sm btn-outline-dark" (click)="addVariant()" style="border-radius: 6px; font-size: 12px;">
+            <i class="bi bi-plus-lg me-1"></i> Ajouter une couleur
+          </button>
+        </div>
+        @if (productForm.variants.length === 0) {
+          <small class="text-muted d-block" style="font-size: 12px;">
+            Produit sans couleur : le stock est géré par taille ci-dessus. Ajoutez des couleurs pour proposer ce produit en plusieurs coloris (chaque couleur a ses photos et son stock par taille).
+          </small>
+        }
+
+        @for (v of productForm.variants; track $index; let i = $index) {
+          <div class="variant-card bg-white border rounded-3 p-3 mt-2">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-5">
+                <label class="form-label small fw-semibold mb-1">Nom de la couleur *</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="v.colorName" placeholder="Ex: Blanc, Rouge bordeaux">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold mb-1">Pastille</label>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="color" class="form-control form-control-color form-control-sm" [(ngModel)]="v.colorHex" title="Choisir la couleur">
+                  <input type="text" class="form-control form-control-sm" [(ngModel)]="v.colorHex" placeholder="#000000" maxlength="7" style="max-width: 100px;">
+                </div>
+              </div>
+              <div class="col-md-3 text-md-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeVariant(i)" style="font-size: 12px;">
+                  <i class="bi bi-trash me-1"></i> Supprimer la couleur
+                </button>
+              </div>
+            </div>
+
+            <div class="row g-2 mt-1">
+              @for (sz of sizes; track sz) {
+                <div class="col-3">
+                  <label class="form-label text-secondary mb-1" style="font-size: 11px;">Taille {{ sz }}</label>
+                  <input type="number" min="0" class="form-control form-control-sm" [(ngModel)]="v.sizeStocks[sz]" placeholder="0">
+                </div>
+              }
+            </div>
+
+            <div class="mt-2">
+              <label class="form-label small fw-semibold mb-1">Photos de cette couleur <span class="text-muted fw-normal">(la première est la photo principale)</span></label>
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                @for (img of v.images; track $index; let j = $index) {
+                  <div class="variant-thumb position-relative" [class.is-main]="j === 0">
+                    <img [src]="img" [alt]="v.colorName">
+                    @if (j > 0) {
+                      <button type="button" class="thumb-btn thumb-main" (click)="setMainVariantImage(v, j)" title="Définir comme photo principale"><i class="bi bi-star"></i></button>
+                    }
+                    <button type="button" class="thumb-btn thumb-remove" (click)="removeVariantImage(v, j)" title="Retirer la photo"><i class="bi bi-x"></i></button>
+                  </div>
+                }
+                <label class="btn btn-sm btn-light border mb-0 d-inline-flex align-items-center gap-1" style="font-size: 12px;">
+                  @if (v.uploading) {
+                    <span class="spinner-border spinner-border-sm" role="status"></span> Envoi...
+                  } @else {
+                    <i class="bi bi-cloud-arrow-up"></i> Ajouter des photos
+                  }
+                  <input type="file" accept="image/*" multiple class="d-none" (change)="onVariantImagesSelected(v, $event)">
+                </label>
+              </div>
+              <div class="input-group input-group-sm mt-2">
+                <input type="text" class="form-control" [(ngModel)]="v.newImageUrl" placeholder="Ou collez l'URL d'une photo" (keyup.enter)="addVariantImageUrl(v)">
+                <button type="button" class="btn btn-outline-secondary" (click)="addVariantImageUrl(v)">Ajouter</button>
+              </div>
+            </div>
+          </div>
+        }
       </div>
       <div class="col-md-4">
         <label class="form-label fw-semibold" style="font-size: 13px;">Marque</label>
@@ -251,6 +336,9 @@
       <!-- Direct Image Upload Component -->
       <div class="col-12">
         <label class="form-label fw-semibold" style="font-size: 13px;">Photo du Produit *</label>
+        @if (productForm.variants.length > 0) {
+          <small class="text-muted d-block mb-2" style="font-size: 12px;">Photo affichée dans les listes. Si vide, la photo principale de la première couleur est utilisée.</small>
+        }
         
         <div class="border rounded-3 p-3 bg-light text-center position-relative" 
              (dragover)="onDragOver($event)" 
