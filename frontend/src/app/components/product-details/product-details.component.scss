@@ -2,70 +2,25 @@
   background-color: #f8f9fa !important;
 }
 
-.input-group {
-  button {
-    text-decoration: none;
+// Photo principale : carré qui s'adapte à l'écran (pas de hauteur fixe sur mobile)
+.product-photo {
+  aspect-ratio: 4 / 5;
+  max-height: 560px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: hidden;
 
-    &:hover {
-      background-color: #f1f1f1;
-    }
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    mix-blend-mode: multiply;
   }
 }
 
-// Pastilles de couleur
-.color-swatch {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  padding: 3px;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-  transition: border-color 0.2s ease, transform 0.2s ease;
-
-  .swatch-dot {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background-color: var(--swatch-color, #cccccc);
-    border: 1px solid rgba(12, 13, 7, 0.18);
-  }
-
-  &:hover {
-    transform: scale(1.06);
-  }
-
-  &.active {
-    border-color: #314021;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #617246;
-    outline-offset: 2px;
-  }
-
-  // Couleur épuisée : barrée en diagonale
-  &.sold-out::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 4px;
-    bottom: 4px;
-    width: 2px;
-    background: rgba(12, 13, 7, 0.55);
-    transform: translateX(-50%) rotate(45deg);
-    border-radius: 2px;
-  }
-}
-
-.size-out {
-  opacity: 0.45;
-  text-decoration: line-through;
-}
-
-// Miniatures
 .gallery-thumb {
   width: 64px;
   height: 64px;
@@ -87,16 +42,266 @@
   }
 }
 
-// Offre "Achetez 2, économisez 10%"
-.qty-offer {
-  background-color: #F7F4F0;
-  border: 1px dashed rgba(192, 155, 172, 0.8);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #314021;
+.product-title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: clamp(1.5rem, 4.5vw, 2rem);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
 
-  i {
-    color: #C09BAC;
+.option-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0C0D07;
+  margin-bottom: 8px;
+
+  span {
+    font-weight: 600;
+    color: #617246;
+  }
+}
+
+// Offre "Achetez 2, économisez X %"
+.offer-card {
+  background-color: #F7F4F0;
+  border: 1px dashed rgba(192, 155, 172, 0.9);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: #314021;
+}
+
+.offer-pill {
+  flex-shrink: 0;
+  background-color: #C09BAC;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-radius: 50px;
+  margin-top: 2px;
+}
+
+.offer-status {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #8a5a6f;
+
+  &.is-ok {
+    color: #2f6b3a;
+  }
+}
+
+// Couleurs : pastille + nom, faciles à toucher sur mobile
+.color-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 14px 6px 8px;
+  border: 1.5px solid rgba(12, 13, 7, 0.15);
+  border-radius: 50px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0C0D07;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  .chip-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid rgba(12, 13, 7, 0.2);
+    flex-shrink: 0;
+  }
+
+  .chip-note {
+    font-size: 11px;
+    font-weight: 500;
+    color: #8a8a8a;
+  }
+
+  &:hover {
+    border-color: #617246;
+  }
+
+  &.active {
+    border-color: #314021;
+    box-shadow: 0 0 0 2px rgba(49, 64, 33, 0.18);
+  }
+
+  &.sold-out {
+    opacity: 0.55;
+
+    .chip-name {
+      text-decoration: line-through;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid #617246;
+    outline-offset: 2px;
+  }
+
+  &.is-small {
+    min-height: 38px;
+    padding: 4px 12px 4px 6px;
+    font-size: 12.5px;
+
+    .chip-dot {
+      width: 22px;
+      height: 22px;
+    }
+  }
+}
+
+// Tailles
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 72px));
+  gap: 8px;
+
+  &.is-small {
+    grid-template-columns: repeat(4, minmax(0, 56px));
+    gap: 6px;
+
+    .size-btn {
+      height: 36px;
+      font-size: 12.5px;
+    }
+  }
+}
+
+.size-btn {
+  height: 44px;
+  border: 1.5px solid rgba(12, 13, 7, 0.2);
+  border-radius: 8px;
+  background: #ffffff;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #0C0D07;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #314021;
+  }
+
+  &.active {
+    background-color: #314021;
+    border-color: #314021;
+    color: #ffffff;
+  }
+
+  &.size-out {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
+}
+
+// Quantité + bouton d'ajout + favori
+.buy-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+
+  .add-btn {
+    flex: 1;
+    min-height: 48px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &.is-added {
+      background-color: #617246;
+      border-color: #617246;
+    }
+  }
+
+  .fav-btn {
+    width: 48px;
+    min-height: 48px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+
+    .bi-heart-fill {
+      color: #C09BAC;
+    }
+  }
+}
+
+.qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid rgba(12, 13, 7, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+
+  button {
+    width: 40px;
+    height: 100%;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    font-size: 18px;
+    color: #0C0D07;
+
+    &:disabled {
+      color: #bbb;
+    }
+
+    &:hover:not(:disabled) {
+      background: #f3f3f3;
+    }
+  }
+
+  span {
+    min-width: 32px;
+    text-align: center;
+    font-weight: 700;
+  }
+}
+
+// Lot à composer
+.bundle-card {
+  border: 1.5px solid rgba(49, 64, 33, 0.25);
+  border-radius: 14px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.bundle-slot {
+  border-top: 1px solid rgba(12, 13, 7, 0.08);
+  padding: 10px 0;
+
+  .slot-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #617246;
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .product-photo {
+    aspect-ratio: 1 / 1;
+  }
+
+  .size-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .buy-row .add-btn {
+    font-size: 14px;
   }
 }

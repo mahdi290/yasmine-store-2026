@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-checkout',
@@ -16,6 +17,7 @@ export class CheckoutComponent implements OnInit {
   cartService = inject(CartService);
   private orderService = inject(OrderService);
   private router = inject(Router);
+  private toast = inject(ToastService);
   protected readonly Math = Math;
   private platformId = inject(PLATFORM_ID);
 
@@ -42,12 +44,12 @@ export class CheckoutComponent implements OnInit {
   onSubmit(event: Event) {
     event.preventDefault();
     if (this.cartService.cartItems().length === 0) {
-      if (isPlatformBrowser(this.platformId)) alert('Votre panier est vide.');
+      this.toast.info('Votre panier est vide.');
       return;
     }
 
     if (!this.customerName.trim() || !this.phone.trim() || !this.address.trim()) {
-      if (isPlatformBrowser(this.platformId)) alert('Veuillez remplir votre nom, téléphone et adresse.');
+      this.toast.error('Veuillez remplir votre nom, téléphone et adresse.');
       return;
     }
 
@@ -79,7 +81,7 @@ export class CheckoutComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         const msg = typeof err.error === 'string' ? err.error : (err.error?.message || 'Échec de la validation de la commande.');
-        if (isPlatformBrowser(this.platformId)) alert(msg);
+        this.toast.error(msg);
       }
     });
   }

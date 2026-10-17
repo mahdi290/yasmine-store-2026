@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { ProductService, Product, Category } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
+import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { WishlistService } from '../../services/wishlist.service';
 import { ShowcaseService, ShowcaseCard, DEFAULT_SHOWCASE_CARDS } from '../../services/showcase.service';
@@ -33,6 +34,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private showcaseService = inject(ShowcaseService);
   private carouselService = inject(CarouselService);
   private router = inject(Router);
+  private toast = inject(ToastService);
   private platformId = inject(PLATFORM_ID);
 
   // Carousel States
@@ -212,7 +214,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     this.cartService.addToCart(product, 1);
-    alert(`${product.name} a été ajouté à votre panier !`);
+    this.toast.success(`${product.name} ajouté au panier.`, { link: { label: 'Voir le panier', url: '/cart' } });
   }
 
   getBadge(index: number): { text: string; type: string } | null {

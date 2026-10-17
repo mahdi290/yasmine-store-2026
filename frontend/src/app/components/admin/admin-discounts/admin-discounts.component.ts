@@ -3,7 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
 import { ProductService, Product, Category } from '../../../services/product.service';
-import { DiscountService, DiscountRule, DiscountRuleRequest, DiscountScope, SCOPE_LABELS, effectivePrice, percentForBundle, round2 } from '../../../services/discount.service';
+import { DiscountService, DiscountRule, DiscountRuleRequest, DiscountScope, SCOPE_LABELS, effectivePrice, percentForBundle, round2, parseDecimal, formatPercent } from '../../../services/discount.service';
 
 @Component({
   selector: 'app-admin-discounts',
@@ -34,9 +34,14 @@ export class AdminDiscountsComponent implements OnInit {
 
   form: DiscountRuleRequest = this.emptyForm();
 
-  // Aide "prix du lot" : 2 hauts à 30 DT vendus 50 DT -> 16.67 %
-  bundleUnitPrice: number | null = null;
-  bundlePrice: number | null = null;
+  // Champs texte : acceptent la virgule ("16,67") comme le point
+  percentText = '';
+
+  // Aide "prix du lot" : 2 hauts à 30 DT vendus 50 DT -> 16,67 %
+  bundleUnitText = '';
+  bundlePriceText = '';
+
+  readonly formatPercent = formatPercent;
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
@@ -85,6 +90,7 @@ export class AdminDiscountsComponent implements OnInit {
     if (this.categories().length > 0) this.form.categoryId = this.categories()[0].id;
     this.selectedRule.set(null);
     this.errorMsg.set(null);
+    this.percentText = formatPercent(this.form.percent);
     this.resetBundleHelper();
     this.modalMode.set('add');
   }
@@ -101,6 +107,7 @@ export class AdminDiscountsComponent implements OnInit {
     };
     this.selectedRule.set(rule);
     this.errorMsg.set(null);
+    this.percentText = formatPercent(rule.percent);
     this.resetBundleHelper();
     this.modalMode.set('edit');
   }
@@ -126,12 +133,13 @@ export class AdminDiscountsComponent implements OnInit {
       const prod = this.products().find(p => p.id === Number(this.form.productId));
       target = prod ? ` (${prod.name})` : '';
     }
-    return `Achetez ${this.form.minQuantity || '?'}, économisez ${this.form.percent || '?'}%${target}`;
+    const pct = parseDecimal(this.percentText);
+    return `Achetez ${this.form.minQuantity || '?'}, économisez ${pct != null ? formatPercent(pct) : '?'}%${target}`;
   }
 
   private resetBundleHelper() {
-    this.bundlePrice = null;
-    this.bundleUnitPrice = null;
+    this.bundlePriceText = '';
+    this.bundleUnitText = '';
     this.syncBundleUnitPrice();
   }
 
@@ -139,25 +147,27 @@ export class AdminDiscountsComponent implements OnInit {
   syncBundleUnitPrice() {
     if (this.form.scope === 'PRODUCT') {
       const prod = this.products().find(p => p.id === Number(this.form.productId));
-      if (prod) this.bundleUnitPrice = effectivePrice(prod);
+      if (prod) this.bundleUnitText = String(effectivePrice(prod));
     }
   }
 
   bundlePercent(): number | null {
-    if (this.bundleUnitPrice == null || this.bundlePrice == null) return null;
-    return percentForBundle(Number(this.bundleUnitPrice), Number(this.form.minQuantity), Number(this.bundlePrice));
+    const unit = parseDecimal(this.bundleUnitText);
+    const lot = parseDecimal(this.bundlePriceText);
+    if (unit == null || lot == null) return null;
+    return percentForBundle(unit, Number(this.form.minQuantity), lot);
   }
 
   applyBundlePrice() {
     const pct = this.bundlePercent();
-    if (pct != null) this.form.percent = pct;
+    if (pct != null) this.percentText = formatPercent(pct);
   }
 
   // Vérification affichée : prix normal du lot et prix après remise (même calcul que le panier)
   bundleCheck(): { regular: number; total: number } | null {
-    const unit = Number(this.bundleUnitPrice);
+    const unit = parseDecimal(this.bundleUnitText) ?? 0;
     const qty = Number(this.form.minQuantity);
-    const pct = Number(this.form.percent);
+    const pct = parseDecimal(this.percentText) ?? 0;
     if (!(unit > 0) || !(qty > 0) || !(pct > 0)) return null;
     const regular = round2(unit * qty);
     return { regular, total: round2(regular - round2(regular * pct / 100)) };
@@ -167,15 +177,18 @@ export class AdminDiscountsComponent implements OnInit {
     this.errorMsg.set(null);
     this.successMsg.set(null);
     const min = Number(this.form.minQuantity);
-    const pct = Number(this.form.percent);
+    // "16,67", "16.67" ou "16.667" (arrondi automatiquement à 16,67)
+    const pct = parseDecimal(this.percentText);
     if (!Number.isInteger(min) || min < 1) {
       this.errorMsg.set('La quantité minimale doit être un nombre entier supérieur ou égal à 1.');
       return;
     }
-    if (!Number.isFinite(pct) || pct < 0.01 || pct > 90 || round2(pct) !== pct) {
-      this.errorMsg.set('Le pourcentage doit être compris entre 0,01 et 90, avec au maximum 2 décimales (ex. 16.67).');
+    if (pct == null || pct < 0.01 || pct > 90) {
+      this.errorMsg.set('Le pourcentage doit être un nombre entre 0,01 et 90 (ex. 16,67).');
       return;
     }
+    this.form.percent = pct;
+    this.percentText = formatPercent(pct);
     if (this.form.scope === 'CATEGORY' && !this.form.categoryId) {
       this.errorMsg.set('Veuillez choisir une catégorie.');
       return;

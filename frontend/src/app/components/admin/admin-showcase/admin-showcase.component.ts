@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { ToastService } from '../../../services/toast.service';
 import { FormsModule } from '@angular/forms';
 import { ShowcaseService, ShowcaseCard, DEFAULT_SHOWCASE_CARDS } from '../../../services/showcase.service';
 import { AdminService } from '../../../services/admin.service';
@@ -15,6 +16,7 @@ export class AdminShowcaseComponent implements OnInit {
   private showcaseService = inject(ShowcaseService);
   private adminService = inject(AdminService);
   private platformId = inject(PLATFORM_ID);
+  private toast = inject(ToastService);
 
   cards = signal<ShowcaseCard[]>([]);
   loading = signal<boolean>(true);
@@ -55,7 +57,7 @@ export class AdminShowcaseComponent implements OnInit {
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
       if (!file.type.startsWith('image/')) {
-        alert('Veuillez sélectionner un fichier image valide.');
+        this.toast.error('Veuillez sélectionner un fichier image valide.');
         return;
       }
       this.uploadingCardKey.set(card.cardKey);

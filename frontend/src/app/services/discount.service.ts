@@ -162,6 +162,59 @@ function groupsFor(rule: DiscountRule, lines: PricingLine[]): number[][] {
   }
 }
 
+/** 10 -> "10", 16.67 -> "16,67" (affichage français). */
+export function formatPercent(value: number | null | undefined): string {
+  const v = round2(Number(value) || 0);
+  return Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0$/, '').replace('.', ',');
+}
+
+/** 50 -> "50", 50.4 -> "50.40" (même notation que les autres prix du site). */
+export function formatPrice(value: number | null | undefined): string {
+  const v = round2(Number(value) || 0);
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
+}
+
+/** Lit "16,67", "16.67", "30" ou "16,667" (arrondi à 2 décimales) ; null si invalide. */
+export function parseDecimal(raw: unknown): number | null {
+  const text = String(raw ?? '').trim().replace(/\s|%/g, '').replace(',', '.');
+  if (!text) return null;
+  const value = Number(text);
+  return Number.isFinite(value) ? round2(value) : null;
+}
+
+export interface OfferProgress {
+  rule: DiscountRule;
+  // Articles déjà comptés pour cette offre / articles manquants
+  current: number;
+  missing: number;
+}
+
+/**
+ * Offres presque atteintes : "ajoutez encore 1 article pour profiter de -16,67 %".
+ * Si `product` est fourni, ne regarde que les offres qui concernent ce produit.
+ */
+export function offerProgress(lines: PricingLine[], rules: DiscountRule[], product?: Product): OfferProgress[] {
+  const result: OfferProgress[] = [];
+  const candidates = product ? rulesForProduct(product, rules) : rules.filter(r => r.active);
+  for (const rule of candidates) {
+    let groups = groupsFor(rule, lines).filter(g => g.length > 0);
+    if (product && rule.scope === 'ALL_PRODUCTS') {
+      groups = groups.filter(g => lines[g[0]].product.id === product.id);
+    }
+    if (groups.length === 0 && product) {
+      result.push({ rule, current: 0, missing: rule.minQuantity });
+      continue;
+    }
+    for (const g of groups) {
+      const current = g.reduce((sum, i) => sum + lines[i].quantity, 0);
+      if (current < rule.minQuantity) {
+        result.push({ rule, current, missing: rule.minQuantity - current });
+      }
+    }
+  }
+  return result.sort((a, b) => a.missing - b.missing);
+}
+
 /** Exemple chiffré d'une offre pour un produit : "2 pour 50 DT au lieu de 60 DT". */
 export function offerExample(product: Product, rule: DiscountRule): { quantity: number; total: number; regular: number } {
   const q = computeQuote([{ product, quantity: rule.minQuantity }], [rule]);

@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, inject, signal, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { ToastService } from '../../../services/toast.service';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
@@ -30,6 +31,9 @@ export class AdminProductsComponent implements OnInit {
   private adminService = inject(AdminService);
   private productService = inject(ProductService);
   private platformId = inject(PLATFORM_ID);
+  private toast = inject(ToastService);
+  // Application sans zone.js : on signale les changements faits dans les callbacks HTTP
+  private cdr = inject(ChangeDetectorRef);
 
   // States
   products = signal<Product[]>([]);
@@ -97,7 +101,7 @@ export class AdminProductsComponent implements OnInit {
 
   handleImageFile(file: File) {
     if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner un fichier image valide (JPG, PNG, WebP).');
+      this.toast.error('Veuillez sélectionner un fichier image valide (JPG, PNG, WebP).');
       return;
     }
 
@@ -106,6 +110,7 @@ export class AdminProductsComponent implements OnInit {
       next: (res) => {
         this.productForm.imageUrl = res.imageUrl;
         this.uploadingImage.set(false);
+        this.cdr.markForCheck();
       },
       error: () => {
         // Fallback to base64 Data URL if needed
@@ -113,6 +118,7 @@ export class AdminProductsComponent implements OnInit {
         reader.onload = (e) => {
           this.productForm.imageUrl = (e.target?.result as string) || '';
           this.uploadingImage.set(false);
+          this.cdr.markForCheck();
         };
         reader.readAsDataURL(file);
       }
@@ -304,10 +310,12 @@ export class AdminProductsComponent implements OnInit {
         next: (res) => {
           v.images.push(res.imageUrl);
           v.uploading = false;
+          this.cdr.markForCheck();
         },
         error: () => {
           v.uploading = false;
           this.errorMsg.set(`Échec du téléversement de la photo "${file.name}".`);
+          this.cdr.markForCheck();
         }
       });
     }

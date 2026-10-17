@@ -48,3 +48,154 @@
   border-radius: 50px;
   letter-spacing: 0.3px;
 }
+
+// Liste du panier (remplace le tableau, lisible sur mobile)
+.cart-list {
+  border-top: 1px solid rgba(12, 13, 7, 0.1);
+}
+
+.cart-line {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(12, 13, 7, 0.1);
+}
+
+.cart-thumb {
+  width: 88px;
+  height: 104px;
+  border-radius: 10px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+}
+
+.cart-name {
+  display: block;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0C0D07;
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.cart-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 12.5px;
+  color: #6c757d;
+
+  .sep {
+    opacity: 0.6;
+  }
+}
+
+.cart-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid rgba(12, 13, 7, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+
+  button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #ffffff;
+    color: #0C0D07;
+
+    &:hover {
+      background: #f3f3f3;
+    }
+  }
+
+  span {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+}
+
+.remove-btn {
+  border: none;
+  background: transparent;
+  color: #b02a37;
+  font-size: 12.5px;
+  padding: 4px 0;
+}
+
+.cart-total {
+  text-align: right;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0C0D07;
+  white-space: nowrap;
+
+  small {
+    font-size: 11.5px;
+  }
+}
+
+.offer-hint {
+  background-color: #F7F4F0;
+  border: 1px dashed rgba(192, 155, 172, 0.9);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #314021;
+
+  i {
+    color: #C09BAC;
+    margin-right: 4px;
+  }
+
+  a {
+    margin-left: 6px;
+    font-weight: 600;
+    color: #314021;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .cart-line {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .cart-thumb {
+    width: 72px;
+    height: 88px;
+  }
+
+  // Le total passe sous les infos, aligné à droite
+  .cart-total {
+    grid-column: 2;
+    text-align: left;
+    margin-top: -4px;
+  }
+
+  .remove-btn span {
+    display: none;
+  }
+}

@@ -45,7 +45,7 @@
               <tr>
                 <td class="ps-4 fw-semibold text-dark">{{ rule.displayLabel }}</td>
                 <td>{{ rule.minQuantity }} article(s)</td>
-                <td><span class="badge badge-percent">-{{ rule.percent }}%</span></td>
+                <td><span class="badge badge-percent">-{{ formatPercent(rule.percent) }} %</span></td>
                 <td class="text-secondary" style="font-size: 13px;">{{ scopeText(rule) }}</td>
                 <td>
                   <div class="form-check form-switch m-0">
@@ -100,7 +100,7 @@
       <div class="col-6">
         <label class="form-label fw-semibold" style="font-size: 13px;">Remise (%) *</label>
         <div class="input-group">
-          <input type="number" min="0.01" max="90" step="0.01" class="form-control" [(ngModel)]="form.percent" placeholder="10">
+          <input type="text" inputmode="decimal" class="form-control" [(ngModel)]="percentText" placeholder="ex. 10 ou 16,67">
           <span class="input-group-text">%</span>
         </div>
       </div>
@@ -144,21 +144,21 @@
           <div class="row g-2 align-items-end">
             <div class="col-sm-4">
               <label class="form-label small text-muted mb-1">Prix unitaire (DT)</label>
-              <input type="number" min="0" step="0.01" class="form-control form-control-sm" [(ngModel)]="bundleUnitPrice" placeholder="30">
+              <input type="text" inputmode="decimal" class="form-control form-control-sm" [(ngModel)]="bundleUnitText" placeholder="30">
             </div>
             <div class="col-sm-4">
               <label class="form-label small text-muted mb-1">Prix pour {{ form.minQuantity || '?' }} articles (DT)</label>
-              <input type="number" min="0" step="0.01" class="form-control form-control-sm" [(ngModel)]="bundlePrice" placeholder="50">
+              <input type="text" inputmode="decimal" class="form-control form-control-sm" [(ngModel)]="bundlePriceText" placeholder="50">
             </div>
             <div class="col-sm-4">
               <button type="button" class="btn btn-sm btn-outline-dark w-100" [disabled]="bundlePercent() === null" (click)="applyBundlePrice()">
-                Utiliser {{ bundlePercent() !== null ? bundlePercent() + ' %' : 'ce prix' }}
+                Utiliser {{ bundlePercent() !== null ? formatPercent(bundlePercent()) + ' %' : 'ce prix' }}
               </button>
             </div>
           </div>
           @if (bundleCheck(); as c) {
             <small class="d-block text-muted mt-2" style="font-size: 12px;">
-              Vérification : {{ form.minQuantity }} × {{ bundleUnitPrice }} DT = {{ c.regular.toFixed(2) }} DT → <strong class="text-dark">{{ c.total.toFixed(2) }} DT</strong> avec -{{ form.percent }} %
+              Vérification : {{ form.minQuantity }} × {{ bundleUnitText }} DT = {{ c.regular.toFixed(2) }} DT → <strong class="text-dark">{{ c.total.toFixed(2) }} DT</strong> avec -{{ percentText }} %
             </small>
           }
         </div>

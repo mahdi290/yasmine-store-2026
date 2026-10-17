@@ -1,11 +1,11 @@
-<!-- Page Header -->
-<div class="bg-light py-4 mb-5 border-bottom">
-  <div class="container d-flex justify-content-between align-items-center">
-    <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Détails du Produit</h1>
+<!-- Fil d'Ariane -->
+<div class="bg-light py-3 mb-4 border-bottom">
+  <div class="container">
     <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
-      <ol class="breadcrumb m-0" style="font-size: 13px;">
+      <ol class="breadcrumb m-0 flex-nowrap text-truncate" style="font-size: 13px;">
         <li class="breadcrumb-item"><a routerLink="/" class="text-secondary text-decoration-none">Accueil</a></li>
-        <li class="breadcrumb-item active text-dark" aria-current="page">Détails du Produit</li>
+        <li class="breadcrumb-item"><a routerLink="/category" class="text-secondary text-decoration-none">Boutique</a></li>
+        <li class="breadcrumb-item active text-dark text-truncate" aria-current="page">{{ product()?.name || 'Produit' }}</li>
       </ol>
     </nav>
   </div>
@@ -20,18 +20,17 @@
     </div>
   } @else {
     @if (product(); as prod) {
-      <div class="row g-5">
-        <!-- Product Image Col -->
-        <div class="col-md-6">
-          <div class="bg-light p-4 rounded-3 d-flex align-items-center justify-content-center border" style="min-height: 400px;">
-            <img [src]="displayedImage()" class="img-fluid main-product-image" [alt]="prod.name + (selectedVariant() ? ' - ' + selectedVariant()!.colorName : '')" style="max-height: 380px; object-fit: contain; mix-blend-mode: multiply;">
+      <div class="row g-4 g-lg-5">
+        <!-- Photos -->
+        <div class="col-lg-6">
+          <div class="product-photo bg-light rounded-3 border">
+            <img [src]="displayedImage()" [alt]="prod.name + (selectedVariant() ? ' - ' + selectedVariant()!.colorName : '')">
           </div>
 
-          <!-- Miniatures de la couleur choisie -->
           @if (galleryImages().length > 1) {
             <div class="d-flex flex-wrap gap-2 mt-3">
               @for (img of galleryImages(); track img) {
-                <button type="button" class="gallery-thumb" [class.active]="displayedImage() === img" (click)="selectedImage.set(img)" [attr.aria-label]="'Voir la photo'">
+                <button type="button" class="gallery-thumb" [class.active]="displayedImage() === img" (click)="selectedImage.set(img)" aria-label="Voir la photo">
                   <img [src]="img" [alt]="prod.name">
                 </button>
               }
@@ -39,152 +38,206 @@
           }
         </div>
 
-        <!-- Product Specs Col -->
-        <div class="col-md-6">
-          <div>
-            <!-- Category & Brand -->
-            @if (prod.category; as cat) {
-              <span class="badge bg-secondary mb-2 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">{{ cat.name }}</span>
-            }
+        <!-- Informations et achat -->
+        <div class="col-lg-6">
+          @if (prod.category; as cat) {
+            <span class="badge bg-secondary mb-2 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">{{ cat.name }}</span>
+          }
+          @if (prod.brand) {
             <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 11px; letter-spacing: 0.5px;">{{ prod.brand }}</small>
-            
-            <!-- Title -->
-            <h2 class="fw-bold text-dark mb-3" style="font-family: 'Inter Tight', sans-serif; font-size: 32px; letter-spacing: -0.5px;">{{ prod.name }}</h2>
+          }
+          <h1 class="product-title fw-bold text-dark mb-2">{{ prod.name }}</h1>
 
-            <!-- Price -->
-            <div class="mb-3">
-              @if (unitPrice() < prod.price) {
-                <span class="h3 fw-bold text-danger">{{ unitPrice() }} DT</span>
-                <span class="text-muted text-decoration-line-through ms-2">{{ prod.price }} DT</span>
-                <span class="badge bg-danger ms-2">-{{ prod.discountPercent }}%</span>
-              } @else {
-                <span class="h3 fw-bold text-dark">{{ prod.price }} DT</span>
-              }
-              <span class="text-muted ms-2" style="font-size: 14px;">+ livraison gratuite</span>
-            </div>
-
-            <!-- Remise par quantité -->
-            <div class="mb-4">
-            @for (rule of quantityOffers(); track rule.id) {
-              <div class="qty-offer d-flex align-items-center gap-2 mb-2">
-                <i class="bi bi-tags-fill"></i>
-                <span>
-                  <strong>Achetez {{ rule.minQuantity }}, économisez {{ rule.percent }}%</strong>
-                  @if (offerExample(rule); as ex) {
-                    <span> : {{ ex.quantity }} pour <strong>{{ ex.total }} DT</strong> au lieu de <span class="text-decoration-line-through">{{ ex.regular }} DT</span></span>
-                  }
-                  @if (rule.scope === 'CATEGORY' && rule.targetName) {
-                    <span class="text-muted"> sur les {{ rule.targetName }}</span>
-                  } @else if (rule.scope === 'CART') {
-                    <span class="text-muted"> sur tout le panier</span>
-                  }
-                  @if (variants().length > 1 && rule.scope !== 'CART') {
-                    <span class="text-muted"> — couleurs mélangeables</span>
-                  }
-                </span>
-              </div>
+          <!-- Prix -->
+          <div class="d-flex flex-wrap align-items-baseline gap-2 mb-3">
+            @if (unitPrice() < prod.price) {
+              <span class="h3 fw-bold text-danger m-0">{{ formatPrice(unitPrice()) }} DT</span>
+              <span class="text-muted text-decoration-line-through">{{ formatPrice(prod.price) }} DT</span>
+              <span class="badge bg-danger">-{{ prod.discountPercent }}%</span>
+            } @else {
+              <span class="h3 fw-bold text-dark m-0">{{ formatPrice(prod.price) }} DT</span>
             }
-            </div>
+          </div>
 
-            <hr class="my-4">
-
-            <!-- Color Selection (produits multicolores) -->
-            @if (variants().length > 0) {
-              <div class="mb-4 text-start">
-                <h6 class="fw-bold text-dark mb-2" style="font-size: 13px;">
-                  Couleur : <span class="fw-semibold text-secondary">{{ selectedVariant()?.colorName || 'Choisissez une couleur' }}</span>
-                </h6>
-                <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Couleurs disponibles">
-                  @for (v of variants(); track v.id) {
-                    <button type="button"
-                            class="color-swatch"
-                            role="radio"
-                            [attr.aria-checked]="selectedVariantId() === v.id"
-                            [class.active]="selectedVariantId() === v.id"
-                            [class.sold-out]="(v.stock ?? 0) <= 0"
-                            [style.--swatch-color]="v.colorHex || '#cccccc'"
-                            [title]="v.colorName + ((v.stock ?? 0) <= 0 ? ' (rupture)' : '')"
-                            [attr.aria-label]="v.colorName"
-                            (click)="selectVariant(v)">
-                      <span class="swatch-dot"></span>
-                    </button>
+          <!-- Offre par quantité -->
+          @if (mainOffer(); as offer) {
+            <div class="offer-card mb-3">
+              <div class="d-flex align-items-start gap-2">
+                <span class="offer-pill">OFFRE</span>
+                <div class="flex-grow-1">
+                  <div class="fw-bold">Achetez {{ offer.minQuantity }}, économisez {{ formatPercent(offer.percent) }} %</div>
+                  @if (offerExample(offer); as ex) {
+                    <div>
+                      {{ ex.quantity }} pour <strong>{{ formatPrice(ex.total) }} DT</strong>
+                      au lieu de <span class="text-decoration-line-through">{{ formatPrice(ex.regular) }} DT</span>
+                      @if (variants().length > 1 && offer.scope !== 'CART') {
+                        <span class="text-muted"> · couleurs au choix</span>
+                      }
+                      @if (offer.scope === 'CATEGORY' && offer.targetName) {
+                        <span class="text-muted"> · sur les {{ offer.targetName }}</span>
+                      } @else if (offer.scope === 'CART') {
+                        <span class="text-muted"> · sur tout le panier</span>
+                      }
+                    </div>
+                  }
+                  @if (offerStatus(); as st) {
+                    @if (st.reached) {
+                      <div class="offer-status is-ok"><i class="bi bi-check-circle-fill me-1"></i>Offre appliquée dans votre panier.</div>
+                    } @else if (st.current > 0) {
+                      <div class="offer-status"><i class="bi bi-bag-check me-1"></i>{{ st.current }} dans votre panier : ajoutez-en encore {{ st.missing }}.</div>
+                    }
                   }
                 </div>
               </div>
-            }
+            </div>
+          }
+          @for (other of quantityOffers().slice(1); track other.id) {
+            <div class="small text-muted mb-2"><i class="bi bi-tags me-1"></i>Aussi : achetez {{ other.minQuantity }}, économisez {{ formatPercent(other.percent) }} %</div>
+          }
 
-            <!-- Size Selection -->
-            <div class="mb-4 text-start">
-              <h6 class="fw-bold text-dark mb-2" style="font-size: 13px;">Sélectionnez une Taille</h6>
-              <div class="d-flex gap-2">
-                @for (sz of availableSizes; track sz) {
+          <!-- Couleur -->
+          @if (variants().length > 0) {
+            <div class="mb-3">
+              <div class="option-label">Couleur : <span>{{ selectedVariant()?.colorName || 'à choisir' }}</span></div>
+              <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Couleurs disponibles">
+                @for (v of variants(); track v.id) {
                   <button type="button"
-                          (click)="changeSize(sz)"
-                          class="btn btn-sm px-3 py-2 fw-semibold"
-                          [class.btn-dark]="selectedSize() === sz"
-                          [class.btn-outline-dark]="selectedSize() !== sz"
-                          [class.size-out]="sizeStock(sz) <= 0"
-                          style="border-radius: 6px; min-width: 44px; font-size: 13px;">
-                    {{ sz }}
+                          class="color-chip"
+                          role="radio"
+                          [attr.aria-checked]="selectedVariantId() === v.id"
+                          [class.active]="selectedVariantId() === v.id"
+                          [class.sold-out]="(v.stock ?? 0) <= 0"
+                          (click)="selectVariant(v)">
+                    <span class="chip-dot" [style.background-color]="v.colorHex || '#cccccc'"></span>
+                    <span class="chip-name">{{ v.colorName }}</span>
+                    @if ((v.stock ?? 0) <= 0) {
+                      <span class="chip-note">épuisé</span>
+                    }
                   </button>
                 }
               </div>
             </div>
+          }
 
-            <!-- Description -->
-            <h6 class="fw-bold text-dark mb-2">Description</h6>
-            <p class="text-secondary lh-lg mb-4" style="font-size: 14px;">{{ prod.description }}</p>
-
-            <!-- Stock status -->
-            <div class="d-flex align-items-center gap-2 mb-4" style="font-size: 14px;">
-              <span class="fw-bold">Disponibilité :</span>
-              @if (selectedSizeStock() > 0) {
-                <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i> En Stock ({{ selectedSizeStock() }} unités en taille {{ selectedSize() }}@if (selectedVariant(); as v) {, {{ v.colorName }}})</span>
-              } @else {
-                <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i> Taille {{ selectedSize() }}@if (selectedVariant(); as v) { ({{ v.colorName }})} Rupture de stock</span>
+          <!-- Taille -->
+          <div class="mb-3">
+            <div class="option-label">Taille : <span>{{ selectedSize() }}</span></div>
+            <div class="size-grid">
+              @for (sz of availableSizes; track sz) {
+                <button type="button"
+                        (click)="changeSize(sz)"
+                        class="size-btn"
+                        [class.active]="selectedSize() === sz"
+                        [class.size-out]="sizeStock(sz) <= 0"
+                        [attr.aria-pressed]="selectedSize() === sz"
+                        [title]="sizeStock(sz) <= 0 ? 'Rupture de stock' : sizeStock(sz) + ' en stock'">
+                  {{ sz }}
+                </button>
               }
             </div>
+          </div>
 
-            <!-- Add to Cart actions -->
-            @if (prod.stock > 0) {
-              <div class="d-flex flex-wrap gap-3 mb-4">
-                <!-- Qty counter -->
-                <div class="input-group border rounded" style="width: 120px;">
-                  <button (click)="decreaseQty()" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;" [disabled]="selectedSizeStock() <= 0">
-                    <i class="bi bi-dash fs-5"></i>
-                  </button>
-                  <span class="d-flex align-items-center justify-content-center fw-bold bg-white text-dark border-start border-end" style="width: 44px; font-size: 15px;">
-                    {{ selectedSizeStock() > 0 ? quantity() : 0 }}
-                  </span>
-                  <button (click)="increaseQty()" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;" [disabled]="selectedSizeStock() <= 0 || quantity() >= selectedSizeStock()">
-                    <i class="bi bi-plus fs-5"></i>
-                  </button>
-                </div>
-
-                <!-- Add Button -->
-                <button (click)="addToCart()" class="btn btn-dark px-5 py-2.5 fw-semibold d-flex align-items-center justify-content-center gap-2" style="border-radius: 4px;" [disabled]="selectedSizeStock() <= 0">
-                  <i class="bi bi-cart-plus fs-5"></i> Ajouter au Panier
-                </button>
-
-                <!-- Wishlist Button -->
-                <button class="btn btn-outline-dark p-2.5 d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; border-radius: 4px;">
-                  <i class="bi bi-heart fs-5"></i>
-                </button>
-              </div>
+          <!-- Disponibilité -->
+          <div class="mb-3" style="font-size: 14px;">
+            @if (selectedSizeStock() > 0) {
+              <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>En stock
+                @if (selectedSizeStock() <= 3) { — plus que {{ selectedSizeStock() }} }
+              </span>
+            } @else {
+              <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i>Taille {{ selectedSize() }}@if (selectedVariant(); as v) { en {{ v.colorName }}} en rupture de stock</span>
             }
+          </div>
 
-            <hr class="my-4">
+          <!-- Ajout au panier -->
+          @if (prod.stock > 0) {
+            <div class="buy-row mb-4">
+              <div class="qty-stepper" role="group" aria-label="Quantité">
+                <button type="button" (click)="decreaseQty()" [disabled]="quantity() <= 1" aria-label="Diminuer la quantité"><i class="bi bi-dash"></i></button>
+                <span>{{ quantity() }}</span>
+                <button type="button" (click)="increaseQty()" [disabled]="selectedSizeStock() <= 0 || quantity() >= selectedSizeStock()" aria-label="Augmenter la quantité"><i class="bi bi-plus"></i></button>
+              </div>
+              <button type="button" (click)="addToCart()" class="btn btn-dark add-btn" [class.is-added]="justAdded()" [disabled]="selectedSizeStock() <= 0">
+                @if (justAdded()) {
+                  <i class="bi bi-check2"></i> Ajouté
+                } @else {
+                  <i class="bi bi-bag-plus"></i> Ajouter au panier
+                }
+              </button>
+              <button type="button" class="btn btn-outline-dark fav-btn" (click)="toggleFavorite()" [attr.aria-pressed]="wishlistService.isFavorite(prod.id)" aria-label="Ajouter aux favoris">
+                <i class="bi" [class.bi-heart]="!wishlistService.isFavorite(prod.id)" [class.bi-heart-fill]="wishlistService.isFavorite(prod.id)"></i>
+              </button>
+            </div>
+          } @else {
+            <div class="alert alert-light border mb-4">Ce produit est actuellement épuisé.</div>
+          }
 
-            <!-- Guarantee Features -->
-            <div class="row g-3" style="font-size: 12px; color: #555;">
-              <div class="col-6 d-flex align-items-center gap-2">
-                <i class="bi bi-shield-check text-dark fs-5"></i>
-                <span>Garantie Qualité</span>
+          <!-- Composez votre lot (ex. 1 bleu + 1 rouge) -->
+          @if (bundleSize() > 0 && prod.stock > 0) {
+            <div class="bundle-card mb-4">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                <div>
+                  <div class="fw-bold">Composez votre lot de {{ bundleSize() }}</div>
+                  <small class="text-muted">Choisissez la couleur et la taille de chaque article.</small>
+                </div>
+                @if (bundleExample(); as ex) {
+                  <div class="text-end">
+                    <div class="fw-bold fs-5 lh-1">{{ formatPrice(ex.total) }} DT</div>
+                    <small class="text-muted text-decoration-line-through">{{ formatPrice(ex.regular) }} DT</small>
+                  </div>
+                }
               </div>
-              <div class="col-6 d-flex align-items-center gap-2">
-                <i class="bi bi-arrow-left-right text-dark fs-5"></i>
-                <span>Retours sous 30 Jours</span>
-              </div>
+
+              @for (slot of bundleSlots(); track $index; let i = $index) {
+                <div class="bundle-slot">
+                  <div class="slot-title">Article {{ i + 1 }}</div>
+                  <div class="d-flex flex-wrap gap-2 mb-2">
+                    @for (v of variants(); track v.id) {
+                      <button type="button" class="color-chip is-small"
+                              [class.active]="slot.variantId === v.id"
+                              [class.sold-out]="(v.stock ?? 0) <= 0"
+                              [attr.aria-pressed]="slot.variantId === v.id"
+                              (click)="setSlotVariant(i, v)">
+                        <span class="chip-dot" [style.background-color]="v.colorHex || '#cccccc'"></span>
+                        <span class="chip-name">{{ v.colorName }}</span>
+                      </button>
+                    }
+                  </div>
+                  <div class="size-grid is-small">
+                    @for (sz of availableSizes; track sz) {
+                      <button type="button" class="size-btn"
+                              [class.active]="slot.size === sz"
+                              [class.size-out]="!bundleVariant(slot) || variantStock(bundleVariant(slot)!, sz) <= 0"
+                              [attr.aria-pressed]="slot.size === sz"
+                              (click)="setSlotSize(i, sz)">{{ sz }}</button>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (bundleProblem(); as problem) {
+                <div class="small text-danger mb-2"><i class="bi bi-exclamation-circle me-1"></i>{{ problem }}</div>
+              }
+              <button type="button" class="btn btn-dark w-100 py-2 fw-semibold" (click)="addBundle()" [disabled]="!!bundleProblem()">
+                <i class="bi bi-bag-plus me-1"></i> Ajouter le lot au panier
+                @if (bundleExample(); as ex) { — {{ formatPrice(ex.total) }} DT }
+              </button>
+            </div>
+          }
+
+          <!-- Description -->
+          @if (prod.description) {
+            <h2 class="h6 fw-bold text-dark mb-2">Description</h2>
+            <p class="text-secondary lh-lg mb-4" style="font-size: 14px;">{{ prod.description }}</p>
+          }
+
+          <div class="row g-3 pt-3 border-top" style="font-size: 12px; color: #555;">
+            <div class="col-6 d-flex align-items-center gap-2">
+              <i class="bi bi-truck text-dark fs-5"></i>
+              <span>Livraison partout en Tunisie</span>
+            </div>
+            <div class="col-6 d-flex align-items-center gap-2">
+              <i class="bi bi-cash-coin text-dark fs-5"></i>
+              <span>Paiement à la livraison</span>
             </div>
           </div>
         </div>

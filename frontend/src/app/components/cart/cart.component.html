@@ -1,8 +1,8 @@
 <!-- Page Header -->
-<div class="bg-light py-4 mb-5 border-bottom">
-  <div class="container d-flex justify-content-between align-items-center">
+<div class="bg-light py-3 py-md-4 mb-4 mb-md-5 border-bottom">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
     <h1 class="h3 fw-bold m-0" style="font-family: 'Inter Tight', sans-serif;">Panier</h1>
-    <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+    <nav class="d-none d-sm-block" style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
       <ol class="breadcrumb m-0" style="font-size: 13px;">
         <li class="breadcrumb-item"><a routerLink="/" class="text-secondary text-decoration-none">Accueil</a></li>
         <li class="breadcrumb-item active text-dark" aria-current="page">Panier</li>
@@ -12,91 +12,78 @@
 </div>
 
 <div class="container mb-5">
-  <div class="row g-5">
+  <div class="row g-4 g-lg-5">
     <!-- Left Column: Cart Items -->
     <div class="col-lg-8">
       @if (cartService.cartItems().length > 0) {
-        <div class="table-responsive">
-          <table class="table align-middle text-start">
-            <thead>
-              <tr class="text-uppercase text-secondary border-bottom-2" style="font-size: 11px; letter-spacing: 0.5px;">
-                <th scope="col" style="min-width: 300px;">Produit</th>
-                <th scope="col">Prix</th>
-                <th scope="col" style="width: 120px;">Quantité</th>
-                <th scope="col" class="text-end">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of cartService.cartItems(); track item.id) {
-                <tr class="border-bottom">
-                  <!-- Product details -->
-                  <td class="py-4">
-                    <div class="d-flex align-items-center gap-3">
-                      <div class="bg-light p-2 rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                        <img [src]="cartService.itemImage(item)" class="img-fluid" [alt]="item.product.name" style="max-height: 60px; object-fit: contain; mix-blend-mode: multiply;">
-                      </div>
-                      <div style="line-height: 1.4;">
-                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 15px;">{{ item.product.name }}</h6>
-                        <small class="text-muted d-flex align-items-center flex-wrap gap-1" style="font-size: 12px;">
-                          @if (item.colorName) {
-                            <span class="d-inline-flex align-items-center gap-1">Couleur :
-                              <span class="cart-swatch" [style.background-color]="item.colorHex || '#cccccc'"></span>
-                              <strong class="text-dark fw-semibold">{{ item.colorName }}</strong>
-                            </span>
-                            <span>&nbsp;|&nbsp;</span>
-                          }
-                          <span>Taille : {{ item.size || 'M' }}</span>
-                        </small>
-                        <button (click)="removeItem(item)" class="btn btn-link text-danger p-0 mt-1 d-flex align-items-center gap-1" style="font-size: 12px; text-decoration: none; box-shadow: none;">
-                          <i class="bi bi-trash"></i> Supprimer
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <!-- Price -->
-                  <td class="py-4 fw-semibold text-dark">
-                    {{ cartService.lineQuote(item).unitPrice }} DT
-                    @if (cartService.lineQuote(item).unitPrice < item.product.price) {
-                      <small class="d-block text-muted text-decoration-line-through fw-normal" style="font-size: 11px;">{{ item.product.price }} DT</small>
-                    }
-                  </td>
-                  
-                  <!-- Quantity adjuster -->
-                  <td class="py-4">
-                    <div class="input-group input-group-sm border rounded" style="width: 100px;">
-                      <button (click)="decreaseQty(item)" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;">
-                        <i class="bi bi-dash"></i>
-                      </button>
-                      <span class="d-flex align-items-center justify-content-center fw-bold bg-white text-dark border-start border-end" style="width: 34px; font-size: 13px;">
-                        {{ item.quantity }}
+        <!-- Liste des articles : une carte par ligne, lisible sur mobile comme sur ordinateur -->
+        <div class="cart-list">
+          @for (item of cartService.cartItems(); track item.id) {
+            @if (cartService.lineQuote(item); as lq) {
+              <div class="cart-line">
+                <a [routerLink]="['/product-details', item.product.id]" class="cart-thumb">
+                  <img [src]="cartService.itemImage(item)" [alt]="item.product.name">
+                </a>
+                <div class="cart-info">
+                  <a [routerLink]="['/product-details', item.product.id]" class="cart-name">{{ item.product.name }}</a>
+                  <div class="cart-meta">
+                    @if (item.colorName) {
+                      <span class="d-inline-flex align-items-center gap-1">
+                        <span class="cart-swatch" [style.background-color]="item.colorHex || '#cccccc'"></span>
+                        {{ item.colorName }}
                       </span>
-                      <button (click)="increaseQty(item)" class="btn btn-link text-dark p-0 border-0 d-flex align-items-center justify-content-center flex-grow-1" style="text-decoration: none; box-shadow: none;">
-                        <i class="bi bi-plus"></i>
-                      </button>
-                    </div>
-                  </td>
-                  
-                  <!-- Total -->
-                  <td class="py-4 text-end fw-bold text-dark">
-                    @if (cartService.lineQuote(item); as lq) {
-                      @if (lq.discountPercent > 0) {
-                        <small class="d-block text-muted text-decoration-line-through fw-normal" style="font-size: 11px;">{{ lq.subtotal }} DT</small>
-                        <span class="text-danger">{{ lq.total }} DT</span>
-                        <span class="d-block badge-qty-discount mt-1">Remise -{{ lq.discountPercent }}%</span>
-                      } @else {
-                        {{ lq.total }} DT
-                      }
+                      <span class="sep">·</span>
                     }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                    <span>Taille {{ item.size || 'M' }}</span>
+                    <span class="sep">·</span>
+                    <span>{{ formatPrice(lq.unitPrice) }} DT</span>
+                    @if (lq.unitPrice < item.product.price) {
+                      <span class="text-decoration-line-through">{{ formatPrice(item.product.price) }} DT</span>
+                    }
+                  </div>
+                  <div class="cart-actions">
+                    <div class="qty-stepper" role="group" aria-label="Quantité">
+                      <button type="button" (click)="decreaseQty(item)" [attr.aria-label]="item.quantity > 1 ? 'Diminuer la quantité' : 'Retirer l\'article'">
+                        <i class="bi" [class.bi-dash]="item.quantity > 1" [class.bi-trash]="item.quantity <= 1"></i>
+                      </button>
+                      <span>{{ item.quantity }}</span>
+                      <button type="button" (click)="increaseQty(item)" aria-label="Augmenter la quantité"><i class="bi bi-plus"></i></button>
+                    </div>
+                    <button type="button" (click)="removeItem(item)" class="remove-btn">
+                      <i class="bi bi-x-lg"></i> <span>Retirer</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="cart-total">
+                  @if (lq.discountPercent > 0) {
+                    <small class="d-block text-muted text-decoration-line-through fw-normal">{{ formatPrice(lq.subtotal) }} DT</small>
+                    <span class="text-danger">{{ formatPrice(lq.total) }} DT</span>
+                    <br><span class="badge-qty-discount mt-1">-{{ formatPercent(lq.discountPercent) }} %</span>
+                  } @else {
+                    {{ formatPrice(lq.total) }} DT
+                  }
+                </div>
+              </div>
+            }
+          }
         </div>
 
+        <!-- Offres presque atteintes -->
+        @for (p of offerHints(); track p.rule.id) {
+          <div class="offer-hint mt-3">
+            <i class="bi bi-tags-fill"></i>
+            Ajoutez encore <strong>{{ p.missing }} article{{ p.missing > 1 ? 's' : '' }}</strong>
+            @if (p.rule.targetName) { ({{ p.rule.targetName }}) }
+            pour profiter de <strong>-{{ formatPercent(p.rule.percent) }} %</strong>.
+            @if (p.rule.productId) {
+              <a [routerLink]="['/product-details', p.rule.productId]">Choisir</a>
+            }
+          </div>
+        }
+
         <!-- Cart actions -->
-        <div class="d-flex justify-content-end gap-3 mt-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+          <a routerLink="/category" class="text-secondary small"><i class="bi bi-arrow-left me-1"></i> Continuer vos achats</a>
           <button (click)="clearCart()" class="btn btn-outline-danger px-3 py-2" style="font-size: 13px;"><i class="bi bi-trash3 me-1"></i> Vider le Panier</button>
         </div>
       } @else {

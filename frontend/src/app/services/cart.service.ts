@@ -165,6 +165,11 @@ export class CartService {
     return of({ success: true, items: current });
   }
 
+  /** Remet le panier dans un état précédent (bouton "Annuler" après une suppression). */
+  restoreCart(items: CartItem[]) {
+    this.saveCart([...items]);
+  }
+
   clearCart(): Observable<any> {
     this.saveCart([]);
     return of({ success: true, items: [] });

@@ -102,11 +102,10 @@ public class DiscountRuleController {
         if (req.minQuantity() == null || req.minQuantity() < 1 || req.minQuantity() > 999) {
             return "La quantité minimale doit être comprise entre 1 et 999.";
         }
-        if (req.percent() == null || req.percent().compareTo(new BigDecimal("0.01")) < 0 || req.percent().compareTo(new BigDecimal("90")) > 0) {
+        // Arrondi à 2 décimales (16.667 -> 16.67) plutôt que de refuser la saisie
+        BigDecimal percent = req.percent() != null ? req.percent().setScale(2, java.math.RoundingMode.HALF_UP) : null;
+        if (percent == null || percent.compareTo(new BigDecimal("0.01")) < 0 || percent.compareTo(new BigDecimal("90")) > 0) {
             return "Le pourcentage de remise doit être compris entre 0,01 et 90 %.";
-        }
-        if (req.percent().stripTrailingZeros().scale() > 2) {
-            return "Le pourcentage de remise accepte au maximum 2 décimales (ex. 16.67).";
         }
         String scope = req.scope() != null ? req.scope().trim().toUpperCase() : QuantityDiscountRule.SCOPE_ALL_PRODUCTS;
         if (!SCOPES.contains(scope)) {
@@ -128,7 +127,7 @@ public class DiscountRuleController {
         }
         rule.setLabel(req.label() != null && !req.label().isBlank() ? req.label().trim() : null);
         rule.setMinQuantity(req.minQuantity());
-        rule.setPercent(req.percent());
+        rule.setPercent(percent);
         rule.setActive(req.active() == null || req.active());
         rule.setScope(scope);
         rule.setCategoryId(categoryId);

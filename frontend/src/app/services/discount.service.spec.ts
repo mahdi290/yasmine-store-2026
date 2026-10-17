@@ -1,4 +1,6 @@
-import { computeQuote, DiscountRule, effectivePrice, offerExample, percentForBundle, rulesForProduct } from './discount.service';
+import {
+  computeQuote, DiscountRule, effectivePrice, formatPercent, formatPrice, offerExample, offerProgress, parseDecimal, percentForBundle, rulesForProduct
+} from './discount.service';
 import { Product } from './product.service';
 
 const pull = { id: 1, name: 'Pull rayé', price: 80, category: { id: 10, name: 'Pulls' } } as Product;
@@ -55,6 +57,24 @@ describe('computeQuote (remise par quantité)', () => {
     expect(q.discountAmount).toBe(10);
     expect(q.total).toBe(50);
     expect(offerExample(haut, duo)).toEqual({ quantity: 2, total: 50, regular: 60 });
+  });
+
+  it('accepte la virgule et arrondit à 2 décimales', () => {
+    expect(parseDecimal('16,67')).toBe(16.67);
+    expect(parseDecimal('16.167')).toBe(16.17);
+    expect(parseDecimal(' 10 % ')).toBe(10);
+    expect(parseDecimal('abc')).toBeNull();
+    expect(formatPercent(16.67)).toBe('16,67');
+    expect(formatPercent(10)).toBe('10');
+    expect(formatPrice(50.4)).toBe('50.40');
+    expect(formatPrice(50)).toBe('50');
+  });
+
+  it('indique combien d\'articles manquent pour l\'offre', () => {
+    const haut = { id: 7, name: 'Haut rayé', price: 30, category: { id: 10, name: 'Hauts' } } as Product;
+    const duo = rule({ scope: 'PRODUCT', productId: 7, percent: 16.67 });
+    expect(offerProgress([{ product: haut, quantity: 1 }], [duo], haut)).toEqual([{ rule: duo, current: 1, missing: 1 }]);
+    expect(offerProgress([{ product: haut, quantity: 2 }], [duo], haut)).toEqual([]);
   });
 
   it('liste les offres visibles sur la fiche produit', () => {

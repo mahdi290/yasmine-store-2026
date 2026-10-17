@@ -94,7 +94,7 @@ class PricingServiceTest {
         assertMoney("60", deux.subtotal());
         assertMoney("10", deux.discountAmount());
         assertMoney("50", deux.total());
-        assertEquals("Achetez 2, économisez 16.67%", pricing.labelOf(duo));
+        assertEquals("Achetez 2, économisez 16,67%", pricing.labelOf(duo));
     }
 
     @Test

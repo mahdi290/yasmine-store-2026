@@ -2,6 +2,8 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { CartService, CartItem } from '../../services/cart.service';
+import { ToastService } from '../../services/toast.service';
+import { DiscountService, offerProgress, formatPercent, formatPrice } from '../../services/discount.service';
 
 @Component({
   selector: 'app-cart',
@@ -13,6 +15,16 @@ import { CartService, CartItem } from '../../services/cart.service';
 export class CartComponent {
   cartService = inject(CartService);
   private router = inject(Router);
+  private toast = inject(ToastService);
+  private discountService = inject(DiscountService);
+  protected readonly formatPercent = formatPercent;
+  protected readonly formatPrice = formatPrice;
+
+  // Offres pas encore atteintes pour les articles du panier (ex. "ajoutez encore 1 haut")
+  offerHints = computed(() => offerProgress(
+    this.cartService.cartItems().map(i => ({ product: i.product, quantity: i.quantity })),
+    this.discountService.activeRules()
+  ).filter(p => p.current > 0).slice(0, 2));
   protected readonly Math = Math;
 
   // Summary State
@@ -60,45 +72,38 @@ export class CartComponent {
     }
   }
 
+  // Pas de fenêtre de confirmation bloquante : suppression immédiate + bouton "Annuler"
   removeItem(item: CartItem) {
-    if (confirm(`Voulez-vous retirer ${item.product.name} de votre panier ?`)) {
-      const currentItems = this.cartService.cartItems();
-      this.cartService.cartItems.set(currentItems.filter(i => i.id !== item.id));
-
-      this.cartService.removeFromCart(item.id).subscribe({
-        error: () => {
-          this.cartService.cartItems.set(currentItems);
-          alert('Impossible de retirer cet article du panier.');
-        }
-      });
-    }
+    const previous = this.cartService.cartItems();
+    this.cartService.removeFromCart(item.id).subscribe();
+    const color = item.colorName ? ` (${item.colorName})` : '';
+    this.toast.info(`${item.product.name}${color} retiré du panier.`, {
+      actionLabel: 'Annuler',
+      action: () => this.cartService.restoreCart(previous)
+    });
   }
 
   clearCart() {
-    if (confirm('Êtes-vous sûr de vouloir vider votre panier ?')) {
-      const currentItems = this.cartService.cartItems();
-      this.cartService.cartItems.set([]);
-      this.cartService.clearCart().subscribe({
-        error: () => {
-          this.cartService.cartItems.set(currentItems);
-          alert('Impossible de vider le panier.');
-        }
-      });
-    }
+    const previous = this.cartService.cartItems();
+    this.cartService.clearCart().subscribe();
+    this.toast.info('Panier vidé.', {
+      actionLabel: 'Annuler',
+      action: () => this.cartService.restoreCart(previous)
+    });
   }
 
   applyCoupon(code: string) {
     if (code.trim().toUpperCase() === 'BIENVENUE10' || code.trim().toUpperCase() === 'WELCOME20') {
       this.discount.set(10);
-      alert('Code promo validé ! 10 DT de réduction appliqués.');
+      this.toast.success('Code promo validé ! 10 DT de réduction appliqués.');
     } else {
-      alert('Code promo invalide.');
+      this.toast.error('Code promo invalide.');
     }
   }
 
   proceedToCheckout() {
     if (this.cartService.cartItems().length === 0) {
-      alert('Votre panier est vide.');
+      this.toast.info('Votre panier est vide.');
       return;
     }
     this.router.navigate(['/checkout']);

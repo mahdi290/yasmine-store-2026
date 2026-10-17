@@ -55,9 +55,9 @@ public class PricingService {
 
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
-    /** 10.00 -> "10", 16.67 -> "16.67" */
+    /** 10.00 -> "10", 16.67 -> "16,67" (affichage français) */
     public static String formatPercent(BigDecimal percent) {
-        return percent == null ? "0" : percent.stripTrailingZeros().toPlainString();
+        return percent == null ? "0" : percent.stripTrailingZeros().toPlainString().replace('.', ',');
     }
 
     public static BigDecimal round2(BigDecimal value) {
