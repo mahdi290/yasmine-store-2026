@@ -68,6 +68,16 @@
   }
 }
 
+.contact-link {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #C09BAC;
+  }
+}
+
 .hover-white:hover {
   color: #C09BAC !important;
 }

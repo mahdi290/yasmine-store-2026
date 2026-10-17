@@ -48,6 +48,14 @@ export class DepartmentService {
     );
   }
 
+  // Rayons actifs réels (sans repli sur les valeurs par défaut) : sert à décider
+  // s'il faut afficher un sélecteur de rayon dans l'en-tête / le footer
+  getActiveDepartments(): Observable<Department[]> {
+    return this.http.get<Department[]>(`${this.apiUrl}/departments`).pipe(
+      catchError(() => of([] as Department[]))
+    );
+  }
+
   getAdminDepartments(): Observable<Department[]> {
     return this.http.get<Department[]>(`${this.apiUrl}/admin/departments`).pipe(
       catchError(() => of(DEFAULT_DEPARTMENTS))

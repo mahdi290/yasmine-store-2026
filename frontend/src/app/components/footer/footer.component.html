@@ -2,31 +2,33 @@
   <div class="container">
     <div class="row g-4 mb-5">
       <!-- Brand & Social -->
-      <div class="col-lg-3 col-md-6">
+      <div class="col-lg-4 col-md-6">
         <h3 class="fw-bold mb-3 text-white" style="font-family: 'Inter Tight', sans-serif;">Yasmina Store</h3>
         <p class="text-white-50 mb-4 lh-lg">
           Découvrez les dernières tendances de mode pour femmes. Des collections élégantes, confortables et adaptées à toutes les occasions.
         </p>
         <h6 class="fw-bold mb-3 text-white">Suivez-nous</h6>
         <div class="d-flex gap-2">
-          <a href="javascript:void(0)" class="social-icon"><i class="bi bi-facebook"></i></a>
-          <a href="javascript:void(0)" class="social-icon"><i class="bi bi-instagram"></i></a>
-          <a href="javascript:void(0)" class="social-icon"><i class="bi bi-twitter-x"></i></a>
-          <a href="javascript:void(0)" class="social-icon"><i class="bi bi-tiktok"></i></a>
-          <a href="javascript:void(0)" class="social-icon"><i class="bi bi-pinterest"></i></a>
-          <a href="javascript:void(0)" class="social-icon"><i class="bi bi-youtube"></i></a>
+          <a [href]="contact.instagram" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Instagram Yasmina Store" title="Instagram">
+            <i class="bi bi-instagram"></i>
+          </a>
+          <a [href]="contact.facebook" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Facebook Yasmina Store" title="Facebook">
+            <i class="bi bi-facebook"></i>
+          </a>
         </div>
       </div>
 
       <!-- Shop Links -->
-      <div class="col-lg-2 col-md-6 col-6 ps-lg-5">
+      <div class="col-lg-2 col-md-6 col-6">
         <h5 class="fw-bold mb-3 pb-1 position-relative footer-title text-white">Boutique</h5>
         <ul class="list-unstyled footer-links">
-          <li class="mb-2"><a routerLink="/category" [queryParams]="{department: 'femme'}">Collection Femme</a></li>
-          <li class="mb-2"><a routerLink="/category" [queryParams]="{department: 'homme'}">Collection Homme</a></li>
-          <li class="mb-2"><a routerLink="/category" [queryParams]="{search: 'Robe'}">Robes & Jupes</a></li>
-          <li class="mb-2"><a routerLink="/category" [queryParams]="{search: 'Blouse'}">Hauts & Blouses</a></li>
-          <li class="mb-2"><a routerLink="/category" [queryParams]="{search: 'Accessoires'}">Accessoires</a></li>
+          <li class="mb-2"><a routerLink="/category">Toutes les Pièces</a></li>
+          @for (dept of shopDepartments(); track dept.code) {
+            <li class="mb-2"><a routerLink="/category" [queryParams]="{department: dept.code}">Collection {{ dept.name | titlecase }}</a></li>
+          }
+          @for (cat of shopCategories(); track cat.id) {
+            <li class="mb-2"><a routerLink="/category" [queryParams]="{category: cat.id}">{{ cat.name }}</a></li>
+          }
           <li class="mb-2"><a routerLink="/category" [queryParams]="{promo: 'true'}">Soldes & Promos</a></li>
         </ul>
       </div>
@@ -35,56 +37,29 @@
       <div class="col-lg-2 col-md-6 col-6">
         <h5 class="fw-bold mb-3 pb-1 position-relative footer-title text-white">Service Client</h5>
         <ul class="list-unstyled footer-links">
+          <li class="mb-2"><a routerLink="/cart">Mon Panier</a></li>
+          <li class="mb-2"><a routerLink="/favorites">Mes Favoris</a></li>
           <li class="mb-2"><a routerLink="/orders">Suivi de Commande</a></li>
-          <li class="mb-2"><a routerLink="/category">Toutes les Pièces</a></li>
-          <li class="mb-2"><a href="javascript:void(0)">Livraison 24/48h</a></li>
-          <li class="mb-2"><a href="javascript:void(0)">Paiement à la livraison</a></li>
-          <li class="mb-2"><a href="javascript:void(0)">Contactez-nous</a></li>
         </ul>
       </div>
 
       <!-- Contact Info -->
-      <div class="col-lg-5 col-md-6">
+      <div class="col-lg-4 col-md-6">
         <h5 class="fw-bold mb-3 pb-1 position-relative footer-title text-white">Coordonnées</h5>
-        <ul class="list-unstyled text-white-50 lh-lg mb-4">
+        <ul class="list-unstyled text-white-50 lh-lg mb-0 contact-list">
           <li class="d-flex align-items-start mb-3">
             <i class="bi bi-geo-alt me-3 fs-5 text-white"></i>
-            <span>Avenue Habib Bourguiba, Tunis, Tunisie</span>
+            <span>{{ contact.address }}</span>
           </li>
           <li class="d-flex align-items-center mb-3">
             <i class="bi bi-telephone me-3 fs-5 text-white"></i>
-            <span>+216 71 123 456</span>
+            <a [href]="contact.phoneHref" class="contact-link">{{ contact.phoneDisplay }}</a>
           </li>
-          <li class="d-flex align-items-center mb-3">
+          <li class="d-flex align-items-center">
             <i class="bi bi-envelope me-3 fs-5 text-white"></i>
-            <span>contact@yasminastore.tn</span>
-          </li>
-          <li class="d-flex align-items-start">
-            <i class="bi bi-clock me-3 fs-5 text-white"></i>
-            <div>
-              Lundi - Samedi : 9h00 - 19h00<br>
-              Dimanche : Fermé
-            </div>
+            <a [href]="'mailto:' + contact.email" class="contact-link text-break">{{ contact.email }}</a>
           </li>
         </ul>
-        
-        <!-- App Store Badges -->
-        <div class="d-flex gap-3">
-          <a href="#" class="btn btn-outline-light d-flex align-items-center px-3 py-2 border-secondary" style="border-radius: 6px; background: #111;">
-            <i class="bi bi-apple fs-4 me-2"></i>
-            <div class="text-start" style="line-height: 1.1;">
-              <small class="text-white-50 d-block" style="font-size: 9px; text-transform: uppercase;">Télécharger sur</small>
-              <span class="fw-bold" style="font-size: 13px;">App Store</span>
-            </div>
-          </a>
-          <a href="#" class="btn btn-outline-light d-flex align-items-center px-3 py-2 border-secondary" style="border-radius: 6px; background: #111;">
-            <i class="bi bi-play-btn fs-4 me-2"></i>
-            <div class="text-start" style="line-height: 1.1;">
-              <small class="text-white-50 d-block" style="font-size: 9px; text-transform: uppercase;">Disponible sur</small>
-              <span class="fw-bold" style="font-size: 13px;">Google Play</span>
-            </div>
-          </a>
-        </div>
       </div>
     </div>
 
@@ -96,25 +71,19 @@
       <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
         <p class="mb-0">&copy; Tous droits réservés <span class="text-white fw-semibold">Yasmina Store</span>.</p>
       </div>
-      <div class="col-md-6 d-flex flex-column flex-md-row align-items-center justify-content-md-end gap-3">
+      <div class="col-md-6 d-flex align-items-center justify-content-center justify-content-md-end">
         <!-- Payment Badges -->
-        <div class="d-flex gap-2 mb-2 mb-md-0">
+        <div class="d-flex gap-2">
           <span class="bg-dark px-2 py-1 border border-secondary text-white rounded" style="font-size: 12px; font-weight: bold; letter-spacing: 0.5px;"><i class="bi bi-credit-card-2-back me-1"></i> VISA</span>
           <span class="bg-dark px-2 py-1 border border-secondary text-white rounded" style="font-size: 12px; font-weight: bold; letter-spacing: 0.5px;"><i class="bi bi-paypal me-1"></i> PayPal</span>
           <span class="bg-dark px-2 py-1 border border-secondary text-white rounded" style="font-size: 12px; font-weight: bold; letter-spacing: 0.5px;"><i class="bi bi-apple me-1"></i> Pay</span>
-        </div>
-        <!-- Links -->
-        <div class="d-flex gap-3">
-          <a href="#" class="text-white-50 hover-white">Conditions</a>
-          <a href="#" class="text-white-50 hover-white">Confidentialité</a>
-          <a href="#" class="text-white-50 hover-white">Cookies</a>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Scroll to top button -->
-  <button (click)="scrollToTop()" class="btn btn-dark btn-sm rounded-circle position-fixed bottom-0 end-0 m-4 shadow border border-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; z-index: 1000;">
+  <button (click)="scrollToTop()" aria-label="Remonter en haut de la page" class="btn btn-dark btn-sm rounded-circle position-fixed bottom-0 end-0 m-4 shadow border border-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; z-index: 1000;">
     <i class="bi bi-arrow-up text-white fs-5"></i>
   </button>
 </footer>
