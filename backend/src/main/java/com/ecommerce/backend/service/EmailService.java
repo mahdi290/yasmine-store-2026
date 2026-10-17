@@ -152,8 +152,8 @@ public class EmailService {
                 lineTotal = lineTotal.subtract(item.getDiscountAmount());
             }
             String subtotal = lineTotal.setScale(2, java.math.RoundingMode.HALF_UP).toString();
-            String discountHtml = item.getDiscountPercent() != null && item.getDiscountPercent() > 0
-                    ? "<div style=\"color: #b91c1c; font-size: 11px; font-weight: normal;\">Remise -" + item.getDiscountPercent() + "%</div>"
+            String discountHtml = item.getDiscountPercent() != null && item.getDiscountPercent().signum() > 0
+                    ? "<div style=\"color: #b91c1c; font-size: 11px; font-weight: normal;\">Remise -" + com.ecommerce.backend.service.PricingService.formatPercent(item.getDiscountPercent()) + "%</div>"
                     : "";
 
             String imgTd = !prodImg.isEmpty() 

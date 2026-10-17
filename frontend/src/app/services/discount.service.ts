@@ -162,6 +162,22 @@ function groupsFor(rule: DiscountRule, lines: PricingLine[]): number[][] {
   }
 }
 
+/** Exemple chiffré d'une offre pour un produit : "2 pour 50 DT au lieu de 60 DT". */
+export function offerExample(product: Product, rule: DiscountRule): { quantity: number; total: number; regular: number } {
+  const q = computeQuote([{ product, quantity: rule.minQuantity }], [rule]);
+  return { quantity: rule.minQuantity, total: q.total, regular: q.subtotal };
+}
+
+/**
+ * Pourcentage à saisir pour obtenir un prix de lot (ex. 2 hauts à 30 DT vendus 50 DT -> 16.67 %).
+ * Arrondi à 2 décimales : la remise est calculée au centime, donc 2 x 30 DT donnent bien 50,00 DT.
+ */
+export function percentForBundle(unitPrice: number, quantity: number, bundlePrice: number): number | null {
+  const regular = unitPrice * quantity;
+  if (!(regular > 0) || !(bundlePrice > 0) || bundlePrice >= regular) return null;
+  return round2((1 - bundlePrice / regular) * 100);
+}
+
 /** Règles qui peuvent s'appliquer à ce produit (pour le message "Achetez 2, économisez 10%"). */
 export function rulesForProduct(product: Product, rules: DiscountRule[]): DiscountRule[] {
   return rules

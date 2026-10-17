@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -36,8 +37,9 @@ public class QuantityDiscountRule {
     @Column(name = "min_quantity", nullable = false)
     private Integer minQuantity;
 
-    @Column(name = "percent", nullable = false)
-    private Integer percent;
+    // Pourcentage avec 2 décimales (ex. 16.67 pour "2 hauts à 50 DT au lieu de 60 DT")
+    @Column(name = "percent", nullable = false, precision = 5, scale = 2)
+    private BigDecimal percent;
 
     @Column(name = "active")
     @Builder.Default

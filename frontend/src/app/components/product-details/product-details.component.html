@@ -70,6 +70,9 @@
                 <i class="bi bi-tags-fill"></i>
                 <span>
                   <strong>Achetez {{ rule.minQuantity }}, économisez {{ rule.percent }}%</strong>
+                  @if (offerExample(rule); as ex) {
+                    <span> : {{ ex.quantity }} pour <strong>{{ ex.total }} DT</strong> au lieu de <span class="text-decoration-line-through">{{ ex.regular }} DT</span></span>
+                  }
                   @if (rule.scope === 'CATEGORY' && rule.targetName) {
                     <span class="text-muted"> sur les {{ rule.targetName }}</span>
                   } @else if (rule.scope === 'CART') {

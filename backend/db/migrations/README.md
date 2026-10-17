@@ -12,6 +12,7 @@ une seule fois :
 | --- | --- |
 | `001_variantes_couleurs.sql` | Tables `product_variants` et `product_variant_size_stocks`, colonnes couleur sur `order_items` et `cart_items` |
 | `002_remise_quantite.sql` | Table `quantity_discount_rules`, colonnes de remise sur `orders` et `order_items` |
+| `003_remise_pourcentage_decimal.sql` | Pourcentages de remise avec décimales (16.67 %). **Appliquée automatiquement** au démarrage par `config/SchemaMigrations.java`, car Hibernate ne change pas le type d'une colonne existante |
 
 Aucune donnée existante n'est modifiée :
 

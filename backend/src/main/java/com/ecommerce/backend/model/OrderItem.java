@@ -59,8 +59,8 @@ public class OrderItem {
     private BigDecimal price;
 
     // Remise par quantité appliquée à la ligne (null pour les anciennes commandes)
-    @Column(name = "discount_percent")
-    private Integer discountPercent;
+    @Column(name = "discount_percent", precision = 5, scale = 2)
+    private BigDecimal discountPercent;
 
     @Column(name = "discount_amount")
     private BigDecimal discountAmount;

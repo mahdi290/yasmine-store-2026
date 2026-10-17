@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { ProductService, Product, ProductVariant } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
-import { DiscountService, effectivePrice, rulesForProduct } from '../../services/discount.service';
+import { DiscountService, DiscountRule, effectivePrice, offerExample, rulesForProduct } from '../../services/discount.service';
 
 @Component({
   selector: 'app-product-details',
@@ -38,6 +38,12 @@ export class ProductDetailsComponent implements OnInit {
     const prod = this.product();
     return prod ? effectivePrice(prod) : 0;
   });
+
+  /** "2 pour 50 DT au lieu de 60 DT" pour ce produit. */
+  offerExample(rule: DiscountRule) {
+    const prod = this.product();
+    return prod ? offerExample(prod, rule) : null;
+  }
 
   // Offres "Achetez 2, économisez 10%" applicables à ce produit
   quantityOffers = computed(() => {

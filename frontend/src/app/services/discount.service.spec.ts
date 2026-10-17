@@ -1,4 +1,4 @@
-import { computeQuote, DiscountRule, effectivePrice, rulesForProduct } from './discount.service';
+import { computeQuote, DiscountRule, effectivePrice, offerExample, percentForBundle, rulesForProduct } from './discount.service';
 import { Product } from './product.service';
 
 const pull = { id: 1, name: 'Pull rayé', price: 80, category: { id: 10, name: 'Pulls' } } as Product;
@@ -42,6 +42,19 @@ describe('computeQuote (remise par quantité)', () => {
 
   it('ignore les règles désactivées', () => {
     expect(computeQuote([{ product: pull, quantity: 5 }], [rule({ active: false })]).discountAmount).toBe(0);
+  });
+
+  it('offre duo : 1 haut 30 DT, 2 hauts (bleu + bordeaux) 50 DT au lieu de 60 DT', () => {
+    const haut = { id: 7, name: 'Haut rayé', price: 30, category: { id: 10, name: 'Hauts' } } as Product;
+    const percent = percentForBundle(30, 2, 50);
+    expect(percent).toBe(16.67);
+    const duo = rule({ scope: 'PRODUCT', productId: 7, percent: percent! });
+    expect(computeQuote([{ product: haut, quantity: 1 }], [duo]).total).toBe(30);
+    const q = computeQuote([{ product: haut, quantity: 1 }, { product: haut, quantity: 1 }], [duo]);
+    expect(q.subtotal).toBe(60);
+    expect(q.discountAmount).toBe(10);
+    expect(q.total).toBe(50);
+    expect(offerExample(haut, duo)).toEqual({ quantity: 2, total: 50, regular: 60 });
   });
 
   it('liste les offres visibles sur la fiche produit', () => {

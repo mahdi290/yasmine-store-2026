@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,10 +34,10 @@ public class DiscountRuleController {
     private final ProductRepository productRepository;
     private final PricingService pricingService;
 
-    public record RuleResponse(Long id, String label, String displayLabel, Integer minQuantity, Integer percent,
+    public record RuleResponse(Long id, String label, String displayLabel, Integer minQuantity, BigDecimal percent,
                                Boolean active, String scope, Long categoryId, Long productId, String targetName) {}
 
-    public record RuleRequest(String label, Integer minQuantity, Integer percent, Boolean active,
+    public record RuleRequest(String label, Integer minQuantity, BigDecimal percent, Boolean active,
                               String scope, Long categoryId, Long productId) {}
 
     private RuleResponse toResponse(QuantityDiscountRule r) {
@@ -101,8 +102,11 @@ public class DiscountRuleController {
         if (req.minQuantity() == null || req.minQuantity() < 1 || req.minQuantity() > 999) {
             return "La quantité minimale doit être comprise entre 1 et 999.";
         }
-        if (req.percent() == null || req.percent() < 1 || req.percent() > 90) {
-            return "Le pourcentage de remise doit être compris entre 1 et 90 %.";
+        if (req.percent() == null || req.percent().compareTo(new BigDecimal("0.01")) < 0 || req.percent().compareTo(new BigDecimal("90")) > 0) {
+            return "Le pourcentage de remise doit être compris entre 0,01 et 90 %.";
+        }
+        if (req.percent().stripTrailingZeros().scale() > 2) {
+            return "Le pourcentage de remise accepte au maximum 2 décimales (ex. 16.67).";
         }
         String scope = req.scope() != null ? req.scope().trim().toUpperCase() : QuantityDiscountRule.SCOPE_ALL_PRODUCTS;
         if (!SCOPES.contains(scope)) {

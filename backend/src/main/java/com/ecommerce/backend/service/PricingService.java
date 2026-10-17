@@ -34,10 +34,10 @@ public class PricingService {
     /** Ligne à chiffrer. unitPrice null = prix actuel du produit (soldé le cas échéant). */
     public record Line(Product product, int quantity, BigDecimal unitPrice) {}
 
-    public record LineResult(BigDecimal unitPrice, BigDecimal subtotal, int discountPercent,
+    public record LineResult(BigDecimal unitPrice, BigDecimal subtotal, BigDecimal discountPercent,
                              BigDecimal discountAmount, BigDecimal total, Long ruleId) {}
 
-    public record AppliedDiscount(Long ruleId, String label, int percent, int quantity, BigDecimal amount) {}
+    public record AppliedDiscount(Long ruleId, String label, BigDecimal percent, int quantity, BigDecimal amount) {}
 
     public record Quote(List<LineResult> lines, BigDecimal subtotal, BigDecimal discountAmount,
                         BigDecimal total, List<AppliedDiscount> discounts) {
@@ -53,6 +53,13 @@ public class PricingService {
         }
     }
 
+    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+
+    /** 10.00 -> "10", 16.67 -> "16.67" */
+    public static String formatPercent(BigDecimal percent) {
+        return percent == null ? "0" : percent.stripTrailingZeros().toPlainString();
+    }
+
     public static BigDecimal round2(BigDecimal value) {
         return value.setScale(2, RoundingMode.HALF_UP);
     }
@@ -60,7 +67,7 @@ public class PricingService {
     public List<QuantityDiscountRule> activeRules() {
         return ruleRepository.findAllByActiveTrueOrderByIdAsc().stream()
                 .filter(r -> r.getMinQuantity() != null && r.getMinQuantity() > 0
-                        && r.getPercent() != null && r.getPercent() > 0 && r.getPercent() < 100)
+                        && r.getPercent() != null && r.getPercent().signum() > 0 && r.getPercent().compareTo(HUNDRED) < 0)
                 .toList();
     }
 
@@ -70,7 +77,8 @@ public class PricingService {
 
     public Quote quote(List<Line> lines, List<QuantityDiscountRule> rules) {
         int n = lines.size();
-        int[] bestPercent = new int[n];
+        BigDecimal[] bestPercent = new BigDecimal[n];
+        Arrays.fill(bestPercent, BigDecimal.ZERO);
         QuantityDiscountRule[] bestRule = new QuantityDiscountRule[n];
 
         for (QuantityDiscountRule rule : rules) {
@@ -78,7 +86,7 @@ public class PricingService {
                 int qty = group.stream().mapToInt(i -> lines.get(i).quantity()).sum();
                 if (qty < rule.getMinQuantity()) continue;
                 for (int i : group) {
-                    if (rule.getPercent() > bestPercent[i]) {
+                    if (rule.getPercent().compareTo(bestPercent[i]) > 0) {
                         bestPercent[i] = rule.getPercent();
                         bestRule[i] = rule;
                     }
@@ -97,7 +105,7 @@ public class PricingService {
             Line line = lines.get(i);
             BigDecimal unit = round2(line.unitPrice() != null ? line.unitPrice() : effectivePrice(line.product()));
             BigDecimal lineSubtotal = round2(unit.multiply(BigDecimal.valueOf(line.quantity())));
-            BigDecimal lineDiscount = round2(lineSubtotal.multiply(BigDecimal.valueOf(bestPercent[i])).divide(BigDecimal.valueOf(100)));
+            BigDecimal lineDiscount = round2(lineSubtotal.multiply(bestPercent[i]).divide(HUNDRED));
             QuantityDiscountRule rule = bestRule[i];
 
             results.add(new LineResult(unit, lineSubtotal, bestPercent[i], lineDiscount, lineSubtotal.subtract(lineDiscount),
@@ -178,7 +186,7 @@ public class PricingService {
         if (rule.getLabel() != null && !rule.getLabel().isBlank()) {
             return rule.getLabel().trim();
         }
-        String base = "Achetez " + rule.getMinQuantity() + ", économisez " + rule.getPercent() + "%";
+        String base = "Achetez " + rule.getMinQuantity() + ", économisez " + formatPercent(rule.getPercent()) + "%";
         String target = targetName(rule);
         return target != null ? base + " (" + target + ")" : base;
     }

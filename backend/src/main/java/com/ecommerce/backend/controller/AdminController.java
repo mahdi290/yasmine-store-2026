@@ -44,7 +44,7 @@ public class AdminController {
             String size,
             Integer quantity,
             BigDecimal price,
-            Integer discountPercent,
+            BigDecimal discountPercent,
             BigDecimal discountAmount
     ) {}
 

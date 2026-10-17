@@ -100,14 +100,14 @@
       <div class="col-6">
         <label class="form-label fw-semibold" style="font-size: 13px;">Remise (%) *</label>
         <div class="input-group">
-          <input type="number" min="1" max="90" class="form-control" [(ngModel)]="form.percent" placeholder="10">
+          <input type="number" min="0.01" max="90" step="0.01" class="form-control" [(ngModel)]="form.percent" placeholder="10">
           <span class="input-group-text">%</span>
         </div>
       </div>
 
       <div class="col-12">
         <label class="form-label fw-semibold" style="font-size: 13px;">Portée *</label>
-        <select class="form-select" [(ngModel)]="form.scope">
+        <select class="form-select" [(ngModel)]="form.scope" (ngModelChange)="syncBundleUnitPrice()">
           @for (s of scopes; track s.value) {
             <option [value]="s.value">{{ s.label }}</option>
           }
@@ -128,7 +128,7 @@
       @if (form.scope === 'PRODUCT') {
         <div class="col-12">
           <label class="form-label fw-semibold" style="font-size: 13px;">Produit *</label>
-          <select class="form-select" [(ngModel)]="form.productId">
+          <select class="form-select" [(ngModel)]="form.productId" (ngModelChange)="syncBundleUnitPrice()">
             <option [ngValue]="null" disabled>Choisir un produit</option>
             @for (p of products(); track p.id) {
               <option [ngValue]="p.id">{{ p.name }}</option>
@@ -136,6 +136,33 @@
           </select>
         </div>
       }
+
+      <!-- Aide : calcul du % à partir d'un prix de lot -->
+      <div class="col-12">
+        <div class="bundle-helper rounded-3 p-3">
+          <div class="fw-semibold mb-2" style="font-size: 13px;"><i class="bi bi-calculator me-1"></i> Calculer le % à partir d'un prix de lot</div>
+          <div class="row g-2 align-items-end">
+            <div class="col-sm-4">
+              <label class="form-label small text-muted mb-1">Prix unitaire (DT)</label>
+              <input type="number" min="0" step="0.01" class="form-control form-control-sm" [(ngModel)]="bundleUnitPrice" placeholder="30">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small text-muted mb-1">Prix pour {{ form.minQuantity || '?' }} articles (DT)</label>
+              <input type="number" min="0" step="0.01" class="form-control form-control-sm" [(ngModel)]="bundlePrice" placeholder="50">
+            </div>
+            <div class="col-sm-4">
+              <button type="button" class="btn btn-sm btn-outline-dark w-100" [disabled]="bundlePercent() === null" (click)="applyBundlePrice()">
+                Utiliser {{ bundlePercent() !== null ? bundlePercent() + ' %' : 'ce prix' }}
+              </button>
+            </div>
+          </div>
+          @if (bundleCheck(); as c) {
+            <small class="d-block text-muted mt-2" style="font-size: 12px;">
+              Vérification : {{ form.minQuantity }} × {{ bundleUnitPrice }} DT = {{ c.regular.toFixed(2) }} DT → <strong class="text-dark">{{ c.total.toFixed(2) }} DT</strong> avec -{{ form.percent }} %
+            </small>
+          }
+        </div>
+      </div>
 
       <div class="col-12">
         <label class="form-label fw-semibold" style="font-size: 13px;">Libellé affiché <span class="text-muted fw-normal">(optionnel)</span></label>

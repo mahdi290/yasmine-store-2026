@@ -3,7 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
 import { ProductService, Product, Category } from '../../../services/product.service';
-import { DiscountService, DiscountRule, DiscountRuleRequest, DiscountScope, SCOPE_LABELS } from '../../../services/discount.service';
+import { DiscountService, DiscountRule, DiscountRuleRequest, DiscountScope, SCOPE_LABELS, effectivePrice, percentForBundle, round2 } from '../../../services/discount.service';
 
 @Component({
   selector: 'app-admin-discounts',
@@ -33,6 +33,10 @@ export class AdminDiscountsComponent implements OnInit {
     (Object.keys(SCOPE_LABELS) as DiscountScope[]).map(value => ({ value, label: SCOPE_LABELS[value] }));
 
   form: DiscountRuleRequest = this.emptyForm();
+
+  // Aide "prix du lot" : 2 hauts à 30 DT vendus 50 DT -> 16.67 %
+  bundleUnitPrice: number | null = null;
+  bundlePrice: number | null = null;
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
@@ -81,6 +85,7 @@ export class AdminDiscountsComponent implements OnInit {
     if (this.categories().length > 0) this.form.categoryId = this.categories()[0].id;
     this.selectedRule.set(null);
     this.errorMsg.set(null);
+    this.resetBundleHelper();
     this.modalMode.set('add');
   }
 
@@ -96,6 +101,7 @@ export class AdminDiscountsComponent implements OnInit {
     };
     this.selectedRule.set(rule);
     this.errorMsg.set(null);
+    this.resetBundleHelper();
     this.modalMode.set('edit');
   }
 
@@ -123,6 +129,40 @@ export class AdminDiscountsComponent implements OnInit {
     return `Achetez ${this.form.minQuantity || '?'}, économisez ${this.form.percent || '?'}%${target}`;
   }
 
+  private resetBundleHelper() {
+    this.bundlePrice = null;
+    this.bundleUnitPrice = null;
+    this.syncBundleUnitPrice();
+  }
+
+  /** Prix unitaire de référence : celui du produit choisi (portée "un produit"). */
+  syncBundleUnitPrice() {
+    if (this.form.scope === 'PRODUCT') {
+      const prod = this.products().find(p => p.id === Number(this.form.productId));
+      if (prod) this.bundleUnitPrice = effectivePrice(prod);
+    }
+  }
+
+  bundlePercent(): number | null {
+    if (this.bundleUnitPrice == null || this.bundlePrice == null) return null;
+    return percentForBundle(Number(this.bundleUnitPrice), Number(this.form.minQuantity), Number(this.bundlePrice));
+  }
+
+  applyBundlePrice() {
+    const pct = this.bundlePercent();
+    if (pct != null) this.form.percent = pct;
+  }
+
+  // Vérification affichée : prix normal du lot et prix après remise (même calcul que le panier)
+  bundleCheck(): { regular: number; total: number } | null {
+    const unit = Number(this.bundleUnitPrice);
+    const qty = Number(this.form.minQuantity);
+    const pct = Number(this.form.percent);
+    if (!(unit > 0) || !(qty > 0) || !(pct > 0)) return null;
+    const regular = round2(unit * qty);
+    return { regular, total: round2(regular - round2(regular * pct / 100)) };
+  }
+
   save() {
     this.errorMsg.set(null);
     this.successMsg.set(null);
@@ -132,8 +172,8 @@ export class AdminDiscountsComponent implements OnInit {
       this.errorMsg.set('La quantité minimale doit être un nombre entier supérieur ou égal à 1.');
       return;
     }
-    if (!Number.isInteger(pct) || pct < 1 || pct > 90) {
-      this.errorMsg.set('Le pourcentage doit être un nombre entier entre 1 et 90.');
+    if (!Number.isFinite(pct) || pct < 0.01 || pct > 90 || round2(pct) !== pct) {
+      this.errorMsg.set('Le pourcentage doit être compris entre 0,01 et 90, avec au maximum 2 décimales (ex. 16.67).');
       return;
     }
     if (this.form.scope === 'CATEGORY' && !this.form.categoryId) {
