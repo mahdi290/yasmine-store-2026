@@ -45,6 +45,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   slides = signal<CarouselSlide[]>(DEFAULT_CAROUSEL_SLIDES);
 
   // Dynamic Featured Categories Bento Grid (Managed from Admin)
+  // Vitrine des 4 univers (Robes, Hauts, Maille, Accessoires) : masquée pour le moment
+  readonly showShowcase = false;
   showcaseCards = signal<ShowcaseCard[]>(DEFAULT_SHOWCASE_CARDS);
 
   // States

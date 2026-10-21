@@ -25,6 +25,9 @@ export class FooterComponent implements OnInit {
     facebook: 'https://www.facebook.com/p/Yesmina-store-61594864630099/'
   };
 
+  // Badges VISA / PayPal / Apple Pay : masqués pour le moment (paiement à la livraison uniquement)
+  readonly showPaymentBadges = false;
+
   private categories = signal<Category[]>([]);
   private departments = signal<Department[]>([]);
 

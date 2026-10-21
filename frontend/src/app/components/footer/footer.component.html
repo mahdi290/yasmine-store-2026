@@ -71,9 +71,10 @@
 
     <!-- Bottom Row -->
     <div class="row align-items-center text-white-50" style="font-size: 13px;">
-      <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+      <div class="text-center mb-3 mb-md-0" [class.col-md-6]="showPaymentBadges" [class.text-md-start]="showPaymentBadges" [class.col-12]="!showPaymentBadges">
         <p class="mb-0">&copy; Tous droits réservés <span class="text-white fw-semibold">Yasmina Store</span>.</p>
       </div>
+      @if (showPaymentBadges) {
       <div class="col-md-6 d-flex align-items-center justify-content-center justify-content-md-end">
         <!-- Payment Badges -->
         <div class="d-flex gap-2">
@@ -82,6 +83,7 @@
           <span class="bg-dark px-2 py-1 border border-secondary text-white rounded" style="font-size: 12px; font-weight: bold; letter-spacing: 0.5px;"><i class="bi bi-apple me-1"></i> Pay</span>
         </div>
       </div>
+      }
     </div>
   </div>
 
