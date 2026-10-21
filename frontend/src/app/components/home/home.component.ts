@@ -23,7 +23,7 @@ export interface FeaturedCategory {
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss', './home-products.scss']
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
@@ -206,6 +206,15 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   // ---- Cartes produit ----
+
+  // Peu de produits : cartes plus larges pour éviter une grille à moitié vide
+  gridColClass = computed(() => {
+    const n = this.filteredProducts().length;
+    if (n === 2) return 'col-6 col-lg-5';
+    if (n === 3) return 'col-6 col-md-4';
+    return 'col-6 col-md-4 col-lg-3';
+  });
+
 
   // Couleur survolée / choisie sur chaque carte (id produit -> id couleur)
   private previewedColors = signal<Record<number, number>>({});

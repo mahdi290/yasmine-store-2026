@@ -200,9 +200,106 @@
         }
       </div>
     } @else {
+      @if (filteredProducts().length === 1) {
+        <!-- Un seul produit : mise en avant pleine largeur (photo + infos) au lieu d'une carte isolée -->
+        @let product = filteredProducts()[0];
+        <article class="spotlight">
+          <div class="row g-0 align-items-stretch">
+            <div class="col-md-6">
+              <a class="spotlight-media" [routerLink]="['/product-details', product.id]" [queryParams]="colorParam(product)" [attr.aria-label]="'Voir ' + product.name">
+                <img [src]="cardImage(product)" [alt]="product.name">
+                <div class="pcard-badges">
+                  @if (product.stock <= 0) {
+                    <span class="pbadge is-dark">Épuisé</span>
+                  } @else {
+                    @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+                      <span class="pbadge is-sale">-{{ product.discountPercent }}%</span>
+                    }
+                    @if (isNew(product)) {
+                      <span class="pbadge is-new">Nouveau</span>
+                    }
+                  }
+                </div>
+              </a>
+              <button type="button" class="pcard-fav"
+                      [class.active]="isFavorite(product.id)"
+                      (click)="toggleFavorite(product.id, $event)"
+                      [attr.aria-pressed]="isFavorite(product.id)"
+                      [attr.aria-label]="isFavorite(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                <i class="bi" [class.bi-heart-fill]="isFavorite(product.id)" [class.bi-heart]="!isFavorite(product.id)"></i>
+              </button>
+            </div>
+
+            <div class="col-md-6">
+              <div class="spotlight-body">
+                @if (product.category?.name) {
+                  <span class="spotlight-tag">{{ product.category?.name }}</span>
+                }
+                <h3 class="spotlight-title">{{ product.name }}</h3>
+
+                <div class="spotlight-price">
+                  @if (getEffectivePrice(product) < product.price) {
+                    <span class="is-sale">{{ formatPrice(getEffectivePrice(product)) }} DT</span>
+                    <del>{{ formatPrice(product.price) }} DT</del>
+                  } @else {
+                    <span>{{ formatPrice(product.price) }} DT</span>
+                  }
+                </div>
+
+                @if (cardOffer(product); as offer) {
+                  <div class="spotlight-offer">
+                    <span class="offer-pill">OFFRE</span>
+                    <div>
+                      <strong>{{ offer.quantity }} pour {{ formatPrice(offer.total) }} DT</strong>
+                      <span> au lieu de <del>{{ formatPrice(offer.regular) }} DT</del></span>
+                      @if ((product.variants?.length ?? 0) > 1) {
+                        <span class="d-block small text-muted">Mélangez les couleurs comme vous voulez</span>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if ((product.variants?.length ?? 0) > 0) {
+                  <div class="spotlight-label">Couleurs disponibles</div>
+                  <div class="d-flex flex-wrap gap-2 mb-1">
+                    @for (v of product.variants || []; track v.id) {
+                      <button type="button" class="spot-chip"
+                              [class.active]="previewVariantId(product) === v.id"
+                              [class.is-out]="(v.stock ?? 0) <= 0"
+                              [attr.aria-pressed]="previewVariantId(product) === v.id"
+                              (mouseenter)="previewColor(product, v.id)"
+                              (click)="previewColor(product, v.id)">
+                        <span class="dot" [style.background-color]="v.colorHex || '#cccccc'"></span>
+                        {{ v.colorName }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (product.description) {
+                  <p class="spotlight-desc">{{ product.description }}</p>
+                }
+
+                <div class="d-flex flex-wrap gap-2 mt-auto pt-2">
+                  <a class="btn btn-dark spotlight-cta" [routerLink]="['/product-details', product.id]" [queryParams]="colorParam(product)">
+                    {{ product.stock <= 0 ? 'Voir le produit' : ((product.variants?.length ?? 0) > 1 ? 'Choisir couleur & taille' : 'Choisir ma taille') }}
+                    <i class="bi bi-arrow-right ms-1"></i>
+                  </a>
+                </div>
+
+                <ul class="spotlight-trust">
+                  <li><i class="bi bi-truck"></i> Livraison 24-48h partout en Tunisie</li>
+                  <li><i class="bi bi-cash-coin"></i> Paiement à la livraison</li>
+                  <li><i class="bi bi-arrow-repeat"></i> Satisfait ou échangé</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </article>
+      } @else {
       <div class="row g-3 g-md-4 justify-content-center">
         @for (product of filteredProducts(); track product.id) {
-          <div class="col-6 col-md-4 col-lg-3">
+          <div [class]="gridColClass()">
             <article class="pcard" [class.is-sold-out]="product.stock <= 0">
               <!-- Photo (change avec la couleur survolée / choisie) -->
               <a class="pcard-media" [routerLink]="['/product-details', product.id]" [queryParams]="colorParam(product)" [attr.aria-label]="'Voir ' + product.name">
@@ -292,6 +389,7 @@
           </div>
         }
       </div>
+      }
 
       <!-- Lien vers toute la boutique -->
       <div class="text-center mt-4 mt-md-5">
