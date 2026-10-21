@@ -183,10 +183,12 @@ export class ProductDetailsComponent implements OnInit {
     this.quantity.set(1);
     this.selectedImage.set(null);
 
-    // Couleur par défaut : la première qui a du stock
+    // Couleur choisie depuis la carte produit (?couleur=ID), sinon la première qui a du stock
     const variants = prod.variants ?? [];
+    const wanted = Number(this.route.snapshot.queryParamMap.get('couleur'));
+    const fromLink = variants.find(v => v.id === wanted);
     const firstInStock = variants.find(v => (v.stock ?? 0) > 0) ?? variants[0];
-    this.selectedVariantId.set(firstInStock?.id ?? null);
+    this.selectedVariantId.set((fromLink ?? firstInStock)?.id ?? null);
     this.selectFirstSizeInStock();
   }
 

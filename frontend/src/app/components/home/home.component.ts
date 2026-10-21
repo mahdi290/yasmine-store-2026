@@ -3,8 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { ProductService, Product, Category } from '../../services/product.service';
-import { CartService } from '../../services/cart.service';
-import { ToastService } from '../../services/toast.service';
+import { DiscountService, offerExample, rulesForProduct, formatPrice } from '../../services/discount.service';
 import { AuthService } from '../../services/auth.service';
 import { WishlistService } from '../../services/wishlist.service';
 import { ShowcaseService, ShowcaseCard, DEFAULT_SHOWCASE_CARDS } from '../../services/showcase.service';
@@ -28,13 +27,13 @@ export interface FeaturedCategory {
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
-  private cartService = inject(CartService);
   private authService = inject(AuthService);
   private wishlistService = inject(WishlistService);
   private showcaseService = inject(ShowcaseService);
   private carouselService = inject(CarouselService);
   private router = inject(Router);
-  private toast = inject(ToastService);
+  private discountService = inject(DiscountService);
+  readonly formatPrice = formatPrice;
   private platformId = inject(PLATFORM_ID);
 
   // Carousel States
@@ -206,34 +205,44 @@ export class HomeComponent implements OnInit, OnDestroy {
     return product.price;
   }
 
-  addToCart(product: Product, event: Event) {
-    event.preventDefault();
-    event.stopPropagation();
+  // ---- Cartes produit ----
 
-    if (this.cartService.needsColorChoice(product)) {
-      this.router.navigate(['/product-details', product.id]);
-      return;
-    }
+  // Couleur survolée / choisie sur chaque carte (id produit -> id couleur)
+  private previewedColors = signal<Record<number, number>>({});
 
-    this.cartService.addToCart(product, 1);
-    this.toast.success(`${product.name} ajouté au panier.`, { link: { label: 'Voir le panier', url: '/cart' } });
+  previewVariantId(product: Product): number | null {
+    return this.previewedColors()[product.id] ?? null;
   }
 
-  getBadge(index: number): { text: string; type: string } | null {
-    switch (index % 4) {
-      case 0: return { text: 'ÉDITION LIMITÉE', type: 'limited' };
-      case 1: return { text: '-25%', type: 'discount' };
-      case 2: return { text: 'NOUVEAUTÉ', type: 'new' };
-      case 3: return { text: 'TENDANCE', type: 'trending' };
-      default: return null;
-    }
+  previewColor(product: Product, variantId: number | undefined) {
+    if (variantId == null) return;
+    this.previewedColors.update(map => ({ ...map, [product.id]: variantId }));
   }
 
-  getOriginalPrice(price: number, index: number): number | null {
-    if (index % 4 === 1) {
-      return Math.round(price / 0.75 * 100) / 100;
-    }
-    return null;
+  /** Photo de la couleur choisie sur la carte, sinon photo principale. */
+  cardImage(product: Product): string {
+    const id = this.previewVariantId(product);
+    const variant = product.variants?.find(v => v.id === id);
+    return variant?.images?.[0] || variant?.imageUrl || product.imageUrl;
+  }
+
+  /** La fiche produit s'ouvre directement sur la couleur choisie. */
+  colorParam(product: Product): { couleur: number } | Record<string, never> {
+    const id = this.previewVariantId(product);
+    return id != null ? { couleur: id } : {};
+  }
+
+  /** Offre par quantité du produit, ex. { quantity: 2, total: 50 } -> "2 pour 50 DT". */
+  cardOffer(product: Product) {
+    const rule = rulesForProduct(product, this.discountService.activeRules()).find(r => r.scope !== 'CART');
+    return rule ? offerExample(product, rule) : null;
+  }
+
+  /** Ajouté il y a moins de 30 jours. */
+  isNew(product: Product): boolean {
+    if (!product.createdAt) return false;
+    const age = Date.now() - new Date(product.createdAt).getTime();
+    return age >= 0 && age < 30 * 24 * 3600 * 1000;
   }
 
   getCategoryIdByName(name: string): number | null {

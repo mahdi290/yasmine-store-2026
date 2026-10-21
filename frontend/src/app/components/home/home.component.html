@@ -158,10 +158,10 @@
 }
 
 <!-- MAX OPTIMIZED MEILLEURES VENTES GRID (Replaces Capture 2) -->
-<section class="products-section py-5" style="background-color: #fcfcfd;">
+<section class="products-section py-4 py-md-5">
   <div class="container">
     <!-- Header with interactive tabs -->
-    <div class="d-flex flex-column align-items-center text-center mb-5">
+    <div class="d-flex flex-column align-items-center text-center mb-4 mb-md-5">
       <span class="section-tag text-uppercase fw-bold">Sélection Tendance</span>
       <h2 class="section-title fw-bold mt-2 mb-2">Meilleures Ventes</h2>
       <p class="section-subtitle text-muted mb-4">Les pièces coup de cœur les plus convoitées par nos clientes.</p>
@@ -192,84 +192,96 @@
     </div>
 
     @if (loading()) {
-      <div class="py-5 text-center">
-        <div class="spinner-border text-dark" role="status">
-          <span class="visually-hidden">Chargement...</span>
-        </div>
+      <div class="row g-3 g-md-4 justify-content-center">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="pcard is-skeleton"><div class="pcard-media"></div><div class="pcard-body"><span></span><span></span></div></div>
+          </div>
+        }
       </div>
     } @else {
-      <!-- 4 Columns Grid of High-End Product Cards -->
-      <div class="row g-4 justify-content-center">
-        @for (product of filteredProducts(); track product.id; let idx = $index) {
-          <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-            <div class="product-luxury-card bg-white rounded-4 overflow-hidden h-100 d-flex flex-column border shadow-sm"
-                 [routerLink]="['/product-details', product.id]">
-              
-              <!-- Image Container (Consistent Aspect Ratio & Visuals) -->
-              <div class="product-img-box position-relative overflow-hidden">
-                <!-- Badges -->
-                <div class="product-badge-pos position-absolute start-0 top-0 m-3 z-2 d-flex flex-column gap-1">
-                  @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
-                    <span class="badge bg-danger rounded-pill px-2.5 py-1.5 fw-bold shadow-sm" style="font-size: 11px;">
-                      -{{ product.discountPercent }}%
-                    </span>
-                  } @else if (getBadge(idx); as badge) {
-                    <span class="badge-luxury badge-luxury-{{badge.type}}">{{ badge.text }}</span>
+      <div class="row g-3 g-md-4 justify-content-center">
+        @for (product of filteredProducts(); track product.id) {
+          <div class="col-6 col-md-4 col-lg-3">
+            <article class="pcard" [class.is-sold-out]="product.stock <= 0">
+              <!-- Photo (change avec la couleur survolée / choisie) -->
+              <a class="pcard-media" [routerLink]="['/product-details', product.id]" [queryParams]="colorParam(product)" [attr.aria-label]="'Voir ' + product.name">
+                <img [src]="cardImage(product)" [alt]="product.name" loading="lazy">
+
+                <div class="pcard-badges">
+                  @if (product.stock <= 0) {
+                    <span class="pbadge is-dark">Épuisé</span>
+                  } @else {
+                    @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
+                      <span class="pbadge is-sale">-{{ product.discountPercent }}%</span>
+                    }
+                    @if (cardOffer(product); as offer) {
+                      <span class="pbadge is-offer">{{ offer.quantity }} pour {{ formatPrice(offer.total) }} DT</span>
+                    }
+                    @if (isNew(product)) {
+                      <span class="pbadge is-new">Nouveau</span>
+                    }
+                  }
+                </div>
+              </a>
+
+              <button type="button"
+                      class="pcard-fav"
+                      [class.active]="isFavorite(product.id)"
+                      (click)="toggleFavorite(product.id, $event)"
+                      [attr.aria-pressed]="isFavorite(product.id)"
+                      [attr.aria-label]="isFavorite(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                <i class="bi" [class.bi-heart-fill]="isFavorite(product.id)" [class.bi-heart]="!isFavorite(product.id)"></i>
+              </button>
+
+              <div class="pcard-body">
+                <a class="pcard-name" [routerLink]="['/product-details', product.id]" [queryParams]="colorParam(product)">{{ product.name }}</a>
+
+                <!-- Couleurs disponibles -->
+                @if ((product.variants?.length ?? 0) > 0) {
+                  <div class="pcard-colors" role="group" [attr.aria-label]="'Couleurs de ' + product.name">
+                    @for (v of (product.variants || []).slice(0, 5); track v.id) {
+                      <button type="button"
+                              class="pcard-dot"
+                              [class.active]="previewVariantId(product) === v.id"
+                              [class.is-out]="(v.stock ?? 0) <= 0"
+                              [style.background-color]="v.colorHex || '#cccccc'"
+                              [title]="v.colorName"
+                              [attr.aria-label]="v.colorName"
+                              (mouseenter)="previewColor(product, v.id)"
+                              (click)="previewColor(product, v.id)"></button>
+                    }
+                    @if ((product.variants?.length ?? 0) > 5) {
+                      <span class="pcard-more">+{{ (product.variants?.length ?? 0) - 5 }}</span>
+                    }
+                    <span class="pcard-colors-label">{{ product.variants?.length }} couleur{{ (product.variants?.length ?? 0) > 1 ? 's' : '' }}</span>
+                  </div>
+                }
+
+                <div class="pcard-price">
+                  @if (getEffectivePrice(product) < product.price) {
+                    <span class="is-sale">{{ formatPrice(getEffectivePrice(product)) }} DT</span>
+                    <del>{{ formatPrice(product.price) }} DT</del>
+                  } @else {
+                    <span>{{ formatPrice(product.price) }} DT</span>
+                  }
+                  @if (product.stock > 0 && product.stock <= 3) {
+                    <small class="pcard-low">Plus que {{ product.stock }}</small>
                   }
                 </div>
 
-                <!-- Wishlist Heart Button -->
-                <button type="button" 
-                        class="btn-wishlist position-absolute end-0 top-0 m-3 z-2 rounded-circle d-flex align-items-center justify-content-center"
-                        [class.active]="isFavorite(product.id)"
-                        (click)="toggleFavorite(product.id, $event)" 
-                        title="Ajouter aux favoris">
-                  <i class="bi" [class.bi-heart-fill]="isFavorite(product.id)" [class.bi-heart]="!isFavorite(product.id)"></i>
-                </button>
-
-                <!-- High Res Product Image with Zoom on Hover -->
-                <img [src]="product.imageUrl" 
-                     class="product-image w-100 h-100" 
-                     [alt]="product.name" 
-                     loading="lazy">
-
-                <!-- Hover Floating Action Bar -->
-                <div class="product-hover-actions position-absolute bottom-0 start-0 w-100 p-3 d-flex gap-2 z-2">
-                  <button type="button" class="btn btn-dark flex-grow-1 py-2 fw-semibold btn-view-product text-uppercase" style="font-size: 12px; letter-spacing: 0.5px;">
-                    Voir les détails
-                  </button>
-                  <button type="button" class="btn btn-light px-3 py-2 btn-quick-cart" (click)="addToCart(product, $event)" title="Ajouter au panier">
-                    <i class="bi bi-cart-plus fs-6 text-dark"></i>
-                  </button>
-                </div>
+                <a class="pcard-cta" [routerLink]="['/product-details', product.id]" [queryParams]="colorParam(product)">
+                  @if (product.stock <= 0) {
+                    Voir le produit
+                  } @else if ((product.variants?.length ?? 0) > 1) {
+                    Choisir couleur & taille
+                  } @else {
+                    Choisir ma taille
+                  }
+                  <i class="bi bi-arrow-right"></i>
+                </a>
               </div>
-
-              <!-- Product Info Body -->
-              <div class="product-info-box p-3 d-flex flex-column flex-grow-1 justify-content-between">
-                <div>
-                  <div class="mb-1">
-                    <small class="product-brand text-muted text-uppercase fw-bold">{{ product.brand || 'YASMINA' }}</small>
-                  </div>
-
-                  <h6 class="product-name fw-bold text-dark mb-2 text-truncate" [title]="product.name">{{ product.name }}</h6>
-                </div>
-
-                <!-- Price Row -->
-                <div class="d-flex align-items-baseline justify-content-between mt-2 pt-2 border-top">
-                  <div class="d-flex align-items-baseline gap-2">
-                    @if (product.onSale && product.discountPercent && product.discountPercent > 0) {
-                      <span class="product-price fw-extrabold text-danger">{{ getEffectivePrice(product) }} DT</span>
-                      <del class="product-old-price text-muted small">{{ product.price }} DT</del>
-                    } @else {
-                      <span class="product-price fw-extrabold text-dark">{{ product.price }} DT</span>
-                    }
-                  </div>
-                  <span class="stock-pill small text-success fw-semibold">
-                    <i class="bi bi-check2-circle me-1"></i>En stock
-                  </span>
-                </div>
-              </div>
-            </div>
+            </article>
           </div>
         } @empty {
           <div class="col-12 py-5 text-center">
@@ -281,10 +293,10 @@
         }
       </div>
 
-      <!-- Bottom View All Button -->
-      <div class="text-center mt-5">
-        <a routerLink="/category" class="btn btn-dark rounded-pill px-5 py-3 fw-bold text-uppercase shadow-sm" style="letter-spacing: 1px; font-size: 13px;">
-          Voir toute la collection ({{ products().length }} pièces) &rarr;
+      <!-- Lien vers toute la boutique -->
+      <div class="text-center mt-4 mt-md-5">
+        <a routerLink="/category" class="btn btn-dark rounded-pill px-4 px-md-5 py-3 fw-bold text-uppercase shadow-sm" style="letter-spacing: 1px; font-size: 13px;">
+          Voir toute la collection ({{ products().length }} {{ products().length > 1 ? 'pièces' : 'pièce' }}) &rarr;
         </a>
       </div>
     }
